@@ -79,7 +79,7 @@ def create_starlette_app():
     # Create an SSE endpoint for each server
     for server_name, server_info in servers.items():
         # Create SSE transport for this server
-        sse_path = f"/api/{server_name}/messages/"
+        sse_path = f"/{server_name}/messages/"
         sse_transport = SseServerTransport(sse_path)
         
         # Create handler for this server
@@ -107,7 +107,7 @@ def create_starlette_app():
         )
         
         # Add routes for this server
-        routes.append(Route(f"/api/{server_name}/sse", endpoint=handler))
+        routes.append(Route(f"/{server_name}", endpoint=handler))
         routes.append(Mount(sse_path, app=sse_transport.handle_post_message))
         
         logger.info(f"Added routes for server: {server_name}")

@@ -22,7 +22,7 @@ class RemoteMCPTestClient:
         """Connect to a remote MCP server via SSE
 
         Args:
-            sse_endpoint: Full SSE endpoint URL (e.g., "http://localhost:8000/api/simple-tools-server/sse")
+            sse_endpoint: Full SSE endpoint URL (e.g., "http://localhost:8000/simple-tools-server")
         """
         # Use the provided SSE endpoint directly
         print(f"Connecting to server at {sse_endpoint}")

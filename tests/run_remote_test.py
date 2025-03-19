@@ -8,8 +8,8 @@ async def main():
     parser = argparse.ArgumentParser(description="Remote MCP Client")
     parser.add_argument(
         "--endpoint", 
-        default="http://localhost:8000/api/simple-tools-server/sse", 
-        help="SSE endpoint URL (default: http://localhost:8000/api/simple-tools-server/sse)"
+        default="http://localhost:8000/simple-tools-server", 
+        help="SSE endpoint URL (default: http://localhost:8000/simple-tools-server)"
     )
     
     args = parser.parse_args()
