@@ -1,13 +1,18 @@
-import asyncio
+import logging
+from typing import Dict, Any
 
-from mcp.server.models import InitializationOptions
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
-import mcp.server.stdio
+from mcp.server.models import InitializationOptions
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("simple-tools-server")
 
 # Store data as a simple dictionary to demonstrate state management
 data_store = {}
 
+# Create server instance
 server = Server("simple-tools-server")
 
 @server.list_tools()
@@ -16,6 +21,7 @@ async def handle_list_tools() -> list[types.Tool]:
     List available tools.
     Each tool specifies its arguments using JSON Schema validation.
     """
+    logger.info("Listing tools")
     return [
         types.Tool(
             name="store-data",
@@ -58,6 +64,8 @@ async def handle_call_tool(
     Handle tool execution requests.
     Tools can modify server state and return responses.
     """
+    logger.info(f"Calling tool: {name} with arguments: {arguments}")
+    
     if name == "store-data":
         if not arguments:
             raise ValueError("Missing arguments")
@@ -121,21 +129,13 @@ async def handle_call_tool(
     
     raise ValueError(f"Unknown tool: {name}")
 
-async def main():
-    # Run the server using stdin/stdout streams
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="simple-tools-server",
-                server_version="1.0.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
-            ),
-        )
-
-if __name__ == "__main__":
-    asyncio.run(main())
+def get_initialization_options() -> InitializationOptions:
+    """Get the initialization options for the server"""
+    return InitializationOptions(
+        server_name="simple-tools-server",
+        server_version="1.0.0",
+        capabilities=server.get_capabilities(
+            notification_options=NotificationOptions(),
+            experimental_capabilities={},
+        ),
+    )
