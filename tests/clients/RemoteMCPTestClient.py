@@ -18,15 +18,13 @@ class RemoteMCPTestClient:
         self.exit_stack = AsyncExitStack()
         self.anthropic = Anthropic()
 
-    async def connect_to_server(self, server_url: str):
+    async def connect_to_server(self, sse_endpoint: str):
         """Connect to a remote MCP server via SSE
 
         Args:
-            server_url: Base URL of the server (e.g., "http://localhost:8000")
+            sse_endpoint: Full SSE endpoint URL (e.g., "http://localhost:8000/api/simple-tools-server/sse")
         """
-        # Connect to the SSE endpoint
-        sse_endpoint = f"{server_url}/api/sse"
-        
+        # Use the provided SSE endpoint directly
         print(f"Connecting to server at {sse_endpoint}")
         
         # Use the sse_client from the mcp.client.sse module
