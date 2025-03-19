@@ -4,16 +4,14 @@ from contextlib import AsyncExitStack
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
-# MCP imports
 from mcp import ClientSession
 from mcp.client.sse import sse_client
 
-load_dotenv()  # load environment variables from .env
+load_dotenv()
 
 
 class RemoteMCPTestClient:
     def __init__(self):
-        # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
         self.anthropic = Anthropic()
@@ -24,27 +22,21 @@ class RemoteMCPTestClient:
         Args:
             sse_endpoint: Full SSE endpoint URL (e.g., "http://localhost:8000/simple-tools-server")
         """
-        # Use the provided SSE endpoint directly
         print(f"Connecting to server at {sse_endpoint}")
         
-        # Use the sse_client from the mcp.client.sse module
         read_stream, write_stream = await self.exit_stack.enter_async_context(
             sse_client(sse_endpoint)
         )
         
-        # Create a client session with the read and write streams
         self.session = await self.exit_stack.enter_async_context(
             ClientSession(read_stream, write_stream)
         )
 
         print("Initializing Client Session...")
-        # Initialize the session
         await self.session.initialize()
-
         print("Session initialized!")
 
         print("Listing tools...")
-        # List available tools
         response = await self.session.list_tools()
         tools = response.tools
         print("\nConnected to server with tools:", [tool.name for tool in tools])
@@ -137,4 +129,27 @@ class RemoteMCPTestClient:
 
     async def cleanup(self):
         """Clean up resources"""
-        await self.exit_stack.aclose()
+        # TODO: Fix errors during cleanup when running test clients
+        try:
+            # Close the session first if it exists
+            if self.session:
+                # Create a detached task for session cleanup if needed
+                if hasattr(self.session, 'close'):
+                    await self.session.close()
+                self.session = None
+
+            # Then close the exit stack
+            if self.exit_stack:
+                # Manually close each context in the stack to avoid task context issues
+                while True:
+                    try:
+                        # Pop and close each context manager one by one
+                        cm = self.exit_stack._exit_callbacks.pop()
+                        await cm(None, None, None)
+                    except IndexError:
+                        # No more callbacks
+                        break
+                    except Exception as e:
+                        print(f"Error during cleanup: {e}")
+        except Exception as e:
+            print(f"Cleanup error: {e}")

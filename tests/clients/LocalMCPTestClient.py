@@ -24,7 +24,6 @@ class LocalMCPTestClient:
         Args:
             server_name: Name of the server (e.g., simple-tools-server, slack)
         """
-        # Find the path to local.py (assuming it's in src directory)
         current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         local_script_path = os.path.join(current_dir, "src", "local.py")
         
@@ -139,5 +138,28 @@ class LocalMCPTestClient:
 
     async def cleanup(self):
         """Clean up resources"""
-        await self.exit_stack.aclose()
+        # TODO: Fix errors during cleanup when running test clients
+        try:
+            # Close the session first if it exists
+            if self.session:
+                # Create a detached task for session cleanup if needed
+                if hasattr(self.session, 'close'):
+                    await self.session.close()
+                self.session = None
+
+            # Then close the exit stack
+            if self.exit_stack:
+                # Manually close each context in the stack to avoid task context issues
+                while True:
+                    try:
+                        # Pop and close each context manager one by one
+                        cm = self.exit_stack._exit_callbacks.pop()
+                        await cm(None, None, None)
+                    except IndexError:
+                        # No more callbacks
+                        break
+                    except Exception as e:
+                        print(f"Error during cleanup: {e}")
+        except Exception as e:
+            print(f"Cleanup error: {e}")
 

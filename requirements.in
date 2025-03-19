@@ -1,0 +1,8 @@
+anthropic==0.49.0
+mcp==1.4.1
+pytest
+pytest-asyncio
+pytest-timeout
+python-dotenv
+starlette
+uvicorn

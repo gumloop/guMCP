@@ -122,7 +122,7 @@ def create_starlette_app():
 
 def main():
     """Main entry point for the Starlette server"""
-    parser = argparse.ArgumentParser(description="Central MCP Server")
+    parser = argparse.ArgumentParser(description="GuMCP Server")
     parser.add_argument(
         "--host", 
         default="0.0.0.0", 
