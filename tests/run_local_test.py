@@ -5,16 +5,15 @@ from clients.LocalMCPTestClient import LocalMCPTestClient
 
 async def main():
     if len(sys.argv) < 2:
-        print("Usage: python client.py <path_to_server_script>")
+        print("Usage: python run_local_test.py <server_name>")
         sys.exit(1)
 
     client = LocalMCPTestClient()
     try:
-        await client.connect_to_server(sys.argv[1])
+        await client.connect_to_server_by_name(sys.argv[1])
         await client.chat_loop()
     finally:
         await client.cleanup()
 
 if __name__ == "__main__":
-    import sys
     asyncio.run(main())

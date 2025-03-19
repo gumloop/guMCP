@@ -18,30 +18,21 @@ class LocalMCPTestClient:
         self.exit_stack = AsyncExitStack()
         self.anthropic = Anthropic()
 
-    async def connect_to_server(self, server_script_path: str):
-        """Connect to an MCP server
+    async def connect_to_server_by_name(self, server_name: str):
+        """Connect to an MCP server by name using local.py
 
         Args:
-            server_script_path: Path to the server script (.py, .js or .ts)
+            server_name: Name of the server (e.g., simple-tools-server, slack)
         """
-        if not os.path.isabs(server_script_path):
-            server_script_path = os.path.abspath(server_script_path)
-
-        is_python = server_script_path.endswith('.py')
-        is_js = server_script_path.endswith('.js')
-        is_ts = server_script_path.endswith('.ts')
-        if not (is_python or is_js or is_ts):
-            raise ValueError("Server script must be a .py, .js, or .ts file")
-
-        if is_python:
-            command = "python"
-            args = [server_script_path, "--mode", "stdio"]
-        elif is_ts:
-            command = "tsx"
-            args = [server_script_path]
-        else:
-            command = "node"
-            args = [server_script_path]
+        # Find the path to local.py (assuming it's in src directory)
+        current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        local_script_path = os.path.join(current_dir, "src", "local.py")
+        
+        if not os.path.exists(local_script_path):
+            raise ValueError(f"Could not find local.py at {local_script_path}")
+        
+        command = "python"
+        args = [local_script_path, "--server", server_name]
         
         server_params = StdioServerParameters(
             command=command,

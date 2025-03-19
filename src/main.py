@@ -1,20 +1,14 @@
-#!/usr/bin/env python3
-"""
-Main entry point for the Central MCP Server.
-This script launches the server to host all integration endpoints.
-"""
-
 import argparse
 import logging
 import sys
 
 # Configure logging for the main script
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("central-mcp-server-main")
+logger = logging.getLogger("gumcp-server")
 
 def main():
-    """Parse arguments and launch the central server"""
-    parser = argparse.ArgumentParser(description="Central MCP Server")
+    """Parse arguments and launch the GuMCP server"""
+    parser = argparse.ArgumentParser(description="GuMCP Server")
     parser.add_argument(
         "--host", 
         default="0.0.0.0", 
@@ -29,7 +23,7 @@ def main():
     
     args = parser.parse_args()
     
-    logger.info(f"Starting central server on {args.host}:{args.port}")
+    logger.info(f"Starting GuMCP server on {args.host}:{args.port}")
     # Import and run the remote server
     from remote import main as remote_main
     # Pass the CLI arguments to the remote server
