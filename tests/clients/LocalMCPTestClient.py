@@ -1,61 +1,60 @@
-#!/usr/bin/env python3
-"""
-Remote client implementation for the Simple Tools Server.
-This client connects to the remote FastAPI/SSE server.
-"""
-
 import os
-import sys
-import asyncio
-import argparse
 from typing import Optional
 from contextlib import AsyncExitStack
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
-# MCP imports
-import mcp.types as types
-from mcp import ClientSession
-from mcp.client.sse import sse_client
+load_dotenv()
 
-load_dotenv()  # load environment variables from .env
 
-class RemoteMCPClient:
+class LocalMCPTestClient:
     def __init__(self):
         # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
         self.anthropic = Anthropic()
 
-    async def connect_to_server(self, server_url: str):
-        """Connect to a remote MCP server via SSE
+    async def connect_to_server(self, server_script_path: str):
+        """Connect to an MCP server
 
         Args:
-            server_url: Base URL of the server (e.g., "http://localhost:8000")
+            server_script_path: Path to the server script (.py, .js or .ts)
         """
-        # Connect to the SSE endpoint
-        sse_endpoint = f"{server_url}/api/sse"
+        if not os.path.isabs(server_script_path):
+            server_script_path = os.path.abspath(server_script_path)
+
+        is_python = server_script_path.endswith('.py')
+        is_js = server_script_path.endswith('.js')
+        is_ts = server_script_path.endswith('.ts')
+        if not (is_python or is_js or is_ts):
+            raise ValueError("Server script must be a .py, .js, or .ts file")
+
+        if is_python:
+            command = "python"
+            args = [server_script_path, "--mode", "stdio"]
+        elif is_ts:
+            command = "tsx"
+            args = [server_script_path]
+        else:
+            command = "node"
+            args = [server_script_path]
         
-        print(f"Connecting to server at {sse_endpoint}")
-        
-        # Use the sse_client from the mcp.client.sse module
-        read_stream, write_stream = await self.exit_stack.enter_async_context(
-            sse_client(sse_endpoint)
-        )
-        
-        # Create a client session with the read and write streams
-        self.session = await self.exit_stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
+        server_params = StdioServerParameters(
+            command=command,
+            args=args,
+            env=None
         )
 
-        print("Initializing Client Session...")
-        # Initialize the session
+        stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+        self.stdio, self.write = stdio_transport
+        self.session = await self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
+
         await self.session.initialize()
 
-        print("Session initialized!")
-
-        print("Listing tools...")
         # List available tools
         response = await self.session.list_tools()
         tools = response.tools
@@ -131,7 +130,7 @@ class RemoteMCPClient:
 
     async def chat_loop(self):
         """Run an interactive chat loop"""
-        print("\nRemote MCP Client Started!")
+        print("\nMCP Client Started!")
         print("Type your queries or 'quit' to exit.")
 
         while True:
@@ -151,22 +150,3 @@ class RemoteMCPClient:
         """Clean up resources"""
         await self.exit_stack.aclose()
 
-async def main():
-    parser = argparse.ArgumentParser(description="Remote MCP Client")
-    parser.add_argument(
-        "--server", 
-        default="http://localhost:8000", 
-        help="Server URL (default: http://localhost:8000)"
-    )
-    
-    args = parser.parse_args()
-    
-    client = RemoteMCPClient()
-    try:
-        await client.connect_to_server(args.server)
-        await client.chat_loop()
-    finally:
-        await client.cleanup()
-
-if __name__ == "__main__":
-    asyncio.run(main())
