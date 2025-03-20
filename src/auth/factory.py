@@ -8,7 +8,7 @@ logger = logging.getLogger("auth-factory")
 
 T = TypeVar('T', bound=BaseAuthClient)
 
-def create_auth_client(client_type: Optional[Type[T]] = None) -> BaseAuthClient:
+def create_auth_client(client_type: Optional[Type[T]] = None, api_key: str = None) -> BaseAuthClient:
     """
     Factory function to create the appropriate auth client based on environment
     
@@ -26,12 +26,8 @@ def create_auth_client(client_type: Optional[Type[T]] = None) -> BaseAuthClient:
     environment = os.environ.get("ENVIRONMENT", "local").lower()
     
     if environment == "gumloop":
-        try:
-            from auth.clients.GumloopAuthClient import GumloopAuthClient
-            return GumloopAuthClient()
-        except ImportError as e:
-            logger.warning(f"Gumloop auth client requested but dependencies not available: {str(e)}. "
-                          "Falling back to local auth client.")
+        from auth.clients.GumloopAuthClient import GumloopAuthClient
+        return GumloopAuthClient(api_key=api_key)
     
     # Default to local file auth client
     from auth.clients.LocalAuthClient import LocalAuthClient

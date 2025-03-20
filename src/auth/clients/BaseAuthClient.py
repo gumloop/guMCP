@@ -9,20 +9,7 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
     Abstract base class for authentication clients.
     Generic auth client that can work with any API authentication system.
     """
-    
-    @abc.abstractmethod
-    def get_oauth_config(self, service_name: str) -> Dict[str, Any]:
-        """
-        Retrieves OAuth configuration for a specific service
-        
-        Args:
-            service_name: Name of the service (e.g., "gdrive", "github", etc.)
-            
-        Returns:
-            Dict containing OAuth configuration
-        """
-        pass
-    
+       
     @abc.abstractmethod
     def get_user_credentials(self, service_name: str, user_id: str) -> Optional[CredentialsT]:
         """
@@ -36,8 +23,19 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
             Credentials object if found, None otherwise
         """
         pass
+
+    def get_oauth_config(self, service_name: str) -> Dict[str, Any]:
+        """
+        Retrieves OAuth configuration for a specific service
+        
+        Args:
+            service_name: Name of the service (e.g., "gdrive", "github", etc.)
+            
+        Returns:
+            Dict containing OAuth configuration
+        """
+        raise NotImplementedError("This method is optional and not implemented by this client")    
     
-    @abc.abstractmethod
     def save_user_credentials(self, service_name: str, user_id: str, credentials: CredentialsT) -> None:
         """
         Saves user credentials after authentication or refresh
@@ -47,4 +45,4 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
             user_id: Identifier for the user
             credentials: Credentials object to save
         """
-        pass
+        raise NotImplementedError("This method is optional and not implemented by this client")
