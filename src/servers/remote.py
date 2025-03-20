@@ -24,8 +24,7 @@ user_server_instances = {}
 def discover_servers():
     """Discover and load all servers from the servers directory"""
     # Get the path to the servers directory
-    current_dir = Path(__file__).parent.absolute()
-    servers_dir = current_dir / "servers"  # Look in the servers subdirectory
+    servers_dir = Path(__file__).parent.absolute()
     
     logger.info(f"Looking for servers in {servers_dir}")
     

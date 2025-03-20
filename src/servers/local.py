@@ -26,8 +26,7 @@ async def run_stdio_server(server, get_initialization_options):
 async def load_server(server_name):
     """Load a server module by name"""
     # Get the path to the servers directory
-    current_dir = Path(__file__).parent.absolute()
-    servers_dir = current_dir / "servers"
+    servers_dir = Path(__file__).parent.absolute()
     
     server_dir = servers_dir / server_name
     server_file = server_dir / "main.py"

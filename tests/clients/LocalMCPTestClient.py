@@ -25,7 +25,7 @@ class LocalMCPTestClient:
             server_name: Name of the server (e.g., simple-tools-server, slack)
         """
         current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        local_script_path = os.path.join(current_dir, "src", "local.py")
+        local_script_path = os.path.join(current_dir, "src", "servers", "local.py")
         
         if not os.path.exists(local_script_path):
             raise ValueError(f"Could not find local.py at {local_script_path}")
