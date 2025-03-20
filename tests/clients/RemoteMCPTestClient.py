@@ -1,3 +1,4 @@
+import argparse
 from typing import Optional
 from contextlib import AsyncExitStack
 
@@ -153,3 +154,25 @@ class RemoteMCPTestClient:
                         print(f"Error during cleanup: {e}")
         except Exception as e:
             print(f"Cleanup error: {e}")
+
+
+async def main():
+    parser = argparse.ArgumentParser(description="Remote MCP Test Client")
+    parser.add_argument(
+        "--endpoint", 
+        default="http://localhost:8000/simple-tools-server",
+        help="Endpoint URL for the MCP server"
+    )
+    
+    args = parser.parse_args()
+    
+    client = RemoteMCPTestClient()
+    try:
+        await client.connect_to_server(args.endpoint)
+        await client.chat_loop()
+    finally:
+        await client.cleanup()
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

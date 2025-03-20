@@ -15,20 +15,48 @@ anyio==4.9.0
     #   mcp
     #   sse-starlette
     #   starlette
+cachetools==5.5.2
+    # via google-auth
 certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
+    #   requests
+charset-normalizer==3.4.1
+    # via requests
 click==8.1.8
     # via uvicorn
 distro==1.9.0
     # via anthropic
+google-api-core==2.24.2
+    # via google-api-python-client
+google-api-python-client==2.165.0
+    # via -r requirements.in
+google-auth==2.38.0
+    # via
+    #   -r requirements.in
+    #   google-api-core
+    #   google-api-python-client
+    #   google-auth-httplib2
+    #   google-auth-oauthlib
+google-auth-httplib2==0.2.0
+    # via
+    #   -r requirements.in
+    #   google-api-python-client
+google-auth-oauthlib==1.2.1
+    # via -r requirements.in
+googleapis-common-protos==1.69.2
+    # via google-api-core
 h11==0.14.0
     # via
     #   httpcore
     #   uvicorn
 httpcore==1.0.7
     # via httpx
+httplib2==0.22.0
+    # via
+    #   google-api-python-client
+    #   google-auth-httplib2
 httpx==0.28.1
     # via
     #   anthropic
@@ -39,16 +67,32 @@ idna==3.10
     # via
     #   anyio
     #   httpx
+    #   requests
 iniconfig==2.1.0
     # via pytest
 jiter==0.9.0
     # via anthropic
 mcp==1.4.1
     # via -r requirements.in
+oauthlib==3.2.2
+    # via requests-oauthlib
 packaging==24.2
     # via pytest
 pluggy==1.5.0
     # via pytest
+proto-plus==1.26.1
+    # via google-api-core
+protobuf==6.30.1
+    # via
+    #   google-api-core
+    #   googleapis-common-protos
+    #   proto-plus
+pyasn1==0.6.1
+    # via
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.4.1
+    # via google-auth
 pydantic==2.10.6
     # via
     #   anthropic
@@ -58,6 +102,8 @@ pydantic-core==2.27.2
     # via pydantic
 pydantic-settings==2.8.1
     # via mcp
+pyparsing==3.2.1
+    # via httplib2
 pytest==8.3.5
     # via
     #   -r requirements.in
@@ -71,6 +117,14 @@ python-dotenv==1.0.1
     # via
     #   -r requirements.in
     #   pydantic-settings
+requests==2.32.3
+    # via
+    #   google-api-core
+    #   requests-oauthlib
+requests-oauthlib==2.0.0
+    # via google-auth-oauthlib
+rsa==4.9
+    # via google-auth
 sniffio==1.3.1
     # via
     #   anthropic
@@ -88,6 +142,10 @@ typing-extensions==4.12.2
     #   anyio
     #   pydantic
     #   pydantic-core
+uritemplate==4.1.1
+    # via google-api-python-client
+urllib3==2.3.0
+    # via requests
 uvicorn==0.34.0
     # via
     #   -r requirements.in

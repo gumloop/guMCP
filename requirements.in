@@ -1,4 +1,8 @@
 anthropic==0.49.0
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
 mcp==1.4.1
 pytest
 pytest-asyncio
