@@ -168,5 +168,6 @@ cython_debug/
 .vscode/
 
 # Ignore credentials files regardless of path
+local_auth/*
 credentials.json
 oauth.keys.json
