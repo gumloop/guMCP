@@ -18,9 +18,6 @@ from googleapiclient.discovery import build
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("gdrive-server")
 
-# Create server instance
-server = Server("gdrive-server")
-
 # Google Drive API configuration
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
@@ -62,175 +59,189 @@ async def create_drive_service():
     credentials = load_credentials()
     return build('drive', 'v3', credentials=credentials)
 
-@server.list_resources()
-async def handle_list_resources(cursor: str = None) -> dict:
-    """List files from Google Drive"""
-    logger.info(f"Listing resources with cursor: {cursor}")
+def create_server(user_id=None):
+    """Create a new server instance with optional user context"""
+    server = Server("gdrive-server")
     
-    drive_service = await create_drive_service()
+    if user_id:
+        server.user_id = user_id
     
-    page_size = 10
-    params = {
-        "pageSize": page_size,
-        "fields": "nextPageToken, files(id, name, mimeType)"
-    }
-    
-    if cursor:
-        params["pageToken"] = cursor
-    
-    results = drive_service.files().list(**params).execute()
-    files = results.get('files', [])
-    
-    resources = []
-    for file in files:
-        resources.append(types.Resource(
-            uri=f"gdrive:///{file['id']}",
-            mimeType=file['mimeType'],
-            name=file['name']
-        ))
-    
-    return {
-        "resources": resources,
-        "nextCursor": results.get('nextPageToken', None)
-    }
-
-@server.read_resource()
-async def handle_read_resource(uri: str) -> dict:
-    """Read a file from Google Drive by URI"""
-    logger.info(f"Reading resource: {uri}")
-    
-    drive_service = await create_drive_service()
-    file_id = uri.replace("gdrive:///", "")
-    
-    # First get file metadata to check mime type
-    file_metadata = drive_service.files().get(
-        fileId=file_id,
-        fields="mimeType"
-    ).execute()
-    
-    mime_type = file_metadata.get('mimeType', 'application/octet-stream')
-    
-    # For Google Docs/Sheets/etc we need to export
-    if mime_type.startswith("application/vnd.google-apps"):
-        export_mime_type = "text/plain"
-        
-        if mime_type == "application/vnd.google-apps.document":
-            export_mime_type = "text/markdown"
-        elif mime_type == "application/vnd.google-apps.spreadsheet":
-            export_mime_type = "text/csv"
-        elif mime_type == "application/vnd.google-apps.presentation":
-            export_mime_type = "text/plain"
-        elif mime_type == "application/vnd.google-apps.drawing":
-            export_mime_type = "image/png"
-        
-        file_content = drive_service.files().export(
-            fileId=file_id,
-            mimeType=export_mime_type
-        ).execute()
-        
-        return {
-            "contents": [
-                types.TextContent(
-                    uri=uri,
-                    mimeType=export_mime_type,
-                    text=file_content
-                )
-            ]
-        }
-    
-    # For regular files download content
-    file_content = drive_service.files().get_media(fileId=file_id).execute()
-    
-    if mime_type.startswith("text/") or mime_type == "application/json":
-        if isinstance(file_content, bytes):
-            file_content = file_content.decode('utf-8')
-        
-        return {
-            "contents": [
-                types.TextContent(
-                    uri=uri,
-                    mimeType=mime_type,
-                    text=file_content
-                )
-            ]
-        }
-    else:
-        # Handle binary content
-        if not isinstance(file_content, bytes):
-            file_content = file_content.encode('utf-8')
-        
-        return {
-            "contents": [
-                types.BlobContent(
-                    uri=uri,
-                    mimeType=mime_type,
-                    blob=base64.b64encode(file_content).decode('ascii')
-                )
-            ]
-        }
-
-@server.list_tools()
-async def handle_list_tools() -> list[types.Tool]:
-    """List available tools"""
-    logger.info("Listing tools")
-    return [
-        types.Tool(
-            name="search",
-            description="Search for files in Google Drive",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "Search query"
-                    }
-                },
-                "required": ["query"]
-            }
-        )
-    ]
-
-@server.call_tool()
-async def handle_call_tool(
-    name: str, arguments: dict | None
-) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-    """Handle tool execution requests"""
-    logger.info(f"Calling tool: {name} with arguments: {arguments}")
-    
-    if name == "search":
-        if not arguments or "query" not in arguments:
-            raise ValueError("Missing query parameter")
+    @server.list_resources()
+    async def handle_list_resources(cursor: str = None) -> dict:
+        """List files from Google Drive"""
+        current_user = getattr(server, "user_id", None)
+        logger.info(f"Listing resources for user: {current_user} with cursor: {cursor}")
         
         drive_service = await create_drive_service()
         
-        user_query = arguments["query"]
-        escaped_query = user_query.replace("\\", "\\\\").replace("'", "\\'")
-        formatted_query = f"fullText contains '{escaped_query}'"
+        page_size = 10
+        params = {
+            "pageSize": page_size,
+            "fields": "nextPageToken, files(id, name, mimeType)"
+        }
         
-        results = drive_service.files().list(
-            q=formatted_query,
-            pageSize=10,
-            fields="files(id, name, mimeType, modifiedTime, size)"
+        if cursor:
+            params["pageToken"] = cursor
+        
+        results = drive_service.files().list(**params).execute()
+        files = results.get('files', [])
+        
+        resources = []
+        for file in files:
+            resources.append(types.Resource(
+                uri=f"gdrive:///{file['id']}",
+                mimeType=file['mimeType'],
+                name=file['name']
+            ))
+        
+        return {
+            "resources": resources,
+            "nextCursor": results.get('nextPageToken', None)
+        }
+    
+    @server.read_resource()
+    async def handle_read_resource(uri: str) -> dict:
+        """Read a file from Google Drive by URI"""
+        logger.info(f"Reading resource: {uri}")
+        
+        drive_service = await create_drive_service()
+        file_id = uri.replace("gdrive:///", "")
+        
+        # First get file metadata to check mime type
+        file_metadata = drive_service.files().get(
+            fileId=file_id,
+            fields="mimeType"
         ).execute()
         
-        files = results.get('files', [])
-        file_list = "\n".join([f"{file['name']} ({file['mimeType']})" for file in files])
+        mime_type = file_metadata.get('mimeType', 'application/octet-stream')
         
+        # For Google Docs/Sheets/etc we need to export
+        if mime_type.startswith("application/vnd.google-apps"):
+            export_mime_type = "text/plain"
+            
+            if mime_type == "application/vnd.google-apps.document":
+                export_mime_type = "text/markdown"
+            elif mime_type == "application/vnd.google-apps.spreadsheet":
+                export_mime_type = "text/csv"
+            elif mime_type == "application/vnd.google-apps.presentation":
+                export_mime_type = "text/plain"
+            elif mime_type == "application/vnd.google-apps.drawing":
+                export_mime_type = "image/png"
+            
+            file_content = drive_service.files().export(
+                fileId=file_id,
+                mimeType=export_mime_type
+            ).execute()
+            
+            return {
+                "contents": [
+                    types.TextContent(
+                        uri=uri,
+                        mimeType=export_mime_type,
+                        text=file_content
+                    )
+                ]
+            }
+        
+        # For regular files download content
+        file_content = drive_service.files().get_media(fileId=file_id).execute()
+        
+        if mime_type.startswith("text/") or mime_type == "application/json":
+            if isinstance(file_content, bytes):
+                file_content = file_content.decode('utf-8')
+            
+            return {
+                "contents": [
+                    types.TextContent(
+                        uri=uri,
+                        mimeType=mime_type,
+                        text=file_content
+                    )
+                ]
+            }
+        else:
+            # Handle binary content
+            if not isinstance(file_content, bytes):
+                file_content = file_content.encode('utf-8')
+            
+            return {
+                "contents": [
+                    types.BlobContent(
+                        uri=uri,
+                        mimeType=mime_type,
+                        blob=base64.b64encode(file_content).decode('ascii')
+                    )
+                ]
+            }
+    
+    @server.list_tools()
+    async def handle_list_tools() -> list[types.Tool]:
+        """List available tools"""
+        current_user = getattr(server, "user_id", None)
+        logger.info(f"Listing tools for user: {current_user}")
         return [
-            types.TextContent(
-                type="text",
-                text=f"Found {len(files)} files:\n{file_list}"
+            types.Tool(
+                name="search",
+                description="Search for files in Google Drive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        }
+                    },
+                    "required": ["query"]
+                }
             )
         ]
     
-    raise ValueError(f"Unknown tool: {name}")
+    @server.call_tool()
+    async def handle_call_tool(
+        name: str, arguments: dict | None
+    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+        """Handle tool execution requests"""
+        current_user = getattr(server, "user_id", None)
+        logger.info(f"User {current_user} calling tool: {name} with arguments: {arguments}")
+        
+        if name == "search":
+            if not arguments or "query" not in arguments:
+                raise ValueError("Missing query parameter")
+            
+            drive_service = await create_drive_service()
+            
+            user_query = arguments["query"]
+            escaped_query = user_query.replace("\\", "\\\\").replace("'", "\\'")
+            formatted_query = f"fullText contains '{escaped_query}'"
+            
+            results = drive_service.files().list(
+                q=formatted_query,
+                pageSize=10,
+                fields="files(id, name, mimeType, modifiedTime, size)"
+            ).execute()
+            
+            files = results.get('files', [])
+            file_list = "\n".join([f"{file['name']} ({file['mimeType']})" for file in files])
+            
+            return [
+                types.TextContent(
+                    type="text",
+                    text=f"Found {len(files)} files:\n{file_list}"
+                )
+            ]
+        
+        raise ValueError(f"Unknown tool: {name}")
+    
+    return server
 
-def get_initialization_options() -> InitializationOptions:
+server = create_server
+
+def get_initialization_options(server_instance: Server) -> InitializationOptions:
     """Get the initialization options for the server"""
     return InitializationOptions(
         server_name="gdrive-server",
         server_version="1.0.0",
-        capabilities=server.get_capabilities(
+        capabilities=server_instance.get_capabilities(
             notification_options=NotificationOptions(),
             experimental_capabilities={},
         ),
