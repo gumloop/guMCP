@@ -82,6 +82,8 @@ class RemoteMCPTestClient:
                 result = await self.session.call_tool(tool_name, tool_args)
                 final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
 
+                print(f"Tool Call Result: {result}")
+
                 assistant_message_content.append(content)
                 messages.append({
                     "role": "assistant",
