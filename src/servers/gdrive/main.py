@@ -52,38 +52,53 @@ def authenticate_and_save_credentials(user_id):
     logger.info(f"Credentials saved for user {user_id}. You can now run the server.")
     return credentials
 
-async def get_credentials(user_id):
+async def get_credentials(user_id, api_key=None):
     """Get credentials for the specified user"""
     # Get auth client
-    auth_client = create_auth_client()
+    auth_client = create_auth_client(api_key=api_key)
     
     # Get credentials for this user
     credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
     
-    if not credentials_data:
-        logger.error(f"Credentials not found for user {user_id}. Please run with 'auth' argument first.")
-        raise FileNotFoundError(f"Credentials not found for user {user_id}")
+    def handle_missing_credentials():
+        error_str = f"Credentials not found for user {user_id}."
+        if os.environ.get("ENVIRONMENT", "local") == "local":
+            error_str += "Please run with 'auth' argument first."
+        logging.error(error_str)
+        raise ValueError(f"Credentials not found for user {user_id}")
     
-    # Convert to Google credentials object
-    return Credentials.from_authorized_user_info(credentials_data)
+    if not credentials_data:
+        handle_missing_credentials()
+    
+    token = credentials_data.get('token') 
+    if token:
+        return Credentials.from_authorized_user_info(credentials_data)    
+    
+    # If the auth client doesn't return key 'token', but instead returns 'access_token', assume that refreshing is taken care of on the auth client side
+    token = credentials_data.get('access_token')
+    if token:
+        return Credentials(token=token)
+    
+    handle_missing_credentials()
 
-async def create_drive_service(user_id):
+async def create_drive_service(user_id, api_key=None):
     """Create a new Drive service instance for this request"""
-    credentials = await get_credentials(user_id)
+    credentials = await get_credentials(user_id, api_key=api_key)
     return build('drive', 'v3', credentials=credentials)
 
-def create_server(user_id):
+def create_server(user_id, api_key=None):
     """Create a new server instance with optional user context"""
     server = Server("gdrive-server")
     
     server.user_id = user_id
-    
+    server.api_key = api_key
+
     @server.list_resources()
     async def handle_list_resources(cursor: str = None) -> dict:
         """List files from Google Drive"""
         logger.info(f"Listing resources for user: {server.user_id} with cursor: {cursor}")
         
-        drive_service = await create_drive_service(server.user_id)
+        drive_service = await create_drive_service(server.user_id, api_key=server.api_key)
         
         page_size = 10
         params = {
@@ -115,7 +130,7 @@ def create_server(user_id):
         """Read a file from Google Drive by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
         
-        drive_service = await create_drive_service(server.user_id)
+        drive_service = await create_drive_service(server.user_id, api_key=server.api_key)
         file_id = uri.replace("gdrive:///", "")
         
         # First get file metadata to check mime type
@@ -217,7 +232,7 @@ def create_server(user_id):
             if not arguments or "query" not in arguments:
                 raise ValueError("Missing query parameter")
             
-            drive_service = await create_drive_service(server.user_id)
+            drive_service = await create_drive_service(server.user_id, api_key=server.api_key)
             
             user_query = arguments["query"]
             escaped_query = user_query.replace("\\", "\\\\").replace("'", "\\'")
@@ -243,9 +258,7 @@ def create_server(user_id):
     
     return server
 
-def server(user_id):
-    """Create a server instance with the given user ID"""
-    return create_server(user_id)
+server = create_server
 
 def get_initialization_options(server_instance: Server) -> InitializationOptions:
     """Get the initialization options for the server"""

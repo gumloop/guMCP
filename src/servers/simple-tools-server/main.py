@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, Any
 
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
@@ -11,7 +10,7 @@ logger = logging.getLogger("simple-tools-server")
 
 user_data_stores = {}
 
-def create_server(user_id=None):
+def create_server(user_id=None, api_key=None):
     """Create a new server instance with optional user context"""
     server = Server("simple-tools-server")
     
