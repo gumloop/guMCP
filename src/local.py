@@ -62,14 +62,22 @@ async def main():
         required=True,
         help="Name of the server to run (e.g., simple-tools-server, slack)"
     )
+    parser.add_argument(
+        "--user-id",
+        default="local",
+        help="User ID for server context (optional)"
+    )
     
     args = parser.parse_args()
     
     logger.info(f"Loading server: {args.server}")
-    server, get_initialization_options = await load_server(args.server)
+    server_creator, get_initialization_options = await load_server(args.server)
     
-    logger.info(f"Starting local stdio server for server: {args.server}")
-    await run_stdio_server(server, get_initialization_options)
+    # Create the server instance with user_id if provided
+    server_instance = server_creator(user_id=args.user_id)
+    
+    logger.info(f"Starting local stdio server for server: {args.server} with user: {args.user_id or 'None'}")
+    await run_stdio_server(server_instance, lambda: get_initialization_options(server_instance))
 
 if __name__ == "__main__":
     logger.info("Starting GuMCP local stdio server")

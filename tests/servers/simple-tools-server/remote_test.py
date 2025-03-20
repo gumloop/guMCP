@@ -15,8 +15,8 @@ def get_endpoint():
     parser = argparse.ArgumentParser(description="Remote MCP Test for simple-tools-server")
     parser.add_argument(
         "--endpoint", 
-        default="http://localhost:8000/simple-tools-server", 
-        help="SSE endpoint URL (default: http://localhost:8000/simple-tools-server)"
+        default="http://localhost:8000/simple-tools-server/local", 
+        help="SSE endpoint URL (default: http://localhost:8000/simple-tools-server/local)"
     )
     
     args, _ = parser.parse_known_args()
