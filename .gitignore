@@ -11,6 +11,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+deploy/
 build/
 develop-eggs/
 dist/
@@ -168,6 +169,7 @@ cython_debug/
 .vscode/
 
 # Ignore credentials files regardless of path
+local_auth
 local_auth/*
 credentials.json
 oauth.keys.json
