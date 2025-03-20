@@ -69,16 +69,6 @@ def create_starlette_app():
     # Define routes for the Starlette app
     routes = []
     
-    # Health check endpoint
-    async def health_check(request):
-        """Health check endpoint"""
-        return JSONResponse({
-            "status": "ok",
-            "servers": list(servers.keys())
-        })
-    
-    routes.append(Route("/health", endpoint=health_check))
-    
     # Create an SSE endpoint for each server
     for server_name, server_info in servers.items():
         # Create handler for user-specific SSE sessions
@@ -173,8 +163,25 @@ def create_starlette_app():
         ))
         
         logger.info(f"Added user-specific routes for server: {server_name}")
+
+    # Health checks
+    async def root_handler(request):
+        """Root endpoint that returns a simple 200 OK response"""
+        return JSONResponse({
+            "status": "ok",
+            "message": "GuMCP server running",
+            "servers": list(servers.keys())
+        })
+    routes.append(Route("/", endpoint=root_handler))
     
-    # Create and return the Starlette app
+    async def health_check(request):
+        """Health check endpoint"""
+        return JSONResponse({
+            "status": "ok",
+            "servers": list(servers.keys())
+        })
+    routes.append(Route("/health_check", endpoint=health_check))
+
     app = Starlette(
         debug=True,
         routes=routes,

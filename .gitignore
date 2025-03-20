@@ -11,6 +11,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+iac/
 deploy/
 build/
 develop-eggs/
