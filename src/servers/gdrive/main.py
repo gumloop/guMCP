@@ -23,17 +23,15 @@ server = Server("gdrive-server")
 
 # Google Drive API configuration
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+
 CREDENTIALS_PATH = os.environ.get(
     "GDRIVE_CREDENTIALS_PATH", 
-    str(Path(__file__).parent.parent.parent.parent / ".gdrive-server-credentials.json")
+    str(Path(__file__).parent / "credentials.json")
 )
 OAUTH_PATH = os.environ.get(
     "GDRIVE_OAUTH_PATH", 
-    str(Path(__file__).parent.parent.parent.parent / "gcp-oauth.keys.json")
+    str(Path(__file__).parent / "oauth.keys.json")
 )
-
-# Global API service
-drive_service = None
 
 def authenticate_and_save_credentials():
     """Authenticate with Google and save credentials to file"""
@@ -59,10 +57,17 @@ def load_credentials():
     
     return Credentials.from_authorized_user_info(credentials_data)
 
+async def create_drive_service():
+    """Create a new Drive service instance for this request"""
+    credentials = load_credentials()
+    return build('drive', 'v3', credentials=credentials)
+
 @server.list_resources()
 async def handle_list_resources(cursor: str = None) -> dict:
     """List files from Google Drive"""
     logger.info(f"Listing resources with cursor: {cursor}")
+    
+    drive_service = await create_drive_service()
     
     page_size = 10
     params = {
@@ -94,6 +99,7 @@ async def handle_read_resource(uri: str) -> dict:
     """Read a file from Google Drive by URI"""
     logger.info(f"Reading resource: {uri}")
     
+    drive_service = await create_drive_service()
     file_id = uri.replace("gdrive:///", "")
     
     # First get file metadata to check mime type
@@ -194,6 +200,8 @@ async def handle_call_tool(
     if name == "search":
         if not arguments or "query" not in arguments:
             raise ValueError("Missing query parameter")
+        
+        drive_service = await create_drive_service()
         
         user_query = arguments["query"]
         escaped_query = user_query.replace("\\", "\\\\").replace("'", "\\'")

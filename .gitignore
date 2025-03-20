@@ -166,3 +166,7 @@ cython_debug/
 
 # vscode
 .vscode/
+
+# Ignore credentials files regardless of path
+credentials.json
+oauth.keys.json
