@@ -1,78 +1,89 @@
-import logging
 import os
-import json
+import sys
+
+# Add both project root and src directory to Python path
+# Get the project root directory and add to path
+project_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'src'))
+
 import base64
+import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional
 
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-# Google API imports
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+
+from auth.factory import create_auth_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("gdrive-server")
 
-# Google Drive API configuration
+SERVICE_NAME = Path(__file__).parent.name
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
-CREDENTIALS_PATH = os.environ.get(
-    "GDRIVE_CREDENTIALS_PATH", 
-    str(Path(__file__).parent / "credentials.json")
-)
-OAUTH_PATH = os.environ.get(
-    "GDRIVE_OAUTH_PATH", 
-    str(Path(__file__).parent / "oauth.keys.json")
-)
-
-def authenticate_and_save_credentials():
-    """Authenticate with Google and save credentials to file"""
-    logger.info("Launching auth flow...")
-    flow = InstalledAppFlow.from_client_secrets_file(OAUTH_PATH, SCOPES)
-    credentials = flow.run_local_server(port=0)
+def authenticate_and_save_credentials(user_id):
+    """Authenticate with Google and save credentials"""
+    logger.info(f"Launching auth flow for user {user_id}...")
     
-    # Save credentials to file
-    with open(CREDENTIALS_PATH, 'w') as f:
-        f.write(credentials.to_json())
+    # Get auth client
+    auth_client = create_auth_client()
     
-    logger.info("Credentials saved. You can now run the server.")
+    # Get OAuth config
+    oauth_config = auth_client.get_oauth_config(SERVICE_NAME)
+    
+    # Create and run flow
+    flow = InstalledAppFlow.from_client_config(oauth_config, SCOPES)
+    credentials = flow.run_local_server(
+        port=8080,
+        redirect_uri_trailing_slash=False,
+        prompt='consent' # Forces refresh token
+    )
+    
+    # Save credentials using auth client
+    auth_client.save_user_credentials(SERVICE_NAME, user_id, credentials)
+    
+    logger.info(f"Credentials saved for user {user_id}. You can now run the server.")
     return credentials
 
-def load_credentials():
-    """Load credentials from file"""
-    if not os.path.exists(CREDENTIALS_PATH):
-        logger.error("Credentials not found. Please run with 'auth' argument first.")
-        raise FileNotFoundError(f"Credentials file not found at {CREDENTIALS_PATH}")
+async def get_credentials(user_id):
+    """Get credentials for the specified user"""
+    # Get auth client
+    auth_client = create_auth_client()
     
-    with open(CREDENTIALS_PATH, 'r') as f:
-        credentials_data = json.load(f)
+    # Get credentials for this user
+    credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
     
+    if not credentials_data:
+        logger.error(f"Credentials not found for user {user_id}. Please run with 'auth' argument first.")
+        raise FileNotFoundError(f"Credentials not found for user {user_id}")
+    
+    # Convert to Google credentials object
     return Credentials.from_authorized_user_info(credentials_data)
 
-async def create_drive_service():
+async def create_drive_service(user_id):
     """Create a new Drive service instance for this request"""
-    credentials = load_credentials()
+    credentials = await get_credentials(user_id)
     return build('drive', 'v3', credentials=credentials)
 
-def create_server(user_id=None):
+def create_server(user_id):
     """Create a new server instance with optional user context"""
     server = Server("gdrive-server")
     
-    if user_id:
-        server.user_id = user_id
+    server.user_id = user_id
     
     @server.list_resources()
     async def handle_list_resources(cursor: str = None) -> dict:
         """List files from Google Drive"""
-        current_user = getattr(server, "user_id", None)
-        logger.info(f"Listing resources for user: {current_user} with cursor: {cursor}")
+        logger.info(f"Listing resources for user: {server.user_id} with cursor: {cursor}")
         
-        drive_service = await create_drive_service()
+        drive_service = await create_drive_service(server.user_id)
         
         page_size = 10
         params = {
@@ -102,9 +113,9 @@ def create_server(user_id=None):
     @server.read_resource()
     async def handle_read_resource(uri: str) -> dict:
         """Read a file from Google Drive by URI"""
-        logger.info(f"Reading resource: {uri}")
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
         
-        drive_service = await create_drive_service()
+        drive_service = await create_drive_service(server.user_id)
         file_id = uri.replace("gdrive:///", "")
         
         # First get file metadata to check mime type
@@ -177,8 +188,7 @@ def create_server(user_id=None):
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
         """List available tools"""
-        current_user = getattr(server, "user_id", None)
-        logger.info(f"Listing tools for user: {current_user}")
+        logger.info(f"Listing tools for user: {server.user_id}")
         return [
             types.Tool(
                 name="search",
@@ -201,14 +211,13 @@ def create_server(user_id=None):
         name: str, arguments: dict | None
     ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         """Handle tool execution requests"""
-        current_user = getattr(server, "user_id", None)
-        logger.info(f"User {current_user} calling tool: {name} with arguments: {arguments}")
+        logger.info(f"User {server.user_id} calling tool: {name} with arguments: {arguments}")
         
         if name == "search":
             if not arguments or "query" not in arguments:
                 raise ValueError("Missing query parameter")
             
-            drive_service = await create_drive_service()
+            drive_service = await create_drive_service(server.user_id)
             
             user_query = arguments["query"]
             escaped_query = user_query.replace("\\", "\\\\").replace("'", "\\'")
@@ -234,7 +243,9 @@ def create_server(user_id=None):
     
     return server
 
-server = create_server
+def server(user_id):
+    """Create a server instance with the given user ID"""
+    return create_server(user_id)
 
 def get_initialization_options(server_instance: Server) -> InitializationOptions:
     """Get the initialization options for the server"""
@@ -246,3 +257,15 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
             experimental_capabilities={},
         ),
     )
+
+
+# Main handler allows users to auth
+if __name__ == "__main__":
+    if sys.argv[1].lower() == "auth":
+        user_id = "local"
+        # Run authentication flow
+        authenticate_and_save_credentials(user_id)
+    else:
+        print("Usage:")
+        print("  python main.py auth - Run authentication flow for a user")
+        print("Note: To run the server normally, use the GuMCP server framework.")

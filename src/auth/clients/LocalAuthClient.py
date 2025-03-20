@@ -14,35 +14,38 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
     """
     
     def __init__(self, 
-                 oauth_config_dir: str = None, 
+                 oauth_config_base_dir: str = None, 
                  credentials_base_dir: str = None):
         """
         Initialize the local file auth client
         
         Args:
-            oauth_config_dir: Directory containing OAuth config files
+            oauth_config_base_dir: Directory containing OAuth config files
             credentials_base_dir: Base directory to store user credentials
         """
         # Get the project root directory (GuMCP/)
         project_root = Path(__file__).parent.parent.parent.parent
         
-        self.oauth_config_dir = oauth_config_dir or os.environ.get(
-            "MCP_OAUTH_CONFIG_DIR", 
+        self.oauth_config_base_dir = oauth_config_base_dir or os.environ.get(
+            "GUMCP_OAUTH_CONFIG_DIR", 
             str(project_root / "local_auth" / "oauth_configs")
         )
         
         self.credentials_base_dir = credentials_base_dir or os.environ.get(
-            "MCP_CREDENTIALS_DIR",
+            "GUMCP_CREDENTIALS_DIR",
             str(project_root / "local_auth" / "credentials")
         )
         
         # Ensure directories exist
-        os.makedirs(self.oauth_config_dir, exist_ok=True)
+        os.makedirs(self.oauth_config_base_dir, exist_ok=True)
         os.makedirs(self.credentials_base_dir, exist_ok=True)
     
     def get_oauth_config(self, service_name: str) -> Dict[str, Any]:
         """Retrieve OAuth configuration from local file"""
-        config_path = os.path.join(self.oauth_config_dir, f"{service_name}.oauth.json")
+        service_dir = os.path.join(self.oauth_config_base_dir, service_name)
+        os.makedirs(service_dir, exist_ok=True)
+        
+        config_path = os.path.join(service_dir, f"oauth.json")
         
         if not os.path.exists(config_path):
             raise FileNotFoundError(f"OAuth config not found for {service_name} at {config_path}")
@@ -56,7 +59,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         service_dir = os.path.join(self.credentials_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
         
-        creds_path = os.path.join(service_dir, f"{user_id}.json")
+        creds_path = os.path.join(service_dir, f"{user_id}_credentials.json")
         
         if not os.path.exists(creds_path):
             return None
@@ -73,7 +76,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         service_dir = os.path.join(self.credentials_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
         
-        creds_path = os.path.join(service_dir, f"{user_id}.json")
+        creds_path = os.path.join(service_dir, f"{user_id}_credentials.json")
         
         # Handle different credential types
         if hasattr(credentials, 'to_json'):
