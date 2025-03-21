@@ -26,22 +26,20 @@ class LocalMCPTestClient:
         """
         current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         local_script_path = os.path.join(current_dir, "src", "servers", "local.py")
-        
+
         if not os.path.exists(local_script_path):
             raise ValueError(f"Could not find local.py at {local_script_path}")
-        
+
         command = "python"
         args = [local_script_path, "--server", server_name]
-        
-        server_params = StdioServerParameters(
-            command=command,
-            args=args,
-            env=None
-        )
+
+        server_params = StdioServerParameters(command=command, args=args, env=None)
 
         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
         self.stdio, self.write = stdio_transport
-        self.session = await self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
+        self.session = await self.exit_stack.enter_async_context(
+            ClientSession(self.stdio, self.write)
+        )
 
         await self.session.initialize()
 
@@ -52,26 +50,20 @@ class LocalMCPTestClient:
 
     async def process_query(self, query: str) -> str:
         """Process a query using Claude and available tools"""
-        messages = [
-            {
-                "role": "user",
-                "content": query
-            }
-        ]
+        messages = [{"role": "user", "content": query}]
 
         response = await self.session.list_tools()
-        available_tools = [{
-            "name": tool.name,
-            "description": tool.description,
-            "input_schema": tool.inputSchema
-        } for tool in response.tools]
+        available_tools = [
+            {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
+            for tool in response.tools
+        ]
 
         # Initial Claude API call
         response = self.anthropic.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=1000,
             messages=messages,
-            tools=available_tools
+            tools=available_tools,
         )
 
         # Process response and handle tool calls
@@ -79,10 +71,10 @@ class LocalMCPTestClient:
 
         assistant_message_content = []
         for content in response.content:
-            if content.type == 'text':
+            if content.type == "text":
                 final_text.append(content.text)
                 assistant_message_content.append(content)
-            elif content.type == 'tool_use':
+            elif content.type == "tool_use":
                 tool_name = content.name
                 tool_args = content.input
 
@@ -91,27 +83,26 @@ class LocalMCPTestClient:
                 final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
 
                 assistant_message_content.append(content)
-                messages.append({
-                    "role": "assistant",
-                    "content": assistant_message_content
-                })
-                messages.append({
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": content.id,
-                            "content": result.content
-                        }
-                    ]
-                })
+                messages.append({"role": "assistant", "content": assistant_message_content})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": content.id,
+                                "content": result.content,
+                            }
+                        ],
+                    }
+                )
 
                 # Get next response from Claude
                 response = self.anthropic.messages.create(
                     model="claude-3-5-sonnet-20241022",
                     max_tokens=1000,
                     messages=messages,
-                    tools=available_tools
+                    tools=available_tools,
                 )
 
                 final_text.append(response.content[0].text)
@@ -127,7 +118,7 @@ class LocalMCPTestClient:
             try:
                 query = input("\nQuery: ").strip()
 
-                if query.lower() == 'quit':
+                if query.lower() == "quit":
                     break
 
                 response = await self.process_query(query)
@@ -143,7 +134,7 @@ class LocalMCPTestClient:
             # Close the session first if it exists
             if self.session:
                 # Create a detached task for session cleanup if needed
-                if hasattr(self.session, 'close'):
+                if hasattr(self.session, "close"):
                     await self.session.close()
                 self.session = None
 
@@ -162,4 +153,3 @@ class LocalMCPTestClient:
                         print(f"Error during cleanup: {e}")
         except Exception as e:
             print(f"Cleanup error: {e}")
-

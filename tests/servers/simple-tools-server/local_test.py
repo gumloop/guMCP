@@ -11,14 +11,15 @@ tests_path = os.path.join(os.path.dirname(__file__), "tests.py")
 with open(tests_path) as f:
     exec(f.read())
 
+
 @pytest_asyncio.fixture(scope="function")
 async def client():
     """Fixture to provide a connected client for all tests"""
     client = LocalMCPTestClient()
-    
+
     await client.connect_to_server_by_name("simple-tools-server")
     print("Connected to simple-tools-server")
-    
+
     try:
         yield client
     finally:
