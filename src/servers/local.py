@@ -36,7 +36,7 @@ async def load_server(server_name):
 
     if not server_file.exists():
         logger.error(f"Server '{server_name}' not found at {server_file}")
-        print(f"Available servers:")
+        print("Available servers:")
         for item in servers_dir.iterdir():
             if item.is_dir() and (item / "main.py").exists():
                 print(f"  - {item.name}")
