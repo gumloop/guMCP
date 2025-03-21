@@ -68,18 +68,12 @@ idna==3.10
     #   anyio
     #   httpx
     #   requests
-iniconfig==2.1.0
-    # via pytest
 jiter==0.9.0
     # via anthropic
 mcp==1.4.1
     # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
-packaging==24.2
-    # via pytest
-pluggy==1.5.0
-    # via pytest
 proto-plus==1.26.1
     # via google-api-core
 protobuf==6.30.1
@@ -104,15 +98,6 @@ pydantic-settings==2.8.1
     # via mcp
 pyparsing==3.2.1
     # via httplib2
-pytest==8.3.5
-    # via
-    #   -r requirements.in
-    #   pytest-asyncio
-    #   pytest-timeout
-pytest-asyncio==0.25.3
-    # via -r requirements.in
-pytest-timeout==2.3.1
-    # via -r requirements.in
 python-dotenv==1.0.1
     # via
     #   -r requirements.in
