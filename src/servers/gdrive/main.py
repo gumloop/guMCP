@@ -129,7 +129,7 @@ def create_server(user_id, api_key=None):
         for file in files:
             resources.append(
                 types.Resource(
-                    id=f"gdrive:///{file['id']}",
+                    uri=f"gdrive:///{file['id']}",
                     mime_type=file["mimeType"],
                     name=file["name"],
                 )
@@ -178,7 +178,9 @@ def create_server(user_id, api_key=None):
 
             return {
                 "contents": [
-                    types.TextContent(text=file_content, mime_type=export_mime_type)
+                    types.TextContent(
+                        type="text", text=file_content, mime_type=export_mime_type
+                    )
                 ]
             }
 
@@ -190,7 +192,11 @@ def create_server(user_id, api_key=None):
                 file_content = file_content.decode("utf-8")
 
             return {
-                "contents": [types.TextContent(text=file_content, mime_type=mime_type)]
+                "contents": [
+                    types.TextContent(
+                        type="text", text=file_content, mime_type=mime_type
+                    )
+                ]
             }
         else:
             # Handle binary content
@@ -199,7 +205,8 @@ def create_server(user_id, api_key=None):
 
             return {
                 "contents": [
-                    types.BinaryContent(
+                    types.BlobResourceContents(
+                        uri=uri,
                         blob=base64.b64encode(file_content).decode("ascii"),
                         mime_type=mime_type,
                     )
