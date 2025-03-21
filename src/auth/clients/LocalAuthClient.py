@@ -14,7 +14,9 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
     Can work with any type of credentials object that can be serialized to/from JSON.
     """
 
-    def __init__(self, oauth_config_base_dir: str = None, credentials_base_dir: str = None):
+    def __init__(
+        self, oauth_config_base_dir: str = None, credentials_base_dir: str = None
+    ):
         """
         Initialize the local file auth client
 
@@ -45,12 +47,16 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         config_path = os.path.join(service_dir, "oauth.json")
 
         if not os.path.exists(config_path):
-            raise FileNotFoundError(f"OAuth config not found for {service_name} at {config_path}")
+            raise FileNotFoundError(
+                f"OAuth config not found for {service_name} at {config_path}"
+            )
 
         with open(config_path, "r") as f:
             return json.load(f)
 
-    def get_user_credentials(self, service_name: str, user_id: str) -> Optional[CredentialsT]:
+    def get_user_credentials(
+        self, service_name: str, user_id: str
+    ) -> Optional[CredentialsT]:
         """Get user credentials from local file"""
         # Create service-specific directory if it doesn't exist
         service_dir = os.path.join(self.credentials_base_dir, service_name)
@@ -68,7 +74,10 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         return credentials_data
 
     def save_user_credentials(
-        self, service_name: str, user_id: str, credentials: Union[CredentialsT, Dict[str, Any]]
+        self,
+        service_name: str,
+        user_id: str,
+        credentials: Union[CredentialsT, Dict[str, Any]],
     ) -> None:
         """Save user credentials to local file"""
         # Create service-specific directory if it doesn't exist

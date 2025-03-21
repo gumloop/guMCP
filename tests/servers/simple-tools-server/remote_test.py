@@ -13,7 +13,9 @@ with open(tests_path) as f:
 
 
 def get_endpoint():
-    parser = argparse.ArgumentParser(description="Remote MCP Test for simple-tools-server")
+    parser = argparse.ArgumentParser(
+        description="Remote MCP Test for simple-tools-server"
+    )
     parser.add_argument(
         "--endpoint",
         default="http://localhost:8000/simple-tools-server/local",

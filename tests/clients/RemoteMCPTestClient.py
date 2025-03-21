@@ -48,7 +48,11 @@ class RemoteMCPTestClient:
 
         response = await self.session.list_tools()
         available_tools = [
-            {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "input_schema": tool.inputSchema,
+            }
             for tool in response.tools
         ]
 
@@ -79,7 +83,9 @@ class RemoteMCPTestClient:
                 print(f"Tool Call Result: {result}")
 
                 assistant_message_content.append(content)
-                messages.append({"role": "assistant", "content": assistant_message_content})
+                messages.append(
+                    {"role": "assistant", "content": assistant_message_content}
+                )
                 messages.append(
                     {
                         "role": "user",

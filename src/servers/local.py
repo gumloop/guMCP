@@ -67,7 +67,9 @@ async def main():
         required=True,
         help="Name of the server to run (e.g., simple-tools-server, slack)",
     )
-    parser.add_argument("--user-id", default="local", help="User ID for server context (optional)")
+    parser.add_argument(
+        "--user-id", default="local", help="User ID for server context (optional)"
+    )
 
     args = parser.parse_args()
 
@@ -80,7 +82,9 @@ async def main():
     logger.info(
         f"Starting local stdio server for server: {args.server} with user: {args.user_id or 'None'}"
     )
-    await run_stdio_server(server_instance, lambda: get_initialization_options(server_instance))
+    await run_stdio_server(
+        server_instance, lambda: get_initialization_options(server_instance)
+    )
 
 
 if __name__ == "__main__":

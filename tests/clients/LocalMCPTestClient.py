@@ -24,7 +24,9 @@ class LocalMCPTestClient:
         Args:
             server_name: Name of the server (e.g., simple-tools-server, slack)
         """
-        current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        current_dir = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
         local_script_path = os.path.join(current_dir, "src", "servers", "local.py")
 
         if not os.path.exists(local_script_path):
@@ -35,7 +37,9 @@ class LocalMCPTestClient:
 
         server_params = StdioServerParameters(command=command, args=args, env=None)
 
-        stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+        stdio_transport = await self.exit_stack.enter_async_context(
+            stdio_client(server_params)
+        )
         self.stdio, self.write = stdio_transport
         self.session = await self.exit_stack.enter_async_context(
             ClientSession(self.stdio, self.write)
@@ -54,7 +58,11 @@ class LocalMCPTestClient:
 
         response = await self.session.list_tools()
         available_tools = [
-            {"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema}
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "input_schema": tool.inputSchema,
+            }
             for tool in response.tools
         ]
 
@@ -83,7 +91,9 @@ class LocalMCPTestClient:
                 final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
 
                 assistant_message_content.append(content)
-                messages.append({"role": "assistant", "content": assistant_message_content})
+                messages.append(
+                    {"role": "assistant", "content": assistant_message_content}
+                )
                 messages.append(
                     {
                         "role": "user",

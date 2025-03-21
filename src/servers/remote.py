@@ -144,7 +144,9 @@ def create_starlette_app():
 
         # Add routes for this server with session_key as path parameter
         handler = create_handler(
-            server_name, server_info["server"], server_info["get_initialization_options"]
+            server_name,
+            server_info["server"],
+            server_info["get_initialization_options"],
         )
 
         # Add the SSE connection route with path parameter for session_key
@@ -159,7 +161,8 @@ def create_starlette_app():
 
                 if session_key not in user_session_transports:
                     return Response(
-                        f"Session not found or expired for session {session_key}", status_code=404
+                        f"Session not found or expired for session {session_key}",
+                        status_code=404,
                     )
 
                 transport = user_session_transports[session_key]
@@ -183,7 +186,11 @@ def create_starlette_app():
     async def root_handler(request):
         """Root endpoint that returns a simple 200 OK response"""
         return JSONResponse(
-            {"status": "ok", "message": "GuMCP server running", "servers": list(servers.keys())}
+            {
+                "status": "ok",
+                "message": "GuMCP server running",
+                "servers": list(servers.keys()),
+            }
         )
 
     routes.append(Route("/", endpoint=root_handler))
@@ -206,7 +213,9 @@ def main():
     """Main entry point for the Starlette server"""
     parser = argparse.ArgumentParser(description="GuMCP Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host for Starlette server")
-    parser.add_argument("--port", type=int, default=8000, help="Port for Starlette server")
+    parser.add_argument(
+        "--port", type=int, default=8000, help="Port for Starlette server"
+    )
 
     args = parser.parse_args()
 

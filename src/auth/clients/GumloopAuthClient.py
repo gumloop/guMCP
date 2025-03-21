@@ -22,7 +22,9 @@ class GumloopAuthClient(BaseAuthClient[CredentialsT]):
         Args:
             api_key: Gumloop API key for service authentication
         """
-        self.api_base_url = os.environ.get("GUMLOOP_API_BASE_URL", "https://api.gumloop.com/api/v1")
+        self.api_base_url = os.environ.get(
+            "GUMLOOP_API_BASE_URL", "https://api.gumloop.com/api/v1"
+        )
         self.api_key = api_key
 
         if not all([self.api_base_url, self.api_key]):
@@ -30,7 +32,9 @@ class GumloopAuthClient(BaseAuthClient[CredentialsT]):
                 "Missing configuration for GumloopAuthClient. Some functionality may be limited."
             )
 
-    def get_user_credentials(self, service_name: str, user_id: str) -> Optional[CredentialsT]:
+    def get_user_credentials(
+        self, service_name: str, user_id: str
+    ) -> Optional[CredentialsT]:
         """Get user credentials from Gumloop API"""
 
         url = f"{self.api_base_url}/auth/{service_name}/credentials?user_id={user_id}"

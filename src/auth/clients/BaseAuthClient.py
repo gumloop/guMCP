@@ -12,7 +12,9 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_user_credentials(self, service_name: str, user_id: str) -> Optional[CredentialsT]:
+    def get_user_credentials(
+        self, service_name: str, user_id: str
+    ) -> Optional[CredentialsT]:
         """
         Retrieves user credentials for a specific service
 
@@ -35,7 +37,9 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
         Returns:
             Dict containing OAuth configuration
         """
-        raise NotImplementedError("This method is optional and not implemented by this client")
+        raise NotImplementedError(
+            "This method is optional and not implemented by this client"
+        )
 
     def save_user_credentials(
         self, service_name: str, user_id: str, credentials: CredentialsT
@@ -48,4 +52,6 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
             user_id: Identifier for the user
             credentials: Credentials object to save
         """
-        raise NotImplementedError("This method is optional and not implemented by this client")
+        raise NotImplementedError(
+            "This method is optional and not implemented by this client"
+        )

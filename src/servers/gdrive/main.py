@@ -46,7 +46,9 @@ def authenticate_and_save_credentials(user_id):
     # Create and run flow
     flow = InstalledAppFlow.from_client_config(oauth_config, SCOPES)
     credentials = flow.run_local_server(
-        port=8080, redirect_uri_trailing_slash=False, prompt="consent"  # Forces refresh token
+        port=8080,
+        redirect_uri_trailing_slash=False,
+        prompt="consent",  # Forces refresh token
     )
 
     # Save credentials using auth client
@@ -102,12 +104,19 @@ def create_server(user_id, api_key=None):
     @server.list_resources()
     async def handle_list_resources(cursor: str = None) -> dict:
         """List files from Google Drive"""
-        logger.info(f"Listing resources for user: {server.user_id} with cursor: {cursor}")
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
 
-        drive_service = await create_drive_service(server.user_id, api_key=server.api_key)
+        drive_service = await create_drive_service(
+            server.user_id, api_key=server.api_key
+        )
 
         page_size = 10
-        params = {"pageSize": page_size, "fields": "nextPageToken, files(id, name, mimeType)"}
+        params = {
+            "pageSize": page_size,
+            "fields": "nextPageToken, files(id, name, mimeType)",
+        }
 
         if cursor:
             params["pageToken"] = cursor
@@ -119,22 +128,31 @@ def create_server(user_id, api_key=None):
         for file in files:
             resources.append(
                 types.Resource(
-                    uri=f"gdrive:///{file['id']}", mimeType=file["mimeType"], name=file["name"]
+                    uri=f"gdrive:///{file['id']}",
+                    mimeType=file["mimeType"],
+                    name=file["name"],
                 )
             )
 
-        return {"resources": resources, "nextCursor": results.get("nextPageToken", None)}
+        return {
+            "resources": resources,
+            "nextCursor": results.get("nextPageToken", None),
+        }
 
     @server.read_resource()
     async def handle_read_resource(uri: str) -> dict:
         """Read a file from Google Drive by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
-        drive_service = await create_drive_service(server.user_id, api_key=server.api_key)
+        drive_service = await create_drive_service(
+            server.user_id, api_key=server.api_key
+        )
         file_id = uri.replace("gdrive:///", "")
 
         # First get file metadata to check mime type
-        file_metadata = drive_service.files().get(fileId=file_id, fields="mimeType").execute()
+        file_metadata = (
+            drive_service.files().get(fileId=file_id, fields="mimeType").execute()
+        )
 
         mime_type = file_metadata.get("mimeType", "application/octet-stream")
 
@@ -152,12 +170,16 @@ def create_server(user_id, api_key=None):
                 export_mime_type = "image/png"
 
             file_content = (
-                drive_service.files().export(fileId=file_id, mimeType=export_mime_type).execute()
+                drive_service.files()
+                .export(fileId=file_id, mimeType=export_mime_type)
+                .execute()
             )
 
             return {
                 "contents": [
-                    types.TextContent(uri=uri, mimeType=export_mime_type, text=file_content)
+                    types.TextContent(
+                        uri=uri, mimeType=export_mime_type, text=file_content
+                    )
                 ]
             }
 
@@ -168,7 +190,11 @@ def create_server(user_id, api_key=None):
             if isinstance(file_content, bytes):
                 file_content = file_content.decode("utf-8")
 
-            return {"contents": [types.TextContent(uri=uri, mimeType=mime_type, text=file_content)]}
+            return {
+                "contents": [
+                    types.TextContent(uri=uri, mimeType=mime_type, text=file_content)
+                ]
+            }
         else:
             # Handle binary content
             if not isinstance(file_content, bytes):
@@ -194,7 +220,9 @@ def create_server(user_id, api_key=None):
                 description="Search for files in Google Drive",
                 inputSchema={
                     "type": "object",
-                    "properties": {"query": {"type": "string", "description": "Search query"}},
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"}
+                    },
                     "required": ["query"],
                 },
             )
@@ -205,13 +233,17 @@ def create_server(user_id, api_key=None):
         name: str, arguments: dict | None
     ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         """Handle tool execution requests"""
-        logger.info(f"User {server.user_id} calling tool: {name} with arguments: {arguments}")
+        logger.info(
+            f"User {server.user_id} calling tool: {name} with arguments: {arguments}"
+        )
 
         if name == "search":
             if not arguments or "query" not in arguments:
                 raise ValueError("Missing query parameter")
 
-            drive_service = await create_drive_service(server.user_id, api_key=server.api_key)
+            drive_service = await create_drive_service(
+                server.user_id, api_key=server.api_key
+            )
 
             user_query = arguments["query"]
             escaped_query = user_query.replace("\\", "\\\\").replace("'", "\\'")
@@ -228,9 +260,15 @@ def create_server(user_id, api_key=None):
             )
 
             files = results.get("files", [])
-            file_list = "\n".join([f"{file['name']} ({file['mimeType']})" for file in files])
+            file_list = "\n".join(
+                [f"{file['name']} ({file['mimeType']})" for file in files]
+            )
 
-            return [types.TextContent(type="text", text=f"Found {len(files)} files:\n{file_list}")]
+            return [
+                types.TextContent(
+                    type="text", text=f"Found {len(files)} files:\n{file_list}"
+                )
+            ]
 
         raise ValueError(f"Unknown tool: {name}")
 

@@ -39,7 +39,10 @@ def parse_args():
     parser.add_argument("--verbose", action="store_true", help="Show verbose output")
 
     parser.add_argument(
-        "--timeout", type=int, default=60, help="Timeout in seconds for each test (default: 60)"
+        "--timeout",
+        type=int,
+        default=60,
+        help="Timeout in seconds for each test (default: 60)",
     )
 
     return parser.parse_args()
@@ -113,7 +116,9 @@ def run_tests(
             local_result = pytest.main(pytest_args)
             results["local"] = local_result == 0
 
-            print(f"Local tests for {server}: {'PASSED' if results['local'] else 'FAILED'}")
+            print(
+                f"Local tests for {server}: {'PASSED' if results['local'] else 'FAILED'}"
+            )
         else:
             print(f"No local tests found for {server} at {local_test_file}")
 
@@ -138,7 +143,9 @@ def run_tests(
             remote_result = pytest.main(pytest_args)
             results["remote"] = remote_result == 0
 
-            print(f"Remote tests for {server}: {'PASSED' if results['remote'] else 'FAILED'}")
+            print(
+                f"Remote tests for {server}: {'PASSED' if results['remote'] else 'FAILED'}"
+            )
         else:
             print(f"No remote tests found for {server} at {remote_test_file}")
 

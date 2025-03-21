@@ -75,7 +75,9 @@ def create_server(user_id=None, api_key=None):
         Tools can modify server state and return responses.
         """
         current_user = getattr(server, "user_id", None)
-        logger.info(f"User {current_user} calling tool: {name} with arguments: {arguments}")
+        logger.info(
+            f"User {current_user} calling tool: {name} with arguments: {arguments}"
+        )
 
         # Get user-specific data store
         data_store = user_data_stores.get(current_user, {})

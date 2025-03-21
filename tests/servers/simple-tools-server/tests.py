@@ -27,7 +27,9 @@ async def test_retrieve_existing_data(client):
     # Then retrieve it
     response = await client.process_query(f"Get the value for key '{key}'")
 
-    assert expected in response, f"Expected value '{expected}' not found in response: {response}"
+    assert (
+        expected in response
+    ), f"Expected value '{expected}' not found in response: {response}"
     print(f"✅ Retrieved existing data: {key}={expected}")
 
 
@@ -40,7 +42,9 @@ async def test_retrieve_nonexistent_data(client):
         f"Get the value for key '{key}'. Respond with 'not found' if it couldn't be found."
     )
 
-    assert "not found" in response.lower(), f"Expected 'not found' message, got: {response}"
+    assert (
+        "not found" in response.lower()
+    ), f"Expected 'not found' message, got: {response}"
     print(f"✅ Correctly handled non-existent key: {key}")
 
 
@@ -86,5 +90,7 @@ async def test_list_data_updated(client):
         "stored data" in response.lower()
     ), f"Expected 'stored data' confirmation, got: {response}"
     assert "test_key" in response, f"Expected test_key in data listing, got: {response}"
-    assert "another_key" in response, f"Expected another_key in data listing, got: {response}"
+    assert (
+        "another_key" in response
+    ), f"Expected another_key in data listing, got: {response}"
     print("✅ Updated data list returned successfully with multiple entries")
