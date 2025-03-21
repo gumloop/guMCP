@@ -15,7 +15,9 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
     """
 
     def __init__(
-        self, oauth_config_base_dir: Optional[str] = None, credentials_base_dir: Optional[str] = None
+        self,
+        oauth_config_base_dir: Optional[str] = None,
+        credentials_base_dir: Optional[str] = None,
     ):
         """
         Initialize the local file auth client
@@ -45,7 +47,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         """Retrieve OAuth configuration from local file"""
         if not self.oauth_config_base_dir:
             raise ValueError("OAuth config directory not set")
-            
+
         service_dir = os.path.join(self.oauth_config_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
 
@@ -65,7 +67,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         """Retrieve user credentials from local file"""
         if not self.credentials_base_dir:
             raise ValueError("Credentials directory not set")
-            
+
         service_dir = os.path.join(self.credentials_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
 
@@ -89,7 +91,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         """Save user credentials to local file"""
         if not self.credentials_base_dir:
             raise ValueError("Credentials directory not set")
-            
+
         service_dir = os.path.join(self.credentials_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
 

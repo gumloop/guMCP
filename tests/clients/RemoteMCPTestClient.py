@@ -48,7 +48,7 @@ class RemoteMCPTestClient:
 
         if self.session is None:
             raise ValueError("Session not initialized")
-            
+
         response = await self.session.list_tools()
         available_tools = [
             {
@@ -180,4 +180,5 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

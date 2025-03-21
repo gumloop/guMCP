@@ -1,6 +1,5 @@
 import os
 
-import asyncio
 from asyncio import StreamReader, StreamWriter
 from contextlib import AsyncExitStack
 
@@ -100,20 +99,15 @@ class LocalMCPTestClient:
                 messages.append(
                     {"role": "assistant", "content": assistant_message_content}
                 )
-                
+
                 tool_result_content: Dict[str, Any] = {
                     "type": "tool_result",
                     "tool_use_id": content.id,
                     "content": result.content,
                 }
-                
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": [tool_result_content]
-                    }
-                )
-                
+
+                messages.append({"role": "user", "content": [tool_result_content]})
+
                 # Get next response from Claude
                 response = self.anthropic.messages.create(
                     model="claude-3-5-sonnet-20241022",
@@ -121,7 +115,7 @@ class LocalMCPTestClient:
                     messages=messages,
                     tools=available_tools,
                 )
-                
+
                 final_text.append(response.content[0].text)
 
         return "\n".join(final_text)

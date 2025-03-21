@@ -178,9 +178,7 @@ def create_server(user_id, api_key=None):
 
             return {
                 "contents": [
-                    types.TextContent(
-                        text=file_content, mime_type=export_mime_type
-                    )
+                    types.TextContent(text=file_content, mime_type=export_mime_type)
                 ]
             }
 
@@ -192,9 +190,7 @@ def create_server(user_id, api_key=None):
                 file_content = file_content.decode("utf-8")
 
             return {
-                "contents": [
-                    types.TextContent(text=file_content, mime_type=mime_type)
-                ]
+                "contents": [types.TextContent(text=file_content, mime_type=mime_type)]
             }
         else:
             # Handle binary content
@@ -205,7 +201,7 @@ def create_server(user_id, api_key=None):
                 "contents": [
                     types.BinaryContent(
                         blob=base64.b64encode(file_content).decode("ascii"),
-                        mime_type=mime_type
+                        mime_type=mime_type,
                     )
                 ]
             }
