@@ -1,6 +1,10 @@
 import os
-from typing import Optional
+
+import asyncio
+from asyncio import StreamReader, StreamWriter
 from contextlib import AsyncExitStack
+
+from typing import Optional, Dict, Any, List
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -17,6 +21,8 @@ class LocalMCPTestClient:
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
         self.anthropic = Anthropic()
+        self.stdio: Optional[StreamReader] = None
+        self.write: Optional[StreamWriter] = None
 
     async def connect_to_server_by_name(self, server_name: str):
         """Connect to an MCP server by name using local.py
@@ -54,7 +60,7 @@ class LocalMCPTestClient:
 
     async def process_query(self, query: str) -> str:
         """Process a query using Claude and available tools"""
-        messages = [{"role": "user", "content": query}]
+        messages: List[Dict[str, Any]] = [{"role": "user", "content": query}]
 
         response = await self.session.list_tools()
         available_tools = [
@@ -94,19 +100,20 @@ class LocalMCPTestClient:
                 messages.append(
                     {"role": "assistant", "content": assistant_message_content}
                 )
+                
+                tool_result_content: Dict[str, Any] = {
+                    "type": "tool_result",
+                    "tool_use_id": content.id,
+                    "content": result.content,
+                }
+                
                 messages.append(
                     {
                         "role": "user",
-                        "content": [
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": content.id,
-                                "content": result.content,
-                            }
-                        ],
+                        "content": [tool_result_content]
                     }
                 )
-
+                
                 # Get next response from Claude
                 response = self.anthropic.messages.create(
                     model="claude-3-5-sonnet-20241022",
@@ -114,7 +121,7 @@ class LocalMCPTestClient:
                     messages=messages,
                     tools=available_tools,
                 )
-
+                
                 final_text.append(response.content[0].text)
 
         return "\n".join(final_text)

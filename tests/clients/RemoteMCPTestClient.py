@@ -1,5 +1,4 @@
-import argparse
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from contextlib import AsyncExitStack
 
 from anthropic import Anthropic
@@ -44,8 +43,11 @@ class RemoteMCPTestClient:
 
     async def process_query(self, query: str) -> str:
         """Process a query using Claude and available tools"""
-        messages = [{"role": "user", "content": query}]
+        messages: List[Dict[str, Any]] = [{"role": "user", "content": query}]
 
+        if self.session is None:
+            raise ValueError("Session not initialized")
+            
         response = await self.session.list_tools()
         available_tools = [
             {
@@ -177,5 +179,4 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-
     asyncio.run(main())

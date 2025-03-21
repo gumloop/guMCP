@@ -3,7 +3,7 @@ import logging
 import requests
 from typing import Optional
 
-from auth.clients.BaseAuthClient import BaseAuthClient, CredentialsT
+from .BaseAuthClient import BaseAuthClient, CredentialsT
 
 logger = logging.getLogger("gumloop-auth-client")
 
@@ -15,7 +15,7 @@ class GumloopAuthClient(BaseAuthClient[CredentialsT]):
     Can work with any type of credentials that can be linked from https://gumloop.com/credentials
     """
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the Gumloop auth client
 

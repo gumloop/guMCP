@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Optional
 
 # Add both project root and src directory to Python path
 # Get the project root directory and add to path
@@ -21,7 +22,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from auth.factory import create_auth_client
+from src.auth.factory import create_auth_client
 
 # Configure logging
 logging.basicConfig(
@@ -102,7 +103,7 @@ def create_server(user_id, api_key=None):
     server.api_key = api_key
 
     @server.list_resources()
-    async def handle_list_resources(cursor: str = None) -> dict:
+    async def handle_list_resources(cursor: Optional[str] = None) -> dict:
         """List files from Google Drive"""
         logger.info(
             f"Listing resources for user: {server.user_id} with cursor: {cursor}"
@@ -128,8 +129,8 @@ def create_server(user_id, api_key=None):
         for file in files:
             resources.append(
                 types.Resource(
-                    uri=f"gdrive:///{file['id']}",
-                    mimeType=file["mimeType"],
+                    id=f"gdrive:///{file['id']}",
+                    mime_type=file["mimeType"],
                     name=file["name"],
                 )
             )
@@ -178,7 +179,7 @@ def create_server(user_id, api_key=None):
             return {
                 "contents": [
                     types.TextContent(
-                        uri=uri, mimeType=export_mime_type, text=file_content
+                        text=file_content, mime_type=export_mime_type
                     )
                 ]
             }
@@ -192,7 +193,7 @@ def create_server(user_id, api_key=None):
 
             return {
                 "contents": [
-                    types.TextContent(uri=uri, mimeType=mime_type, text=file_content)
+                    types.TextContent(text=file_content, mime_type=mime_type)
                 ]
             }
         else:
@@ -202,10 +203,9 @@ def create_server(user_id, api_key=None):
 
             return {
                 "contents": [
-                    types.BlobContent(
-                        uri=uri,
-                        mimeType=mime_type,
+                    types.BinaryContent(
                         blob=base64.b64encode(file_content).decode("ascii"),
+                        mime_type=mime_type
                     )
                 ]
             }

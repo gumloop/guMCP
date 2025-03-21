@@ -2,7 +2,7 @@ import os
 import logging
 from typing import Optional, TypeVar, Type
 
-from auth.clients.BaseAuthClient import BaseAuthClient
+from .clients.BaseAuthClient import BaseAuthClient
 
 logger = logging.getLogger("auth-factory")
 
@@ -10,7 +10,7 @@ T = TypeVar("T", bound=BaseAuthClient)
 
 
 def create_auth_client(
-    client_type: Optional[Type[T]] = None, api_key: str = None
+    client_type: Optional[Type[T]] = None, api_key: Optional[str] = None
 ) -> BaseAuthClient:
     """
     Factory function to create the appropriate auth client based on environment
@@ -29,11 +29,11 @@ def create_auth_client(
     environment = os.environ.get("ENVIRONMENT", "local").lower()
 
     if environment == "gumloop":
-        from auth.clients.GumloopAuthClient import GumloopAuthClient
+        from .clients.GumloopAuthClient import GumloopAuthClient
 
         return GumloopAuthClient(api_key=api_key)
 
     # Default to local file auth client
-    from auth.clients.LocalAuthClient import LocalAuthClient
+    from .clients.LocalAuthClient import LocalAuthClient
 
     return LocalAuthClient()

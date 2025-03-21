@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
-from auth.clients.BaseAuthClient import BaseAuthClient, CredentialsT
+from .BaseAuthClient import BaseAuthClient, CredentialsT
 
 
 class LocalAuthClient(BaseAuthClient[CredentialsT]):
@@ -15,7 +15,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
     """
 
     def __init__(
-        self, oauth_config_base_dir: str = None, credentials_base_dir: str = None
+        self, oauth_config_base_dir: Optional[str] = None, credentials_base_dir: Optional[str] = None
     ):
         """
         Initialize the local file auth client
@@ -36,11 +36,16 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         )
 
         # Ensure directories exist
-        os.makedirs(self.oauth_config_base_dir, exist_ok=True)
-        os.makedirs(self.credentials_base_dir, exist_ok=True)
+        if self.oauth_config_base_dir:
+            os.makedirs(self.oauth_config_base_dir, exist_ok=True)
+        if self.credentials_base_dir:
+            os.makedirs(self.credentials_base_dir, exist_ok=True)
 
     def get_oauth_config(self, service_name: str) -> Dict[str, Any]:
         """Retrieve OAuth configuration from local file"""
+        if not self.oauth_config_base_dir:
+            raise ValueError("OAuth config directory not set")
+            
         service_dir = os.path.join(self.oauth_config_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
 
@@ -57,8 +62,10 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
     def get_user_credentials(
         self, service_name: str, user_id: str
     ) -> Optional[CredentialsT]:
-        """Get user credentials from local file"""
-        # Create service-specific directory if it doesn't exist
+        """Retrieve user credentials from local file"""
+        if not self.credentials_base_dir:
+            raise ValueError("Credentials directory not set")
+            
         service_dir = os.path.join(self.credentials_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
 
@@ -80,7 +87,9 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         credentials: Union[CredentialsT, Dict[str, Any]],
     ) -> None:
         """Save user credentials to local file"""
-        # Create service-specific directory if it doesn't exist
+        if not self.credentials_base_dir:
+            raise ValueError("Credentials directory not set")
+            
         service_dir = os.path.join(self.credentials_base_dir, service_name)
         os.makedirs(service_dir, exist_ok=True)
 
