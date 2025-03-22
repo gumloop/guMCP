@@ -4,6 +4,6 @@
 
 #### Examples:
 
-`python tests/run_remote_test.py`
+`python tests/run_tests.py`
 
-`python tests/run_local_test.py src/servers/test-server/main.py`
+`python tests/servers/simple-tools-server/local_test.py`
