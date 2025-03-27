@@ -18,80 +18,24 @@ import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from src.utils.google.util import authenticate_and_save_credentials, get_credentials
+
 from googleapiclient.discovery import build
 
-from src.auth.factory import create_auth_client
+
+SERVICE_NAME = Path(__file__).parent.name
+SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("gdrive-server")
-
-SERVICE_NAME = Path(__file__).parent.name
-SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-
-
-def authenticate_and_save_credentials(user_id):
-    """Authenticate with Google and save credentials"""
-    logger.info(f"Launching auth flow for user {user_id}...")
-
-    # Get auth client
-    auth_client = create_auth_client()
-
-    # Get OAuth config
-    oauth_config = auth_client.get_oauth_config(SERVICE_NAME)
-
-    # Create and run flow
-    flow = InstalledAppFlow.from_client_config(oauth_config, SCOPES)
-    credentials = flow.run_local_server(
-        port=8080,
-        redirect_uri_trailing_slash=False,
-        prompt="consent",  # Forces refresh token
-    )
-
-    # Save credentials using auth client
-    auth_client.save_user_credentials(SERVICE_NAME, user_id, credentials)
-
-    logger.info(f"Credentials saved for user {user_id}. You can now run the server.")
-    return credentials
-
-
-async def get_credentials(user_id, api_key=None):
-    """Get credentials for the specified user"""
-    # Get auth client
-    auth_client = create_auth_client(api_key=api_key)
-
-    # Get credentials for this user
-    credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
-
-    def handle_missing_credentials():
-        error_str = f"Credentials not found for user {user_id}."
-        if os.environ.get("ENVIRONMENT", "local") == "local":
-            error_str += "Please run with 'auth' argument first."
-        logging.error(error_str)
-        raise ValueError(f"Credentials not found for user {user_id}")
-
-    if not credentials_data:
-        handle_missing_credentials()
-
-    token = credentials_data.get("token")
-    if token:
-        return Credentials.from_authorized_user_info(credentials_data)
-
-    # If the auth client doesn't return key 'token', but instead returns 'access_token', assume that refreshing is taken care of on the auth client side
-    token = credentials_data.get("access_token")
-    if token:
-        return Credentials(token=token)
-
-    handle_missing_credentials()
+logger = logging.getLogger(SERVICE_NAME)
 
 
 async def create_drive_service(user_id, api_key=None):
     """Create a new Drive service instance for this request"""
-    credentials = await get_credentials(user_id, api_key=api_key)
+    credentials = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
     return build("drive", "v3", credentials=credentials)
 
 
@@ -298,7 +242,7 @@ if __name__ == "__main__":
     if sys.argv[1].lower() == "auth":
         user_id = "local"
         # Run authentication flow
-        authenticate_and_save_credentials(user_id)
+        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
