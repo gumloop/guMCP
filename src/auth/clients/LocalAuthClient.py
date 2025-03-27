@@ -5,6 +5,14 @@ from typing import Dict, Any, Optional, Union
 
 from .BaseAuthClient import BaseAuthClient, CredentialsT
 
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("LocalAuthClient")
+
 
 class LocalAuthClient(BaseAuthClient[CredentialsT]):
     """
@@ -28,6 +36,8 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         """
         # Get the project root directory (GuMCP/)
         project_root = Path(__file__).parent.parent.parent.parent
+
+        print(f"Using project root: {project_root}")
 
         self.oauth_config_base_dir = oauth_config_base_dir or os.environ.get(
             "GUMCP_OAUTH_CONFIG_DIR", str(project_root / "local_auth" / "oauth_configs")
@@ -53,6 +63,8 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
 
         config_path = os.path.join(service_dir, "oauth.json")
 
+        print("config_path:" + config_path)
+
         if not os.path.exists(config_path):
             raise FileNotFoundError(
                 f"OAuth config not found for {service_name} at {config_path}"
@@ -72,6 +84,8 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         os.makedirs(service_dir, exist_ok=True)
 
         creds_path = os.path.join(service_dir, f"{user_id}_credentials.json")
+
+        print("creds_path:" + creds_path)
 
         if not os.path.exists(creds_path):
             return None
