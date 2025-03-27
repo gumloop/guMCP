@@ -10,6 +10,23 @@ Thank you for your interest in contributing to GuMCP! This document provides gui
 - `tests/`: Test suite for the project
 - `scripts/`: Utility scripts
 
+## Server Configuration
+
+To add a new server, create a directory under `src/servers/<server-id>` with a `config.yaml` file:
+
+```yaml
+# Required fields
+name: "Your Server Name"
+icon: "assets/icon.jpg"
+description: "A brief description of your server"
+documentation_path: "README.md"
+
+# Optional fields
+tools:  # Will default to [] if omitted
+  - name: "Tool Name"
+    description: "Tool description"
+```
+
 ## Development Environment Setup
 
 ### Prerequisites

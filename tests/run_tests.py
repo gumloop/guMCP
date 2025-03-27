@@ -108,7 +108,6 @@ def run_tests(
             pytest_args = [
                 "-xvs" if args.verbose else "-v",
                 str(local_test_file),
-                f"--server-name={server}",
                 f"--timeout={args.timeout}",
             ]
 
