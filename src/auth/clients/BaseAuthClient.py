@@ -16,7 +16,7 @@ class BaseAuthClient(Generic[CredentialsT], abc.ABC):
         self, service_name: str, user_id: str
     ) -> Optional[CredentialsT]:
         """
-        Retrieves user credentials for a specific service
+        Retrieves user credentials for a specific service. Credentials returned here should be ready-to-use (ex. access tokens should be refreshed already)
 
         Args:
             service_name: Name of the service (e.g., "gdrive", "github", etc.)
