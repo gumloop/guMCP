@@ -42,6 +42,30 @@ class RemoteMCPTestClient:
         tools = response.tools
         print("\nConnected to server with tools:", [tool.name for tool in tools])
 
+    async def list_resources(self) -> None:
+        """List all available resources from the server"""
+        if not self.session:
+            raise ValueError("Session not initialized")
+
+        try:
+            return await self.session.list_resources()
+        except Exception as e:
+            print(f"Error listing resources: {e}")
+
+    async def read_resource(self, uri: str) -> None:
+        """Read a specific resource from the server
+
+        Args:
+            uri: URI of the resource to read
+        """
+        if not self.session:
+            raise ValueError("Session not initialized")
+
+        try:
+            return await self.session.read_resource(uri)
+        except Exception as e:
+            print(f"Error reading resource: {e}")
+
     async def process_query(self, query: str) -> str:
         """Process a query using Claude and available tools"""
         messages: List[Dict[str, Any]] = [{"role": "user", "content": query}]

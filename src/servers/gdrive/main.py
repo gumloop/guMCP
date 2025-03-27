@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Optional
+from typing import Optional, Iterable
 
 # Add both project root and src directory to Python path
 # Get the project root directory and add to path
@@ -10,11 +10,18 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-import base64
 import logging
 from pathlib import Path
 
-import mcp.types as types
+from mcp.types import (
+    AnyUrl,
+    Resource,
+    TextContent,
+    Tool,
+    ImageContent,
+    EmbeddedResource,
+)
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
@@ -47,7 +54,9 @@ def create_server(user_id, api_key=None):
     server.api_key = api_key
 
     @server.list_resources()
-    async def handle_list_resources(cursor: Optional[str] = None) -> dict:
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
         """List files from Google Drive"""
         logger.info(
             f"Listing resources for user: {server.user_id} with cursor: {cursor}"
@@ -71,28 +80,25 @@ def create_server(user_id, api_key=None):
 
         resources = []
         for file in files:
-            resources.append(
-                types.Resource(
-                    uri=f"gdrive:///{file['id']}",
-                    mime_type=file["mimeType"],
-                    name=file["name"],
-                )
+            resource = Resource(
+                uri=f"gdrive:///{file['id']}",
+                mimeType=file["mimeType"],
+                name=file["name"],
             )
+            resources.append(resource)
 
-        return {
-            "resources": resources,
-            "nextCursor": results.get("nextPageToken", None),
-        }
+        # mcp Python sdk (1.4.1) doesn't seem to support returning cursors for pagination here
+        return resources
 
     @server.read_resource()
-    async def handle_read_resource(uri: str) -> dict:
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
         """Read a file from Google Drive by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
         drive_service = await create_drive_service(
             server.user_id, api_key=server.api_key
         )
-        file_id = uri.replace("gdrive:///", "")
+        file_id = str(uri).replace("gdrive:///", "")
 
         # First get file metadata to check mime type
         file_metadata = (
@@ -120,13 +126,11 @@ def create_server(user_id, api_key=None):
                 .execute()
             )
 
-            return {
-                "contents": [
-                    types.TextContent(
-                        type="text", text=file_content, mime_type=export_mime_type
-                    )
-                ]
-            }
+            file_content = file_content.decode("utf-8")
+
+            return [
+                ReadResourceContents(content=file_content, mime_type=export_mime_type)
+            ]
 
         # For regular files download content
         file_content = drive_service.files().get_media(fileId=file_id).execute()
@@ -135,34 +139,20 @@ def create_server(user_id, api_key=None):
             if isinstance(file_content, bytes):
                 file_content = file_content.decode("utf-8")
 
-            return {
-                "contents": [
-                    types.TextContent(
-                        type="text", text=file_content, mime_type=mime_type
-                    )
-                ]
-            }
+            return [ReadResourceContents(content=file_content, mime_type=mime_type)]
         else:
             # Handle binary content
             if not isinstance(file_content, bytes):
                 file_content = file_content.encode("utf-8")
 
-            return {
-                "contents": [
-                    types.BlobResourceContents(
-                        uri=uri,
-                        blob=base64.b64encode(file_content).decode("ascii"),
-                        mime_type=mime_type,
-                    )
-                ]
-            }
+            return [ReadResourceContents(content=file_content, mime_type=mime_type)]
 
     @server.list_tools()
-    async def handle_list_tools() -> list[types.Tool]:
+    async def handle_list_tools() -> list[Tool]:
         """List available tools"""
         logger.info(f"Listing tools for user: {server.user_id}")
         return [
-            types.Tool(
+            Tool(
                 name="search",
                 description="Search for files in Google Drive",
                 inputSchema={
@@ -178,7 +168,7 @@ def create_server(user_id, api_key=None):
     @server.call_tool()
     async def handle_call_tool(
         name: str, arguments: dict | None
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+    ) -> list[TextContent | ImageContent | EmbeddedResource]:
         """Handle tool execution requests"""
         logger.info(
             f"User {server.user_id} calling tool: {name} with arguments: {arguments}"
@@ -212,9 +202,7 @@ def create_server(user_id, api_key=None):
             )
 
             return [
-                types.TextContent(
-                    type="text", text=f"Found {len(files)} files:\n{file_list}"
-                )
+                TextContent(type="text", text=f"Found {len(files)} files:\n{file_list}")
             ]
 
         raise ValueError(f"Unknown tool: {name}")

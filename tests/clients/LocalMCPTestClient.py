@@ -5,6 +5,7 @@ from contextlib import AsyncExitStack
 
 from typing import Optional, Dict, Any, List
 
+from mcp.types import AnyUrl, ListResourcesResult, ReadResourceResult
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -56,6 +57,30 @@ class LocalMCPTestClient:
         response = await self.session.list_tools()
         tools = response.tools
         print("\nConnected to server with tools:", [tool.name for tool in tools])
+
+    async def list_resources(self) -> ListResourcesResult:
+        """List all available resources from the server"""
+        if not self.session:
+            raise ValueError("Session not initialized")
+
+        try:
+            return await self.session.list_resources()
+        except Exception as e:
+            print(f"Error listing resources: {e}")
+
+    async def read_resource(self, uri: AnyUrl) -> ReadResourceResult:
+        """Read a specific resource from the server
+
+        Args:
+            uri: URI of the resource to read
+        """
+        if not self.session:
+            raise ValueError("Session not initialized")
+
+        try:
+            return await self.session.read_resource(uri)
+        except Exception as e:
+            print(f"Error reading resource: {e}")
 
     async def process_query(self, query: str) -> str:
         """Process a query using Claude and available tools"""
