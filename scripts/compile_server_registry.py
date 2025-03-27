@@ -84,6 +84,11 @@ def generate_server_list(output_path: str) -> bool:
         
         # Scan all directories in the servers folder
         for item in os.listdir(servers_dir):
+            # Skip simple-tools-server
+            if item == "simple-tools-server":
+                logger.info(f"Skipping simple-tools-server as requested")
+                continue
+                
             item_path = os.path.join(servers_dir, item)
             if os.path.isdir(item_path) and not item.startswith('__'):
                 logger.info(f"Processing server: {item}")
