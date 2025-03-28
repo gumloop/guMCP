@@ -31,10 +31,11 @@ local_auth/oauth_configs/discord/oauth.json
 4. Note your Client ID and Client Secret
 5. Under "Bot" section:
    - Create a bot if you haven't already
-   - Enable necessary bot permissions:
-     - Read Messages/View Channels
-     - Send Messages
-     - Other permissions as needed for your use case
+   - Enable Scopes:
+     - bot
+     - identify
+     - guilds
+     - messages.read
 
 #### Running Authentication
 

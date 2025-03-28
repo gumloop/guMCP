@@ -19,6 +19,7 @@ from mcp.server.models import InitializationOptions
 import discord
 from discord.ext import commands
 import asyncio
+import aiohttp
 
 from utils.discord.util import authenticate_and_save_credentials, get_credentials
 
@@ -84,37 +85,53 @@ def create_server(user_id, api_key=None):
     server.bot_ready = asyncio.Event()
 
     async def start_bot_background():
-        """Start the bot in the background and set the ready event when done"""
+        """Start the Discord REST API client in the background"""
         try:
-            bot = await create_discord_bot(server.user_id, api_key=server.api_key)
-            
-            @bot.event
-            async def on_ready():
-                logger.info(f"Bot logged in as {bot.user.name}")
-                server.bot_ready.set()
-            
-            # Get credentials again to ensure we have the latest token
+            # Get credentials
             credentials = await get_credentials(server.user_id, SERVICE_NAME, api_key=server.api_key)
             
-            # Handle different token formats
+            # Extract the access token from credentials
             if isinstance(credentials, dict) and "access_token" in credentials:
                 token = credentials["access_token"]
                 logger.info(f"Using access_token from credentials dict")
-            elif isinstance(credentials, str):
-                token = credentials
-                logger.info(f"Using credentials directly as token string")
             else:
-                token_str = str(credentials)
-                logger.info(f"Using credentials converted to string: {token_str[:10]}...")
-                token = token_str
+                logger.error(f"Invalid credentials format: {type(credentials)}")
+                raise ValueError("Invalid credentials format")
             
-            try:
-                await bot.start(token)
-            except Exception as e:
-                logger.error(f"Failed to start bot with token: {e}")
-                raise
+            # Create a session with the token for REST API calls
+            server.headers = {
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json'
+            }
+            
+            server.session = aiohttp.ClientSession(headers=server.headers)
+            
+            # Test the connection
+            async with server.session.get('https://discord.com/api/v10/users/@me') as resp:
+                if resp.status == 200:
+                    user_data = await resp.json()
+                    logger.info(f"Connected as {user_data.get('username', 'Unknown user')}")
+                    server.user_data = user_data
+                else:
+                    error_text = await resp.text()
+                    logger.error(f"Failed to connect to Discord API: {resp.status} {error_text}")
+                    raise ValueError(f"Discord API connection failed: {resp.status}")
+            
+            # Get guilds the user has access to
+            async with server.session.get('https://discord.com/api/v10/users/@me/guilds') as resp:
+                if resp.status == 200:
+                    server.guilds = await resp.json()
+                    logger.info(f"Retrieved {len(server.guilds)} guilds")
+                else:
+                    error_text = await resp.text()
+                    logger.error(f"Failed to fetch guilds: {resp.status} {error_text}")
+                    server.guilds = []
+            
+            # Signal that we're ready
+            server.bot_ready.set()
+            
         except Exception as e:
-            logger.error(f"Error in bot task: {e}")
+            logger.error(f"Error in API connection: {e}")
             raise
 
     @server.list_resources()
@@ -130,18 +147,31 @@ def create_server(user_id, api_key=None):
 
         resources = []
         
-        for guild in bot.guilds:
-            # List text channels
-            for channel in guild.text_channels:
-                resources.append(
-                    types.Resource(
-                        uri=f"discord:///{guild.id}/{channel.id}",
-                        mime_type="text/plain",
-                        name=f"{guild.name}/{channel.name}",
-                    )
-                )
+        # Use REST API to get channels for each guild
+        for guild in server.guilds:
+            guild_id = guild['id']
+            guild_name = guild['name']
+            
+            # Get channels for this guild
+            async with server.session.get(f'https://discord.com/api/v10/guilds/{guild_id}/channels') as resp:
+                if resp.status == 200:
+                    channels = await resp.json()
+                    
+                    # Add text channels to resources
+                    for channel in channels:
+                        if channel['type'] == 0:  # 0 is text channel
+                            resources.append(
+                                types.Resource(
+                                    uri=f"discord:///{guild_id}/{channel['id']}",
+                                    mime_type="text/plain",
+                                    name=f"{guild_name}/{channel['name']}",
+                                )
+                            )
+                else:
+                    logger.error(f"Failed to fetch channels for guild {guild_id}")
 
         return resources
+
 
     @server.read_resource()
     async def handle_read_resource(uri: types.AnyUrl) -> list[types.TextContent]:
