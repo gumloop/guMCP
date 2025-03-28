@@ -27,7 +27,8 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from src.utils.x.util import authenticate_and_save_credentials, get_credentials
+from src.utils.oauth.util import run_oauth_flow, refresh_token_if_needed
+from src.auth.factory import create_auth_client
 
 import requests
 
@@ -40,6 +41,11 @@ SCOPES = [
     "offline.access",
 ]
 
+# X OAuth endpoints
+X_OAUTH_AUTHORIZE_URL = "https://x.com/i/oauth2/authorize"
+X_OAUTH_TOKEN_URL = "https://api.x.com/2/oauth2/token"
+X_API_BASE = "https://api.x.com/2"
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -47,9 +53,77 @@ logging.basicConfig(
 logger = logging.getLogger(SERVICE_NAME)
 
 
+def build_auth_params(oauth_config, redirect_uri, scopes):
+    """Build X OAuth authorization parameters"""
+    import hashlib
+    import base64
+    
+    scope_string = " ".join(scopes)
+    code_verifier = os.urandom(32).hex()
+    
+    # Store code verifier in a file for retrieval during token exchange
+    verifier_path = os.path.join(os.path.expanduser("~"), f".{SERVICE_NAME}_verifier")
+    with open(verifier_path, "w") as f:
+        f.write(code_verifier)
+    
+    # Create code challenge with SHA256
+    code_challenge_bytes = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    code_challenge = base64.urlsafe_b64encode(code_challenge_bytes).decode('utf-8').rstrip('=')
+    
+    return {
+        "client_id": oauth_config["client_id"],
+        "redirect_uri": redirect_uri,
+        "scope": scope_string,
+        "response_type": "code",
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
+        "state": os.urandom(16).hex()
+    }
+
+
+def build_token_data(oauth_config, redirect_uri, scopes, auth_code):
+    """Build X OAuth token exchange data"""
+    # Retrieve stored code verifier
+    verifier_path = os.path.join(os.path.expanduser("~"), f".{SERVICE_NAME}_verifier")
+    if os.path.exists(verifier_path):
+        with open(verifier_path, "r") as f:
+            code_verifier = f.read().strip()
+        # Clean up file
+        os.remove(verifier_path)
+    else:
+        # Fallback if file doesn't exist
+        code_verifier = os.urandom(32).hex()
+        logger.warning("Code verifier not found, using fallback (auth might fail)")
+    
+    return {
+        "client_id": oauth_config["client_id"],
+        "client_secret": oauth_config["client_secret"],
+        "code": auth_code,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+        "code_verifier": code_verifier,
+    }
+
+
+def build_refresh_data(oauth_config, refresh_token, credentials_data):
+    """Build X OAuth refresh token data"""
+    return {
+        "client_id": oauth_config["client_id"],
+        "client_secret": oauth_config["client_secret"],
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    }
+
+
 async def create_x_client(user_id, api_key=None):
     """Create a new X client instance for this request"""
-    token = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
+    token = await refresh_token_if_needed(
+        user_id, 
+        SERVICE_NAME, 
+        X_OAUTH_TOKEN_URL,
+        build_refresh_data,
+        api_key=api_key
+    )
     return XClient(token)
 
 
@@ -58,7 +132,7 @@ class XClient:
 
     def __init__(self, token):
         self.token = token
-        self.api_base = "https://api.twitter.com/2"
+        self.api_base = X_API_BASE
         self.headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
@@ -447,7 +521,15 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
         user_id = "local"
         # Run authentication flow
-        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
+        run_oauth_flow(
+            service_name=SERVICE_NAME,
+            user_id=user_id,
+            scopes=SCOPES,
+            auth_url_base=X_OAUTH_AUTHORIZE_URL,
+            token_url=X_OAUTH_TOKEN_URL,
+            auth_params_builder=build_auth_params,
+            token_data_builder=build_token_data
+        )
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
