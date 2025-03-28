@@ -24,16 +24,117 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from src.utils.linear.util import authenticate_and_save_credentials, get_linear_client
+from gql import Client, gql
+from gql.transport.requests import RequestsHTTPTransport
+
+from src.auth.factory import create_auth_client
+from src.utils.oauth.util import run_oauth_flow, refresh_token_if_needed
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = ["read", "write", "issues:create"]  # Linear OAuth scopes
+
+# Linear OAuth configuration
+LINEAR_OAUTH_AUTHORIZE_URL = "https://linear.app/oauth/authorize"
+LINEAR_OAUTH_TOKEN_URL = "https://api.linear.app/oauth/token"
+LINEAR_API_GRAPHQL = "https://api.linear.app/graphql"
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(SERVICE_NAME)
+
+
+class LinearClient:
+    """Client for interacting with Linear API"""
+
+    def __init__(self, access_token: str):
+        self.access_token = access_token
+        self.client = self._create_client()
+
+    def _create_client(self) -> Client:
+        """Create a GQL client for Linear API"""
+        transport = RequestsHTTPTransport(
+            url=LINEAR_API_GRAPHQL,
+            headers={"Authorization": f"Bearer {self.access_token}"},
+            use_json=True,
+        )
+        return Client(transport=transport, fetch_schema_from_transport=True)
+
+    def execute(self, query: str, variable_values: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute a GraphQL query against Linear API"""
+        return self.client.execute(gql(query), variable_values=variable_values)
+
+
+def linear_auth_params_builder(oauth_config: Dict[str, Any], redirect_uri: str, scopes: list) -> Dict[str, str]:
+    """Build authorization parameters for Linear OAuth"""
+    return {
+        "client_id": oauth_config["client_id"],
+        "redirect_uri": redirect_uri,
+        "scope": " ".join(scopes),
+        "response_type": "code"
+    }
+
+
+def linear_token_data_builder(
+    oauth_config: Dict[str, Any], redirect_uri: str, scopes: list, code: str
+) -> Dict[str, str]:
+    """Build token request data for Linear OAuth"""
+    return {
+        "client_id": oauth_config["client_id"],
+        "client_secret": oauth_config["client_secret"],
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code"
+    }
+
+
+def linear_refresh_token_data_builder(
+    oauth_config: Dict[str, Any], refresh_token: str, credentials_data: Dict[str, Any]
+) -> Dict[str, str]:
+    """Build refresh token request data for Linear OAuth"""
+    return {
+        "client_id": oauth_config["client_id"],
+        "client_secret": oauth_config["client_secret"],
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token"
+    }
+
+
+def authenticate_and_save_credentials(user_id: str, service_name: str, scopes: list) -> Dict[str, Any]:
+    """Authenticate with Linear and save credentials"""
+    return run_oauth_flow(
+        service_name=service_name,
+        user_id=user_id,
+        scopes=scopes,
+        auth_url_base=LINEAR_OAUTH_AUTHORIZE_URL,
+        token_url=LINEAR_OAUTH_TOKEN_URL,
+        auth_params_builder=linear_auth_params_builder,
+        token_data_builder=linear_token_data_builder
+    )
+
+
+async def get_linear_client(user_id: str, api_key: Optional[str] = None) -> LinearClient:
+    """Get a Linear client for the specified user"""
+    logger = logging.getLogger("linear")
+
+    # Use the global OAuth utility to get and refresh the token if needed
+    access_token = await refresh_token_if_needed(
+        user_id=user_id,
+        service_name="linear",
+        token_url=LINEAR_OAUTH_TOKEN_URL,
+        token_data_builder=linear_refresh_token_data_builder,
+        api_key=api_key
+    )
+
+    if not access_token:
+        error_str = f"Credentials not found for user {user_id}."
+        if os.environ.get("ENVIRONMENT", "local") == "local":
+            error_str += " Please run with 'auth' argument first."
+        logging.error(error_str)
+        raise ValueError(f"Credentials not found for user {user_id}")
+
+    return LinearClient(access_token)
 
 
 def create_server(user_id, api_key=None):
@@ -53,6 +154,7 @@ def create_server(user_id, api_key=None):
         )
 
         linear_client = await get_linear_client(server.user_id, server.api_key)
+        print(linear_client)
         
         page_size = 10
         query = """
