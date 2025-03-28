@@ -13,7 +13,6 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 
 load_dotenv()
-print("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
 
 
 class LocalMCPTestClient:
