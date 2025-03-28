@@ -1,4 +1,5 @@
 import argparse
+import traceback
 from typing import Optional, List, Dict, Any
 from contextlib import AsyncExitStack
 
@@ -51,6 +52,7 @@ class RemoteMCPTestClient:
             return await self.session.list_resources()
         except Exception as e:
             print(f"Error listing resources: {e}")
+            print(f"Stacktrace: {traceback.format_exc()}")
 
     async def read_resource(self, uri: str) -> None:
         """Read a specific resource from the server
