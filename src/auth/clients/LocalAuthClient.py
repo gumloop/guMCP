@@ -63,8 +63,6 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
 
         config_path = os.path.join(service_dir, "oauth.json")
 
-        print("config_path:" + config_path)
-
         if not os.path.exists(config_path):
             raise FileNotFoundError(
                 f"OAuth config not found for {service_name} at {config_path}"
@@ -84,8 +82,6 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         os.makedirs(service_dir, exist_ok=True)
 
         creds_path = os.path.join(service_dir, f"{user_id}_credentials.json")
-
-        print("creds_path:" + creds_path)
 
         if not os.path.exists(creds_path):
             return None
