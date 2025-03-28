@@ -190,7 +190,7 @@ async def main():
         "--endpoint",
         #default="http://localhost:8000/simple-tools-server/session_key",
         #default="http://localhost:8000/gdrive/local",
-        default="http://localhost:8000/gsheet/local",
+        default="http://localhost:8000/gsheets/local",
         help="Endpoint URL for the MCP server",
     )
 

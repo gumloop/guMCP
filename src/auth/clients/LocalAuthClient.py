@@ -37,7 +37,7 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         # Get the project root directory (GuMCP/)
         project_root = Path(__file__).parent.parent.parent.parent
 
-        print(f"Using project root: {project_root}")
+        logger.info(f"Using project root: {project_root}")
 
         self.oauth_config_base_dir = oauth_config_base_dir or os.environ.get(
             "GUMCP_OAUTH_CONFIG_DIR", str(project_root / "local_auth" / "oauth_configs")
@@ -84,8 +84,6 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
         os.makedirs(service_dir, exist_ok=True)
 
         creds_path = os.path.join(service_dir, f"{user_id}_credentials.json")
-
-        print("creds_path:" + creds_path)
 
         if not os.path.exists(creds_path):
             return None

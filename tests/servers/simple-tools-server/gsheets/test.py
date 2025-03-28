@@ -8,8 +8,7 @@ async def test_create_sheet(client):
     response = await client.call_tool("create-sheet", {"title": "MCP Test Sheet"})
 
     assert response and "Created new spreadsheet" in response[0].text, f"Create failed: {response}"
-    print(response[0].text)
-    print("Sheet creation works")
+    print(f"✅ Created sheet successfully. Response message from API: '{response[0].text}'")
 
 @pytest.mark.asyncio
 async def test_get_spreadsheet_info(client):
@@ -17,7 +16,7 @@ async def test_get_spreadsheet_info(client):
     response = await client.call_tool("get-spreadsheet-info", {"spreadsheet_url": EXAMPLE_URL})
 
     assert "properties" in response[0].text.lower(), f"Missing properties in response: {response}"
-    print("Spreadsheet info retrieved")
+    print("✅ Spreadsheet info retrieved")
 
 @pytest.mark.asyncio
 async def test_get_sheet_names(client):
@@ -26,7 +25,7 @@ async def test_get_sheet_names(client):
 
     assert response and len(response[0].text.strip()) > 0, "No sheet names returned"
     print(f"Sheets: {response[0].text}")
-    print("Sheet names fetched")
+    print("✅ Sheet names fetched")
 
 @pytest.mark.asyncio
 async def test_batch_get(client):
@@ -37,7 +36,7 @@ async def test_batch_get(client):
     })
 
     assert response and "Sheet1" in response[0].text, f"Batch get failed: {response}"
-    print("Batch get worked")
+    print("✅ Batch get worked")
 
 @pytest.mark.asyncio
 async def test_batch_update(client):
@@ -48,7 +47,7 @@ async def test_batch_update(client):
     })
 
     assert "Batch update" in response[0].text or "successful" in response[0].text
-    print("Batch update success")
+    print("✅ Batch update success")
 
 @pytest.mark.asyncio
 async def test_append_values(client):
@@ -60,7 +59,7 @@ async def test_append_values(client):
     })
 
     assert "appended" in response[0].text.lower()
-    print("Append successful")
+    print("✅ Append successful")
 
 @pytest.mark.asyncio
 async def test_lookup_row(client):
@@ -72,7 +71,7 @@ async def test_lookup_row(client):
     })
 
     assert "Found row" in response[0].text or "not found" in response[0].text
-    print("Lookup works")
+    print("✅ Lookup works")
 
 @pytest.mark.asyncio
 async def test_clear_values(client):
@@ -83,7 +82,7 @@ async def test_clear_values(client):
     })
 
     assert "cleared" in response[0].text.lower()
-    print("Clear successful")
+    print("✅ Clear successful")
 
 @pytest.mark.asyncio
 async def test_copy_sheet(client):
@@ -95,4 +94,4 @@ async def test_copy_sheet(client):
     })
 
     assert "copied" in response[0].text.lower() or "spreadsheet id" in response[0].text.lower()
-    print("Copy sheet worked")
+    print("✅ Copy sheet worked")

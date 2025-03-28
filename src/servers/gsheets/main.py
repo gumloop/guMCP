@@ -38,18 +38,16 @@ from src.auth.factory import create_auth_client
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("gdrive-server")
+logger = logging.getLogger("gsheets-server")
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-
-print("SERVICE_NAME:", SERVICE_NAME)
 
 def extract_spreadsheet_id(sheet_url: str) -> str:
     """Extracts the spreadsheetId from a Google Sheets URL.
 
     Args:
-        sheet_url (str): The full URL of the Google Sheet.
+        sheet_url (str): The full URL of the Google Sheets.
 
     Returns:
         str: The extracted spreadsheet ID.
@@ -172,7 +170,7 @@ def create_server(user_id, api_key=None):
         return [
             types.Tool(
                 name="create-sheet",
-                description="Create a new Google Sheet",
+                description="Create a new Google Sheets",
                 inputSchema={"type": "object", "properties": {"title": {"type": "string"}}, "required": ["title"]},
             ),
             types.Tool(
