@@ -87,12 +87,13 @@ pyasn1==0.6.1
     #   rsa
 pyasn1-modules==0.4.1
     # via google-auth
-pydantic==2.10.6
+pydantic==2.7.4
     # via
+    #   -r requirements.in
     #   anthropic
     #   mcp
     #   pydantic-settings
-pydantic-core==2.27.2
+pydantic-core==2.18.4
     # via pydantic
 pydantic-settings==2.8.1
     # via mcp
