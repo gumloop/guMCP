@@ -9,4 +9,4 @@ python-dotenv
 starlette
 uvicorn
 discord.py
-ggl
+gql
