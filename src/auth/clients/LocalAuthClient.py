@@ -85,6 +85,8 @@ class LocalAuthClient(BaseAuthClient[CredentialsT]):
 
         creds_path = os.path.join(service_dir, f"{user_id}_credentials.json")
 
+        print("creds_path:" + creds_path)
+
         if not os.path.exists(creds_path):
             return None
 
