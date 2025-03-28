@@ -1,4 +1,4 @@
-name: "Discord Server"
+name: "Discord GuMCP Server"
 icon: "assets/icon.png"
 description: "Server for interacting with Discord channels, messages, and users"
 documentation_path: "README.md"
