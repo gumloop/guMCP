@@ -16,13 +16,12 @@ anyio==4.9.0
     #   mcp
     #   sse-starlette
     #   starlette
-<<<<<<< HEAD
-=======
 attrs==25.3.0
     # via aiohttp
 backoff==2.2.1
     # via gql
->>>>>>> 723a11f (lienar)
+beautifulsoup4==4.13.3
+    # via -r requirements.in
 beautifulsoup4==4.13.3
     # via -r requirements.in
 cachetools==5.5.2
