@@ -8,3 +8,4 @@ slack-sdk
 python-dotenv
 starlette
 uvicorn
+discord.py

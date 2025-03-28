@@ -105,11 +105,15 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
     max_wait_time = 120
     wait_time = 0
     while not server.auth_code and not server.auth_error and wait_time < max_wait_time:
+        print("SERVER AUTH CODE: ", server.auth_code)
+        print("SERVER AUTH ERROR: ", server.auth_error)
         time.sleep(1)
         wait_time += 1
 
+    # Stop the server - improved shutdown process
     server.shutdown()
-    server_thread.join(timeout=3)
+    server.server_close()  # Add this to close the socket immediately
+    server_thread.join(timeout=5)  # Add timeout to prevent hanging
 
     if server.auth_error:
         logger.error(f"Authentication error: {server.auth_error}")
@@ -120,6 +124,7 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
         raise ValueError("Authentication timed out or was canceled")
 
     # Exchange code for token
+    print("EXCHANGING SERVER AUTH CODE: ", server.auth_code)
     logger.info("Exchanging authorization code for access token...")
     token_request_data = {
         "client_id": client_id,
@@ -129,12 +134,14 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
         "redirect_uri": redirect_uri,
     }
 
+    print("TOKEN REQUEST DATA: ", token_request_data)
     token_response = requests.post(DISCORD_OAUTH_TOKEN_URL, data=token_request_data)
+    print("TOKEN RESPONSE: ", token_response)
     if not token_response.ok:
         error_message = token_response.text
         logger.error(f"Token exchange failed: {error_message}")
         raise ValueError(f"Token exchange failed: {error_message}")
-        
+
     token_data = token_response.json()
 
     # Add expiration timestamp
@@ -167,30 +174,34 @@ async def get_credentials(user_id, service_name, api_key=None):
         raise ValueError(error_str)
 
     # Check if token needs refresh
-    if "refresh_token" in token and "expires_at" in token and time.time() > token["expires_at"]:
+    if (
+        "refresh_token" in token
+        and "expires_at" in token
+        and time.time() > token["expires_at"]
+    ):
         try:
             # Get OAuth config
             oauth_config = auth_client.get_oauth_config(service_name)
             client_id = oauth_config.get("client_id")
             client_secret = oauth_config.get("client_secret")
-            
+
             # Refresh the token
             refresh_data = {
                 "client_id": client_id,
                 "client_secret": client_secret,
                 "grant_type": "refresh_token",
-                "refresh_token": token["refresh_token"]
+                "refresh_token": token["refresh_token"],
             }
-            
+
             refresh_response = requests.post(DISCORD_OAUTH_TOKEN_URL, data=refresh_data)
-            
+
             if refresh_response.ok:
                 new_token = refresh_response.json()
-                
+
                 # Add expires_at if not present
                 if "expires_in" in new_token:
                     new_token["expires_at"] = time.time() + new_token["expires_in"]
-                
+
                 # Save the refreshed token
                 auth_client.save_user_credentials(service_name, user_id, new_token)
                 return new_token
