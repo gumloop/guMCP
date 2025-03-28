@@ -11,10 +11,18 @@ anthropic==0.49.0
 anyio==4.9.0
     # via
     #   anthropic
+    #   gql
     #   httpx
     #   mcp
     #   sse-starlette
     #   starlette
+<<<<<<< HEAD
+=======
+attrs==25.3.0
+    # via aiohttp
+backoff==2.2.1
+    # via gql
+>>>>>>> 723a11f (lienar)
 cachetools==5.5.2
     # via google-auth
 certifi==2025.1.31
@@ -47,6 +55,10 @@ google-auth-oauthlib==1.2.1
     # via -r requirements.in
 googleapis-common-protos==1.69.2
     # via google-api-core
+gql==3.5.2
+    # via -r requirements.in
+graphql-core==3.2.4
+    # via gql
 h11==0.14.0
     # via
     #   httpcore
@@ -137,3 +149,10 @@ uvicorn==0.34.0
     # via
     #   -r requirements.in
     #   mcp
+<<<<<<< HEAD
+=======
+yarl==1.18.3
+    # via
+    #   aiohttp
+    #   gql
+>>>>>>> 723a11f (lienar)
