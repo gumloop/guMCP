@@ -1,4 +1,4 @@
-name: "Google Drive Server"
+name: "Google Drive GuMCP Server"
 icon: "assets/icon.png"
 description: "Server for interacting with Google Drive files and documents"
 documentation_path: "README.md"
