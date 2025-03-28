@@ -1,0 +1,9 @@
+name: "Outlook GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for reading and sending emails through Microsoft Outlook"
+documentation_path: "README.md"
+tools:
+  - name: "read_emails"
+    description: "Read emails from Outlook. Fetches emails based on specified filters."
+  - name: "send_email"
+    description: "Send an email using Outlook"

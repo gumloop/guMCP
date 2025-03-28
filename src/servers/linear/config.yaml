@@ -1,0 +1,11 @@
+name: "Linear GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for interacting with Linear issue tracking and project management"
+documentation_path: "README.md"
+tools:
+  - name: "search_issues"
+    description: "Search for issues in Linear"
+  - name: "create_issue"
+    description: "Create a new issue in Linear"
+  - name: "update_issue"
+    description: "Update an existing issue in Linear" 

@@ -1,0 +1,13 @@
+name: "Google Docs GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for creating and managing Google Docs documents"
+documentation_path: "README.md"
+tools:
+  - name: "search_docs"
+    description: "Search for Google Docs in Drive"
+  - name: "create_doc"
+    description: "Create a new Google Doc"
+  - name: "append_to_doc"
+    description: "Append content to an existing Google Doc"
+  - name: "update_doc"
+    description: "Update content in an existing Google Doc"

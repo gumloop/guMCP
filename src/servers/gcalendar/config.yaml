@@ -1,0 +1,11 @@
+name: "Google Calendar GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for interacting with Google Calendar events and schedules"
+documentation_path: "README.md"
+tools:
+  - name: "list_events"
+    description: "List events from Google Calendar for a specified time range"
+  - name: "create_event"
+    description: "Create a new event in Google Calendar"
+  - name: "update_event"
+    description: "Update an existing event in Google Calendar"
