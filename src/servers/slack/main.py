@@ -74,6 +74,79 @@ def format_message(message):
     return f"[{formatted_time}] {user}: {text}"
 
 
+async def get_channel_id(slack_client, server, channel_name):
+    """Helper function to get channel ID from channel name with pagination support"""
+    # Create a channel name to ID map if it doesn't exist
+    if not hasattr(server, "channel_name_to_id_map"):
+        server.channel_name_to_id_map = {}
+
+    # Check if we already have this channel in our map
+    if channel_name in server.channel_name_to_id_map:
+        return server.channel_name_to_id_map[channel_name]
+
+    # Look up channel ID with pagination
+    cursor = None
+    while True:
+        pagination_params = {
+            "types": "public_channel,private_channel",
+            "limit": 200,
+        }
+        if cursor:
+            pagination_params["cursor"] = cursor
+
+        response = slack_client.conversations_list(**pagination_params)
+
+        # Update our channel map with all channels in this batch
+        for ch in response["channels"]:
+            server.channel_name_to_id_map[ch["name"]] = ch["id"]
+            if ch["name"] == channel_name:
+                return ch["id"]
+
+        # Check if there are more channels to fetch
+        cursor = response.get("response_metadata", {}).get("next_cursor")
+        if not cursor:
+            break
+
+    return None
+
+
+async def get_user_id(slack_client, server, user_name):
+    """Helper function to get user ID from username with pagination support"""
+    # Create a user name to ID map if it doesn't exist
+    if not hasattr(server, "user_name_to_id_map"):
+        server.user_name_to_id_map = {}
+
+    # Check if we already have this user in our map
+    if user_name in server.user_name_to_id_map:
+        return server.user_name_to_id_map[user_name]
+
+    # Look up user ID with pagination
+    cursor = None
+    while True:
+        pagination_params = {"limit": 200}
+        if cursor:
+            pagination_params["cursor"] = cursor
+
+        response = slack_client.users_list(**pagination_params)
+
+        # Update our user map with all users in this batch
+        for user in response["members"]:
+            if user.get("name"):
+                server.user_name_to_id_map[user.get("name")] = user["id"]
+            if user.get("real_name"):
+                server.user_name_to_id_map[user.get("real_name")] = user["id"]
+
+            if user.get("name") == user_name or user.get("real_name") == user_name:
+                return user["id"]
+
+        # Check if there are more users to fetch
+        cursor = response.get("response_metadata", {}).get("next_cursor")
+        if not cursor:
+            break
+
+    return None
+
+
 def create_server(user_id, api_key=None):
     """Create a new server instance with optional user context"""
     server = Server("slack-server")
@@ -263,20 +336,16 @@ def create_server(user_id, api_key=None):
                 # Handle channel names (starting with #)
                 if channel.startswith("#"):
                     channel_name = channel[1:]
-                    # Look up channel ID
-                    response = slack_client.conversations_list(
-                        types="public_channel,private_channel"
+                    channel_id = await get_channel_id(
+                        slack_client, server, channel_name
                     )
-                    for ch in response["channels"]:
-                        if ch["name"] == channel_name:
-                            channel = ch["id"]
-                            break
-                    else:
+                    if channel_id is None:
                         return [
                             TextContent(
                                 type="text", text=f"Channel {channel} not found"
                             )
                         ]
+                    channel = channel_id
 
                 # Get messages
                 response = slack_client.conversations_history(
@@ -305,41 +374,28 @@ def create_server(user_id, api_key=None):
                 # Handle channel or user names
                 if channel.startswith("#"):
                     channel_name = channel[1:]
-                    # Look up channel ID
-                    response = slack_client.conversations_list(
-                        types="public_channel,private_channel"
+                    channel_id = await get_channel_id(
+                        slack_client, server, channel_name
                     )
-                    for ch in response["channels"]:
-                        if ch["name"] == channel_name:
-                            channel = ch["id"]
-                            break
-                    else:
+                    if channel_id is None:
                         return [
                             TextContent(
                                 type="text", text=f"Channel {channel} not found"
                             )
                         ]
+                    channel = channel_id
 
-                # Handle direct messages
                 elif channel.startswith("@"):
                     user_name = channel[1:]
-                    # Look up user ID
-                    response = slack_client.users_list()
-                    for user in response["members"]:
-                        if (
-                            user.get("name") == user_name
-                            or user.get("real_name") == user_name
-                        ):
-                            # Open DM channel
-                            dm_response = slack_client.conversations_open(
-                                users=user["id"]
-                            )
-                            channel = dm_response["channel"]["id"]
-                            break
-                    else:
+                    user_id = await get_user_id(slack_client, server, user_name)
+                    if user_id is None:
                         return [
                             TextContent(type="text", text=f"User {channel} not found")
                         ]
+
+                    # Open DM channel
+                    dm_response = slack_client.conversations_open(users=user_id)
+                    channel = dm_response["channel"]["id"]
 
                 # Send the message
                 message_args = {"channel": channel, "text": text}
@@ -370,20 +426,16 @@ def create_server(user_id, api_key=None):
                 # Handle channel names
                 if channel.startswith("#"):
                     channel_name = channel[1:]
-                    # Look up channel ID
-                    response = slack_client.conversations_list(
-                        types="public_channel,private_channel"
+                    channel_id = await get_channel_id(
+                        slack_client, server, channel_name
                     )
-                    for ch in response["channels"]:
-                        if ch["name"] == channel_name:
-                            channel = ch["id"]
-                            break
-                    else:
+                    if channel_id is None:
                         return [
                             TextContent(
                                 type="text", text=f"Channel {channel} not found"
                             )
                         ]
+                    channel = channel_id
 
                 # Ensure blocks is valid JSON if it's a string
                 if isinstance(blocks, str):
