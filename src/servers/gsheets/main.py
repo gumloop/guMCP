@@ -32,6 +32,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 import re
 
+from src.utils.google.util import authenticate_and_save_credentials
 from src.auth.factory import create_auth_client
 
 # Configure logging
@@ -59,40 +60,6 @@ def extract_spreadsheet_id(sheet_url: str) -> str:
     if match:
         return match.group(1)
     raise ValueError("Invalid Google Sheets URL: could not extract spreadsheetId")
-
-
-
-def authenticate_and_save_credentials(user_id):
-    """Authenticate with Google and save credentials
-
-    Args:
-        user_id (str): The identifier for the user who will be authenticated.
-
-    Returns:
-        Credentials: The Google OAuth2 credentials for the provided user.
-    """
-    logger.info(f"Launching auth flow for user {user_id}...")
-
-    # Get auth client
-    auth_client = create_auth_client()
-
-    # Get OAuth config
-    oauth_config = auth_client.get_oauth_config(SERVICE_NAME)
-
-    # Create and run flow
-    flow = InstalledAppFlow.from_client_config(oauth_config, SCOPES)
-    credentials = flow.run_local_server(
-        port=8080,
-        redirect_uri_trailing_slash=False,
-        prompt="consent",  # Forces refresh token
-    )
-
-    # Save credentials using auth client
-    auth_client.save_user_credentials(SERVICE_NAME, user_id, credentials)
-
-    logger.info(f"Credentials saved for user {user_id}. You can now run the server.")
-    return credentials
-
 
 async def get_credentials(user_id, api_key=None):
     """Get credentials for the specified user
@@ -394,7 +361,7 @@ if __name__ == "__main__":
     if sys.argv[1].lower() == "auth":
         user_id = "local"
         # Run authentication flow
-        authenticate_and_save_credentials(user_id)
+        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
