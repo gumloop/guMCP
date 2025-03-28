@@ -102,7 +102,6 @@ def process_airtable_token_response(token_response: Dict[str, Any]) -> Dict[str,
 
 async def create_airtable_session(user_id, api_key=None):
     """Create a new aiohttp session for Airtable API requests"""
-    logging.info("GETTING CREDENTIALS")
     access_token = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
     session = aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"})
     return session
