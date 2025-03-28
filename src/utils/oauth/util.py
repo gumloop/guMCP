@@ -146,7 +146,7 @@ def run_oauth_flow(
     )
 
     response = requests.post(token_url, data=token_data)
-    if response.status_code != 200:
+    if not str(response.status_code).startswith("2"):
         raise ValueError(
             f"Failed to exchange authorization code for tokens: {response.text}"
         )

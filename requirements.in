@@ -6,6 +6,7 @@ google-auth-httplib2
 google-auth-oauthlib
 mcp==1.4.1
 slack-sdk
+supabase
 pydantic==2.7.4
 python-dotenv
 starlette
