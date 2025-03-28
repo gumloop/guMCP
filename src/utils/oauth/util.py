@@ -210,7 +210,11 @@ async def refresh_token_if_needed(
         handle_missing_credentials()
 
     # Check if the token has an expiration time (some don't)
-    if "expires_at" in credentials_data:
+    if (
+        "expires_at" in credentials_data
+        # Non-local OAuth clients expected to handle refreshing in get_user_credentials()
+        and os.getenv("ENVIRONMENT", "local") == "local"
+    ):
         # Check if we need to refresh the token
         expires_at = credentials_data.get("expires_at", 0)
 
