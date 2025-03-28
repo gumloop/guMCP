@@ -1,5 +1,9 @@
 import os
+import json
 import time
+import base64
+import hashlib
+import secrets
 import logging
 import requests
 import threading
@@ -32,6 +36,16 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         if "code" in query_params:
             self.server.auth_code = query_params["code"][0]
             success_message = "Authentication successful! You can close this window."
+
+            # Parse state if present to extract code_verifier
+            if "state" in query_params:
+                try:
+                    state_json = query_params["state"][0]
+                    state_data = json.loads(state_json)
+                    if "code_verifier" in state_data:
+                        self.server.code_verifier = state_data["code_verifier"]
+                except (json.JSONDecodeError, KeyError) as e:
+                    logger.warning(f"Failed to parse state parameter: {e}")
         elif "error" in query_params:
             self.server.auth_error = query_params["error"][0]
             success_message = f"Authentication error: {self.server.auth_error}. You can close this window."
@@ -67,6 +81,7 @@ def run_oauth_flow(
     auth_params_builder: Callable[[Dict[str, Any], str, List[str]], Dict[str, str]],
     token_data_builder: Callable[[Dict[str, Any], str, List[str], str], Dict[str, str]],
     process_token_response: Callable[[Dict[str, Any]], Dict[str, Any]] = None,
+    token_header_builder: Callable[[Dict[str, Any]], Dict[str, str]] = None,
     port: int = 8080,
 ) -> Dict[str, Any]:
     """
@@ -81,6 +96,7 @@ def run_oauth_flow(
         auth_params_builder: Function to build auth URL parameters
         token_data_builder: Function to build token request data
         process_token_response: Optional function to process token response
+        token_header_builder: Optional function to build token request headers
         port: Port to use for local callback server
 
     Returns:
@@ -140,12 +156,20 @@ def run_oauth_flow(
         logger.error("No authentication code received")
         raise ValueError("Authentication timed out or was canceled")
 
+    if hasattr(server, "code_verifier"):
+        oauth_config["code_verifier"] = server.code_verifier
+
     # Exchange the authorization code for tokens
     token_data = token_data_builder(
-        oauth_config, redirect_uri, scopes, server.auth_code
+        oauth_config,
+        redirect_uri,
+        scopes,
+        server.auth_code,
     )
 
-    response = requests.post(token_url, data=token_data)
+    # Add headers if header builder is provided
+    headers = token_header_builder(oauth_config) if token_header_builder else None
+    response = requests.post(token_url, data=token_data, headers=headers)
     if response.status_code != 200:
         raise ValueError(
             f"Failed to exchange authorization code for tokens: {response.text}"
@@ -175,6 +199,7 @@ async def refresh_token_if_needed(
     token_url: str,
     token_data_builder: Callable[[Dict[str, Any], str, Dict[str, Any]], Dict[str, str]],
     process_token_response: Callable[[Dict[str, Any]], Dict[str, Any]] = None,
+    token_header_builder: Callable[[Dict[str, Any]], Dict[str, str]] = None,
     api_key: Optional[str] = None,
 ) -> str:
     """
@@ -186,6 +211,7 @@ async def refresh_token_if_needed(
         token_url: URL for token refresh
         token_data_builder: Function to build token refresh request data
         process_token_response: Optional function to process token response
+        token_header_builder: Optional function to build token request headers
         api_key: Optional API key
 
     Returns:
@@ -232,7 +258,11 @@ async def refresh_token_if_needed(
                 oauth_config, refresh_token, credentials_data
             )
 
-            response = requests.post(token_url, data=token_data)
+            # Add headers if header builder is provided
+            headers = (
+                token_header_builder(oauth_config) if token_header_builder else None
+            )
+            response = requests.post(token_url, data=token_data, headers=headers)
             if response.status_code != 200:
                 logger.error(f"Token refresh failed: {response.text}")
                 handle_missing_credentials()
@@ -258,3 +288,31 @@ async def refresh_token_if_needed(
             return new_credentials.get("access_token")
 
     return credentials_data.get("access_token")
+
+
+def generate_code_verifier() -> str:
+    """Generate a code verifier for PKCE.
+
+    Creates a cryptographically secure random string between 43-128 characters
+    using only a-z, A-Z, 0-9, ".", "-", and "_" characters.
+    """
+    # Generate a random string of 64 characters (reasonable middle value in the 43-128 range)
+    allowed_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._"
+    code_verifier = "".join(secrets.choice(allowed_chars) for _ in range(64))
+    return code_verifier
+
+
+def generate_code_challenge(code_verifier: str) -> str:
+    """Generate a code challenge from the code verifier.
+
+    Creates a base64 url encoded SHA-256 hash of the code verifier
+    with padding characters removed.
+    """
+    # Create SHA-256 hash
+    code_challenge_bytes = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+
+    # Convert to base64 and make URL safe
+    code_challenge = base64.urlsafe_b64encode(code_challenge_bytes).decode("utf-8")
+
+    # Remove padding characters (=)
+    return code_challenge.replace("=", "")
