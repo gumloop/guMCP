@@ -1,0 +1,13 @@
+name: "X (Twitter) GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for interacting with X (Twitter) timelines, tweets, and user data"
+documentation_path: "README.md"
+tools:
+  - name: "read_home_timeline"
+    description: "Read tweets from your X home timeline"
+  - name: "read_user_tweets"
+    description: "Read tweets from a specific X user"
+  - name: "post_tweet"
+    description: "Post a new tweet to X"
+  - name: "get_tweet"
+    description: "Get a specific tweet by ID"
