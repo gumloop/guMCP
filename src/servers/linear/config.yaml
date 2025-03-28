@@ -1,0 +1,11 @@
+name: "Linear GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for interacting with Linear issues, teams, and tasks"
+documentation_path: "README.md"
+tools:
+  - name: "create_issue"
+    description: "Create a new issue in Linear"
+  - name: "search_issues"
+    description: "Search for issues in Linear"
+  - name: "list_teams"
+    description: "List available teams in Linear workspace"
