@@ -8,7 +8,6 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-
 import logging
 from pathlib import Path
 import json
@@ -21,15 +20,15 @@ import discord
 from discord.ext import commands
 import asyncio
 
-from src.auth.factory import create_auth_client
+from utils.discord.util import authenticate_and_save_credentials, get_credentials
 
+SERVICE_NAME = Path(__file__).parent.name
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("discord-server")
+logger = logging.getLogger(SERVICE_NAME)
 
-SERVICE_NAME = Path(__file__).parent.name
 
 # Discord bot configuration
 intents = discord.Intents.default()
@@ -39,65 +38,14 @@ intents.members = True
 # Global bot instance
 bot = None
 
+# Required OAuth2 scopes for Discord
+SCOPES = [
+    "bot",
+    "identify",
+    "guilds",
+    "messages.read"
 
-def validate_credentials(user_id):
-    """Validate Discord credentials from existing auth file"""
-    logger.info(f"Validating credentials for user {user_id}...")
-
-    auth_client = create_auth_client()
-    
-    credentials = auth_client.get_user_credentials(SERVICE_NAME, user_id)
-    
-    if not credentials or "token" not in credentials:
-        raise ValueError(f"Discord bot token not found for user {user_id}. Please create the required auth file first.")
-    
-    token = credentials["token"]
-    
-    # Validate token by testing connection
-    test_bot = commands.Bot(command_prefix="!", intents=intents)
-    
-    try:
-        loop = asyncio.get_event_loop()
-        # Just connect and disconnect to test the token
-        task = loop.create_task(test_bot.start(token))
-        loop.run_until_complete(asyncio.sleep(5))  # Give it time to connect
-        test_bot.close()
-        loop.run_until_complete(test_bot.close())
-    except Exception as e:
-        logger.error(f"Failed to authenticate with Discord: {e}")
-        raise ValueError("Invalid Discord token")
-    
-    logger.info(f"Credentials validated for user {user_id}. You can now run the server.")
-    return credentials
-
-
-async def get_credentials(user_id, api_key=None):
-    """Get credentials for the specified user"""
-    auth_client = create_auth_client(api_key=api_key)
-
-    credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
-
-    def handle_missing_credentials():
-        error_str = f"Credentials not found for user {user_id}."
-        if os.environ.get("ENVIRONMENT", "local") == "local":
-            error_str += " Please run with 'auth' argument first."
-        logging.error(error_str)
-        raise ValueError(f"Credentials not found for user {user_id}")
-
-    if not credentials_data:
-        handle_missing_credentials()
-
-    # First try the standard token key
-    token = credentials_data.get("token")
-    if token:
-        return token
-        
-    # If the auth client returns access_token instead (Gumloop format)
-    token = credentials_data.get("access_token")
-    if token:
-        return token
-        
-    handle_missing_credentials()
+]
 
 
 async def create_discord_bot(user_id, api_key=None):
@@ -107,9 +55,21 @@ async def create_discord_bot(user_id, api_key=None):
     if bot is not None:
         return bot
         
-    token = await get_credentials(user_id, api_key=api_key)
+    credentials = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
     
+    # Extract the access token from credentials
+    if not credentials or "access_token" not in credentials:
+        raise ValueError(f"Invalid credentials format for user {user_id}")
+    
+    # Use the OAuth access token
+    token = credentials["access_token"]
+    logger.info(f"Using OAuth access token for Discord API access")
+    
+    # Make sure intents are properly configured
     bot = commands.Bot(command_prefix="!", intents=intents)
+    
+    # Log the token type for debugging (not the actual token)
+    logger.info(f"Got token of type: {type(token).__name__}, length: {len(token) if isinstance(token, str) else 'not a string'}")
     
     return bot
 
@@ -133,7 +93,26 @@ def create_server(user_id, api_key=None):
                 logger.info(f"Bot logged in as {bot.user.name}")
                 server.bot_ready.set()
             
-            await bot.start(await get_credentials(server.user_id, api_key=server.api_key))
+            # Get credentials again to ensure we have the latest token
+            credentials = await get_credentials(server.user_id, SERVICE_NAME, api_key=server.api_key)
+            
+            # Handle different token formats
+            if isinstance(credentials, dict) and "access_token" in credentials:
+                token = credentials["access_token"]
+                logger.info(f"Using access_token from credentials dict")
+            elif isinstance(credentials, str):
+                token = credentials
+                logger.info(f"Using credentials directly as token string")
+            else:
+                token_str = str(credentials)
+                logger.info(f"Using credentials converted to string: {token_str[:10]}...")
+                token = token_str
+            
+            try:
+                await bot.start(token)
+            except Exception as e:
+                logger.error(f"Failed to start bot with token: {e}")
+                raise
         except Exception as e:
             logger.error(f"Error in bot task: {e}")
             raise
@@ -865,8 +844,14 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
         user_id = "local"
-        # Run authentication flow
-        validate_credentials(user_id)
+        # Run authentication flow with OAuth
+        try:
+            token_data = authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
+            print(f"Authentication successful! Token type: {token_data.get('token_type', 'unknown')}")
+            print(f"You can now run the Discord server.")
+        except Exception as e:
+            print(f"Authentication failed: {e}")
+            sys.exit(1)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
