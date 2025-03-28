@@ -179,7 +179,7 @@ class RemoteMCPTestClient:
                         # No more callbacks
                         break
                     except Exception as e:
-                        print(f"Error during cleanup: {e}")
+                        print(f"\nError during cleanup: {e}")
         except Exception as e:
             print(f"Cleanup error: {e}")
 

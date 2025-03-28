@@ -4,6 +4,7 @@ google-auth
 google-auth-httplib2
 google-auth-oauthlib
 mcp==1.4.1
+slack-sdk
 python-dotenv
 starlette
 uvicorn
