@@ -8,7 +8,6 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-
 import logging
 from pathlib import Path
 import json
