@@ -1,0 +1,11 @@
+name: "Gmail GuMCP Server"
+icon: "assets/icon.png"
+description: "Server for interacting with Gmail emails and messages"
+documentation_path: "README.md"
+tools:
+  - name: "read_emails"
+    description: "Search and read emails in Gmail"
+  - name: "send_email"
+    description: "Send an email through Gmail"
+  - name: "update_email"
+    description: "Update email labels (mark as read/unread, move to folders)"
