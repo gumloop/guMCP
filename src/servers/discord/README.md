@@ -1,4 +1,5 @@
 # Discord Server
+
 GuMCP server implementation for interacting with Discord.
 
 ### Prerequisites
@@ -10,14 +11,16 @@ GuMCP server implementation for interacting with Discord.
 ### Authentication
 
 Authentication uses OAuth2 and requires a configuration file:
+
 ```
 local_auth/oauth_configs/discord/oauth.json
 ```
+
 ```json
 {
   "client_id": "YOUR_DISCORD_APP_CLIENT_ID",
   "client_secret": "YOUR_DISCORD_APP_CLIENT_SECRET",
-  "redirect_uri": "http://localhost:8080/callback"
+  "redirect_uri": "http://localhost:8080"
 }
 ```
 
@@ -26,7 +29,7 @@ local_auth/oauth_configs/discord/oauth.json
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
 2. Create a new application or select an existing one
 3. Under the "OAuth2" section:
-   - Add `http://localhost:8080/callback` as a redirect URI
+   - Add `http://localhost:8080` as a redirect URI
    - Save changes
 4. Note your Client ID and Client Secret
 5. Under "Bot" section:
@@ -40,11 +43,13 @@ local_auth/oauth_configs/discord/oauth.json
 #### Running Authentication
 
 To set up authentication:
+
 ```bash
 python src/servers/discord/main.py auth
 ```
 
 This will:
+
 1. Open your browser to the Discord authorization page
 2. Ask you to authorize your application
 3. Redirect back to localhost to complete authentication

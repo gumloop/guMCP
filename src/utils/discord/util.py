@@ -6,12 +6,16 @@ import threading
 import webbrowser
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Dict, List, Any
 
 from src.auth.factory import create_auth_client
+from src.utils.oauth.util import run_oauth_flow, refresh_token_if_needed
 
 
 DISCORD_OAUTH_AUTHORIZE_URL = "https://discord.com/api/oauth2/authorize"
 DISCORD_OAUTH_TOKEN_URL = "https://discord.com/api/oauth2/token"
+
+logger = logging.getLogger(__name__)
 
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
@@ -58,146 +62,64 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(response.encode("utf-8"))
 
 
-def authenticate_and_save_credentials(user_id, service_name, scopes):
-    """Authenticate with Discord and save credentials"""
-    logger = logging.getLogger(service_name)
+def build_discord_auth_params(
+    oauth_config: Dict[str, Any], redirect_uri: str, scopes: List[str]
+) -> Dict[str, str]:
+    """Build the authorization parameters for Discord OAuth."""
+    return {
+        "client_id": oauth_config.get("client_id"),
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": " ".join(scopes),
+    }
 
-    logger.info(f"Launching auth flow for user {user_id}...")
 
-    # Get auth client
-    auth_client = create_auth_client()
-
-    # Get OAuth config
-    oauth_config = auth_client.get_oauth_config(service_name)
-
-    client_id = oauth_config.get("client_id")
-    client_secret = oauth_config.get("client_secret")
-    redirect_uri = oauth_config.get("redirect_uri", "http://localhost:8080/callback")
-
-    if not client_id or not client_secret:
-        raise ValueError("Missing client_id or client_secret in OAuth config")
-
-    # Create local server for callback
-    server = HTTPServer(("localhost", 8080), OAuthCallbackHandler)
-    server.auth_code = None
-    server.auth_error = None
-
-    # Start server in a thread
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.daemon = True
-    server_thread.start()
-
-    # Build authorization URL
-    scope_string = " ".join(scopes)
-    auth_url = (
-        f"{DISCORD_OAUTH_AUTHORIZE_URL}"
-        f"?client_id={client_id}"
-        f"&redirect_uri={redirect_uri}"
-        f"&response_type=code"
-        f"&scope={urllib.parse.quote(scope_string)}"
-    )
-
-    # Open browser for authentication
-    logger.info(f"Opening browser for OAuth flow...")
-    webbrowser.open(auth_url)
-
-    # Wait for callback (timeout after 120 seconds)
-    max_wait_time = 120
-    wait_time = 0
-    while not server.auth_code and not server.auth_error and wait_time < max_wait_time:
-        time.sleep(1)
-        wait_time += 1
-
-    server.shutdown()
-    server_thread.join(timeout=3)
-
-    if server.auth_error:
-        logger.error(f"Authentication error: {server.auth_error}")
-        raise ValueError(f"Authentication failed: {server.auth_error}")
-
-    if not server.auth_code:
-        logger.error("No authentication code received")
-        raise ValueError("Authentication timed out or was canceled")
-
-    # Exchange code for token
-    logger.info("Exchanging authorization code for access token...")
-    token_request_data = {
-        "client_id": client_id,
-        "client_secret": client_secret,
+def build_discord_token_data(
+    oauth_config: Dict[str, Any], redirect_uri: str, scopes: List[str], auth_code: str
+) -> Dict[str, str]:
+    """Build the token request data for Discord OAuth."""
+    return {
+        "client_id": oauth_config.get("client_id"),
+        "client_secret": oauth_config.get("client_secret"),
         "grant_type": "authorization_code",
-        "code": server.auth_code,
+        "code": auth_code,
         "redirect_uri": redirect_uri,
     }
 
-    token_response = requests.post(DISCORD_OAUTH_TOKEN_URL, data=token_request_data)
-    if not token_response.ok:
-        error_message = token_response.text
-        logger.error(f"Token exchange failed: {error_message}")
-        raise ValueError(f"Token exchange failed: {error_message}")
-        
-    token_data = token_response.json()
 
-    # Add expiration timestamp
-    if "expires_in" in token_data:
-        token_data["expires_at"] = time.time() + token_data["expires_in"]
-
-    logger.info(f"Token data: {token_data}")
-    # Save credentials using auth client
-    auth_client.save_user_credentials(service_name, user_id, token_data)
-
-    logger.info(f"Credentials saved for user {user_id}. You can now run the server.")
-    return token_data
+def build_discord_refresh_data(
+    oauth_config: Dict[str, Any], refresh_token: str, credentials: Dict[str, Any]
+) -> Dict[str, str]:
+    """Build the token refresh data for Discord OAuth."""
+    return {
+        "client_id": oauth_config.get("client_id"),
+        "client_secret": oauth_config.get("client_secret"),
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+    }
 
 
-async def get_credentials(user_id, service_name, api_key=None):
-    """Get credentials for the specified user"""
-    logger = logging.getLogger(service_name)
+def authenticate_and_save_credentials(
+    user_id: str, service_name: str, scopes: List[str]
+) -> Dict[str, Any]:
+    """Authenticate with Discord and save credentials"""
+    return run_oauth_flow(
+        service_name=service_name,
+        user_id=user_id,
+        scopes=scopes,
+        auth_url_base=DISCORD_OAUTH_AUTHORIZE_URL,
+        token_url=DISCORD_OAUTH_TOKEN_URL,
+        auth_params_builder=build_discord_auth_params,
+        token_data_builder=build_discord_token_data,
+    )
 
-    # Get auth client
-    auth_client = create_auth_client(api_key=api_key)
 
-    # Get credentials for this user
-    token = auth_client.get_user_credentials(service_name, user_id)
-
-    if not token:
-        error_str = f"Credentials not found for user {user_id}."
-        if os.environ.get("ENVIRONMENT", "local") == "local":
-            error_str += " Please run with 'auth' argument first."
-        logging.error(error_str)
-        raise ValueError(error_str)
-
-    # Check if token needs refresh
-    if "refresh_token" in token and "expires_at" in token and time.time() > token["expires_at"]:
-        try:
-            # Get OAuth config
-            oauth_config = auth_client.get_oauth_config(service_name)
-            client_id = oauth_config.get("client_id")
-            client_secret = oauth_config.get("client_secret")
-            
-            # Refresh the token
-            refresh_data = {
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "grant_type": "refresh_token",
-                "refresh_token": token["refresh_token"]
-            }
-            
-            refresh_response = requests.post(DISCORD_OAUTH_TOKEN_URL, data=refresh_data)
-            
-            if refresh_response.ok:
-                new_token = refresh_response.json()
-                
-                # Add expires_at if not present
-                if "expires_in" in new_token:
-                    new_token["expires_at"] = time.time() + new_token["expires_in"]
-                
-                # Save the refreshed token
-                auth_client.save_user_credentials(service_name, user_id, new_token)
-                return new_token
-            else:
-                logger.error(f"Failed to refresh token: {refresh_response.text}")
-        except Exception as e:
-            logger.error(f"Failed to refresh token: {e}")
-            # Continue with existing token
-
-    return token
+async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
+    """Get Discord credentials"""
+    return await refresh_token_if_needed(
+        user_id=user_id,
+        service_name=service_name,
+        token_url=DISCORD_OAUTH_TOKEN_URL,
+        token_data_builder=build_discord_refresh_data,
+        api_key=api_key,
+    )
