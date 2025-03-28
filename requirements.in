@@ -9,4 +9,5 @@ slack-sdk
 pydantic==2.7.4
 python-dotenv
 starlette
+tweepy
 uvicorn
