@@ -30,7 +30,6 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
 
         if "code" in query_params:
             self.server.auth_code = query_params["code"][0]
-            print(f"RECEIVED AUTH CODE {self.server.auth_code}")
             success_message = "Authentication successful! You can close this window."
         elif "error" in query_params:
             self.server.auth_error = query_params["error"][0]
@@ -105,8 +104,6 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
     max_wait_time = 120
     wait_time = 0
     while not server.auth_code and not server.auth_error and wait_time < max_wait_time:
-        print("SERVER AUTH CODE: ", server.auth_code)
-        print("SERVER AUTH ERROR: ", server.auth_error)
         time.sleep(1)
         wait_time += 1
 
@@ -124,7 +121,6 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
         raise ValueError("Authentication timed out or was canceled")
 
     # Exchange code for token
-    print("EXCHANGING SERVER AUTH CODE: ", server.auth_code)
     logger.info("Exchanging authorization code for access token...")
     token_request_data = {
         "client_id": client_id,
@@ -134,9 +130,7 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
         "redirect_uri": redirect_uri,
     }
 
-    print("TOKEN REQUEST DATA: ", token_request_data)
     token_response = requests.post(DISCORD_OAUTH_TOKEN_URL, data=token_request_data)
-    print("TOKEN RESPONSE: ", token_response)
     if not token_response.ok:
         error_message = token_response.text
         logger.error(f"Token exchange failed: {error_message}")
@@ -148,7 +142,6 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
     if "expires_in" in token_data:
         token_data["expires_at"] = time.time() + token_data["expires_in"]
 
-    logger.info(f"Token data: {token_data}")
     # Save credentials using auth client
     auth_client.save_user_credentials(service_name, user_id, token_data)
 
