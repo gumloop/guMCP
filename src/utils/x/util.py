@@ -7,17 +7,13 @@ import webbrowser
 import urllib.parse
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Dict, Any, Optional, List
-
-from gql import Client, gql
-from gql.transport.requests import RequestsHTTPTransport
 
 from src.auth.factory import create_auth_client
 
 
-LINEAR_OAUTH_AUTHORIZE_URL = "https://linear.app/oauth/authorize"
-LINEAR_OAUTH_TOKEN_URL = "https://api.linear.app/oauth/token"
-LINEAR_API_GRAPHQL = "https://api.linear.app/graphql"
+X_OAUTH_AUTHORIZE_URL = "https://x.com/i/oauth2/authorize"
+X_OAUTH_TOKEN_URL = "https://api.x.com/2/oauth2/token"
+X_API_BASE = "https://api.x.com/2/"
 
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
@@ -54,7 +50,7 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         self.end_headers()
         response = f"""
         <html>
-        <head><title>Linear Authentication</title></head>
+        <head><title>X Authentication</title></head>
         <body>
         <h1>{success_message}</h1>
         <script>
@@ -68,29 +64,8 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(response.encode("utf-8"))
 
 
-class LinearClient:
-    """Client for interacting with Linear API"""
-
-    def __init__(self, access_token: str):
-        self.access_token = access_token
-        self.client = self._create_client()
-
-    def _create_client(self) -> Client:
-        """Create a GQL client for Linear API"""
-        transport = RequestsHTTPTransport(
-            url=LINEAR_API_GRAPHQL,
-            headers={"Authorization": f"Bearer {self.access_token}"},
-            use_json=True,
-        )
-        return Client(transport=transport, fetch_schema_from_transport=True)
-
-    def execute(self, query: str, variable_values: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Execute a GraphQL query against Linear API"""
-        return self.client.execute(gql(query), variable_values=variable_values)
-
-
 def authenticate_and_save_credentials(user_id, service_name, scopes):
-    """Authenticate with Linear and save credentials"""
+    """Authenticate with X and save credentials"""
     logger = logging.getLogger(service_name)
 
     logger.info(f"Launching auth flow for user {user_id}...")
@@ -119,14 +94,20 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
 
     # Build authorization URL
     scope_string = " ".join(scopes)
-    redirect_uri = oauth_config.get("redirect_uri", "http://localhost:8080/callback")
+    redirect_uri = oauth_config.get("redirect_uri")
+    # X uses PKCE for OAuth 2.0
+    code_verifier = os.urandom(32).hex()
+    code_challenge = code_verifier  # In production, this should be hashed
 
     auth_url = (
-        f"{LINEAR_OAUTH_AUTHORIZE_URL}"
+        f"{X_OAUTH_AUTHORIZE_URL}"
         f"?client_id={client_id}"
-        f"&scope={scope_string}"
         f"&redirect_uri={redirect_uri}"
+        f"&scope={scope_string}"
         f"&response_type=code"
+        f"&code_challenge={code_challenge}"
+        f"&code_challenge_method=plain"
+        f"&state=state"
     )
 
     # Open browser for authentication
@@ -159,33 +140,32 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
         "client_secret": client_secret,
         "code": server.auth_code,
         "redirect_uri": redirect_uri,
-        "grant_type": "authorization_code"
+        "grant_type": "authorization_code",
+        "code_verifier": code_verifier,
     }
 
-    token_response = requests.post(LINEAR_OAUTH_TOKEN_URL, data=token_request_data)
-    
-    if not token_response.ok:
-        error_msg = f"Token exchange failed: {token_response.text}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-        
+    token_response = requests.post(X_OAUTH_TOKEN_URL, data=token_request_data)
     token_data = token_response.json()
+
+    if not token_response.ok:
+        logger.error(
+            f"Token exchange failed: {token_data.get('error', 'Unknown error')}"
+        )
+        raise ValueError(
+            f"Token exchange failed: {token_data.get('error', 'Unknown error')}"
+        )
 
     # Extract and prepare credentials
     access_token = token_data.get("access_token")
     refresh_token = token_data.get("refresh_token")
-    
-    if not access_token:
-        logger.error("No access token received")
-        raise ValueError("No access token received in the token response")
 
     # Store credentials
     credentials = {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": token_data.get("token_type", "Bearer"),
-        "scope": token_data.get("scope", scope_string),
-        "expires_in": token_data.get("expires_in")
+        "expires_in": token_data.get("expires_in"),
+        "scope": token_data.get("scope", ""),
     }
 
     # Save credentials using auth client
@@ -195,15 +175,15 @@ def authenticate_and_save_credentials(user_id, service_name, scopes):
     return credentials
 
 
-async def get_linear_client(user_id: str, api_key: Optional[str] = None) -> LinearClient:
-    """Get a Linear client for the specified user"""
-    logger = logging.getLogger("linear")
+async def get_credentials(user_id, service_name, api_key=None):
+    """Get credentials for the specified user"""
+    logger = logging.getLogger(service_name)
 
     # Get auth client
     auth_client = create_auth_client(api_key=api_key)
 
     # Get credentials for this user
-    credentials_data = auth_client.get_user_credentials("linear", user_id)
+    credentials_data = auth_client.get_user_credentials(service_name, user_id)
 
     def handle_missing_credentials():
         error_str = f"Credentials not found for user {user_id}."
@@ -215,9 +195,9 @@ async def get_linear_client(user_id: str, api_key: Optional[str] = None) -> Line
     if not credentials_data:
         handle_missing_credentials()
 
-    # For Linear, we need the access token
+    # For X, we just need the access token
     access_token = credentials_data.get("access_token")
     if access_token:
-        return LinearClient(access_token)
+        return access_token
 
     handle_missing_credentials()
