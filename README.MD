@@ -29,6 +29,8 @@ While many MCP server providers are closed source, and open-source alternatives 
 
 ## Getting Started
 
+[![Watch the video](https://www.gumloop.com/_next/image?url=%2Fimages%2Fmcp%2FGuideVideo.png&w=1920&q=75)](https://vimeo.com/1070438737/8dea56e6a1)
+
 ### Prerequisites
 
 - Python 3.11
