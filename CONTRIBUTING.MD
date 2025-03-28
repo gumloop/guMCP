@@ -17,7 +17,7 @@ To add a new server, create a directory under `src/servers/<server-id>` with a `
 ```yaml
 # Required fields
 name: "Your Server Name"
-icon: "assets/icon.jpg"
+icon: "assets/icon.png"
 description: "A brief description of your server"
 documentation_path: "README.md"
 

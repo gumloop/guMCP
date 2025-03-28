@@ -9,27 +9,20 @@ MCP server implementation for interacting with Discord.
 
 ### Authentication
 
-Three authentication methods are supported:
+Authentication uses a credentials file:
+```
+local_auth/credentials/discord/local_credentials.json
+```
+```json
+{
+  "token": "your_discord_bot_token_here"
+}
+```
 
-1. **Environment variable**:
-   ```bash
-   export DISCORD_BOT_TOKEN=your_token_here
-   ```
-
-2. **OAuth configuration file**:
-   ```
-   local_auth/oauth_configs/discord/oauth.json
-   ```
-   ```json
-   {
-     "token": "your_token_here"
-   }
-   ```
-
-3. **Interactive prompt** (local development only):
-   ```bash
-   python src/servers/discord/main.py auth
-   ```
+To set up and verify authentication, run:
+```bash
+python src/servers/discord/main.py auth
+```
 
 ### Run
 

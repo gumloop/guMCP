@@ -8,7 +8,7 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-import base64
+
 import logging
 from pathlib import Path
 import json
@@ -40,30 +40,18 @@ intents.members = True
 bot = None
 
 
-def authenticate_and_save_credentials(user_id):
-    """Authenticate with Discord and save credentials"""
-    logger.info(f"Launching auth flow for user {user_id}...")
+def validate_credentials(user_id):
+    """Validate Discord credentials from existing auth file"""
+    logger.info(f"Validating credentials for user {user_id}...")
 
-    # Get auth client
     auth_client = create_auth_client()
     
-    # First try to get token from environment variable
-    token = os.environ.get("DISCORD_BOT_TOKEN")
+    credentials = auth_client.get_user_credentials(SERVICE_NAME, user_id)
     
-    if not token:
-        try:
-            # Try to get OAuth config next (for structured configuration)
-            oauth_config = auth_client.get_oauth_config(SERVICE_NAME)
-            token = oauth_config.get("token")
-        except (NotImplementedError, FileNotFoundError):
-            pass
+    if not credentials or "token" not in credentials:
+        raise ValueError(f"Discord bot token not found for user {user_id}. Please create the required auth file first.")
     
-    # If still no token and we're in a local environment, prompt as last resort
-    if not token:
-        if os.environ.get("ENVIRONMENT", "local") == "local":
-            token = input("Please enter your Discord bot token: ")
-        else:
-            raise ValueError("Discord bot token not found. Set DISCORD_BOT_TOKEN environment variable.")
+    token = credentials["token"]
     
     # Validate token by testing connection
     test_bot = commands.Bot(command_prefix="!", intents=intents)
@@ -79,11 +67,7 @@ def authenticate_and_save_credentials(user_id):
         logger.error(f"Failed to authenticate with Discord: {e}")
         raise ValueError("Invalid Discord token")
     
-    # Save credentials using auth client
-    credentials = {"token": token}
-    auth_client.save_user_credentials(SERVICE_NAME, user_id, credentials)
-
-    logger.info(f"Credentials saved for user {user_id}. You can now run the server.")
+    logger.info(f"Credentials validated for user {user_id}. You can now run the server.")
     return credentials
 
 
@@ -155,7 +139,7 @@ def create_server(user_id, api_key=None):
             raise
 
     @server.list_resources()
-    async def handle_list_resources(cursor: Optional[str] = None) -> dict:
+    async def handle_list_resources(cursor: Optional[str] = None) -> list[types.Resource]:
         """List channels from Discord server"""
         logger.info(
             f"Listing resources for user: {server.user_id} with cursor: {cursor}"
@@ -178,13 +162,10 @@ def create_server(user_id, api_key=None):
                     )
                 )
 
-        return {
-            "resources": resources,
-            "nextCursor": None,  # Discord doesn't need pagination for channel listing
-        }
+        return resources
 
     @server.read_resource()
-    async def handle_read_resource(uri: str) -> dict:
+    async def handle_read_resource(uri: types.AnyUrl) -> list[types.TextContent]:
         """Read messages from a Discord channel by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
@@ -192,36 +173,55 @@ def create_server(user_id, api_key=None):
             server.bot_task = asyncio.create_task(start_bot_background())
             await asyncio.wait_for(server.bot_ready.wait(), timeout=30)
 
-        _, guild_id, channel_id = uri.replace("discord:///", "").split("/", 2)
+        # Convert AnyUrl to string before using string methods
+        uri_str = str(uri)
+        logger.info(f"URI string representation: {uri_str}")
         
-        channel = bot.get_channel(int(channel_id))
-        if not channel:
-            try:
-                channel = await bot.fetch_channel(int(channel_id))
-            except discord.NotFound:
-                return {
-                    "contents": [
+        try:
+            # Parse the URI safely
+            if uri_str.startswith("discord:///"):
+                path = uri_str.replace("discord:///", "")
+                parts = path.split("/", 1)
+                if len(parts) >= 2:
+                    guild_id, channel_id = parts[0], parts[1]
+                else:
+                    raise ValueError(f"Invalid URI format: {uri_str}, parts: {parts}")
+            else:
+                raise ValueError(f"Unexpected URI format: {uri_str}")
+            
+            channel = bot.get_channel(int(channel_id))
+            if not channel:
+                try:
+                    channel = await bot.fetch_channel(int(channel_id))
+                except discord.NotFound:
+                    return [
                         types.TextContent(
                             type="text", 
                             text=f"Channel not found: {channel_id}", 
                             mime_type="text/plain"
                         )
                     ]
-                }
+                    
+            messages = []
+            async for message in channel.history(limit=25):
+                messages.append(f"{message.author.name} ({message.created_at}): {message.content}")
                 
-        messages = []
-        async for message in channel.history(limit=25):
-            messages.append(f"{message.author.name} ({message.created_at}): {message.content}")
-            
-        content = "\n".join(messages)
+            content = "\n".join(messages)
 
-        return {
-            "contents": [
+            return [
                 types.TextContent(
                     type="text", text=content, mime_type="text/plain"
                 )
             ]
-        }
+        except Exception as e:
+            logger.error(f"Error reading resource: {e}")
+            return [
+                types.TextContent(
+                    type="text", 
+                    text=f"Error reading resource: {e}", 
+                    mime_type="text/plain"
+                )
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
@@ -866,7 +866,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
         user_id = "local"
         # Run authentication flow
-        authenticate_and_save_credentials(user_id)
+        validate_credentials(user_id)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
