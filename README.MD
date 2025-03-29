@@ -64,23 +64,29 @@ The MCP ecosystem is evolving rapidly with varying levels of implementation:
 
 ## Supported Servers and Authentication Methods
 
-The following table provides an overview of the current servers implemented in guMCP and their authentication requirements:
+The following table provides an overview of the current servers implemented in guMCP, their authentication requirements, and relative ease of use with different AI clients:
 
-| Server | Authentication Method | Auth Type | Notes |
-|--------|----------------------|-----------|-------|
-| Slack | OAuth | OAuth 2.0 | Requires specific scopes (channels:history, channels:read, chat:write, chat:write.customize, users:read). Needs HTTPS redirect URI. |
-| Perplexity | API Key | API Key | Simple authentication with API key from Perplexity AI. |
-| Google Sheets | OAuth | OAuth 2.0 | Requires Google Cloud project with Sheets API enabled. Uses desktop application OAuth credentials. |
-| Airtable | OAuth | OAuth 2.0 | Requires Airtable OAuth application with specific scopes (data.records:read, data.records:write, schema.bases:read). |
-| Gmail | OAuth | OAuth 2.0 | Requires Google Cloud project with Gmail API enabled. |
-| Google Docs | OAuth | OAuth 2.0 | Requires Google Cloud project with Docs API enabled. |
-| Google Drive | OAuth | OAuth 2.0 | Requires Google Cloud project with Drive API enabled. |
-| Google Calendar | OAuth | OAuth 2.0 | Requires Google Cloud project with Calendar API enabled. |
-| Linear | OAuth | OAuth 2.0 | Requires Linear developer application setup. |
-| Outlook | OAuth | OAuth 2.0 | Requires Microsoft Azure application registration. |
-| Attio | OAuth/API Key | Mixed | May support multiple authentication methods. |
+| Server | Auth Type | Claude Desktop Compatibility | Cursor Compatibility | Documentation |
+|--------|-----------|------------------------------|----------------------|---------------|
+| Perplexity | API Key | ✅ Easy - Simple API key setup | ✅ Works seamlessly with remote auth | [Perplexity Docs](/src/servers/perplexity/README.md) |
+| Slack | OAuth 2.0 | ⚠️ Complex - Requires OAuth setup with HTTPS redirect | ✅ Works seamlessly with remote auth | [Slack Docs](/src/servers/slack/README.md) |
+| Google Sheets | OAuth 2.0 | ⚠️ Complex - Requires GCP project & OAuth setup | ✅ Works seamlessly with remote auth | [GSheets Docs](/src/servers/gsheets/README.md) |
+| Gmail | OAuth 2.0 | ⚠️ Complex - Requires GCP project & OAuth setup | ✅ Works seamlessly with remote auth | [Gmail Docs](/src/servers/gmail/README.md) |
+| Google Docs | OAuth 2.0 | ⚠️ Complex - Requires GCP project & OAuth setup | ✅ Works seamlessly with remote auth | [GDocs Docs](/src/servers/gdocs/README.md) |
+| Google Drive | OAuth 2.0 | ⚠️ Complex - Requires GCP project & OAuth setup | ✅ Works seamlessly with remote auth | [GDrive Docs](/src/servers/gdrive/README.md) |
+| Google Calendar | OAuth 2.0 | ⚠️ Complex - Requires GCP project & OAuth setup | ✅ Works seamlessly with remote auth | [GCalendar Docs](/src/servers/gcalendar/README.md) |
+| Airtable | OAuth 2.0 | ⚠️ Complex - Requires Airtable OAuth application | ✅ Works seamlessly with remote auth | [Airtable Docs](/src/servers/airtable/README.md) |
+| Linear | OAuth 2.0 | ⚠️ Complex - Requires Linear developer setup | ✅ Works seamlessly with remote auth | [Linear Docs](/src/servers/linear/README.md) |
+| Outlook | OAuth 2.0 | ⚠️ Complex - Requires Azure app registration | ✅ Works seamlessly with remote auth | [Outlook Docs](/src/servers/outlook/README.md) |
+| Attio | Mixed | ⚠️ Moderate - Depends on auth method used | ✅ Works seamlessly with remote auth | [Attio Docs](/src/servers/attio/README.md) |
 
-> **Note for Claude Desktop Users**: Servers requiring OAuth (like Google services and Slack) will need additional setup when running locally. API key-based services like Perplexity are much simpler to configure and use with Claude Desktop.
+### Client Compatibility Notes:
+
+- **Cursor**: All servers work seamlessly with Cursor through Gumloop's remote authentication layer, requiring minimal setup from users.
+- **Claude Desktop**: 
+  - API key-based services (like Perplexity) are simple to configure and use
+  - OAuth-based services require significant local setup, including creating developer applications and configuring OAuth flows
+  - We're developing an adapter to simplify Claude Desktop connections to guMCP servers
 
 ## Getting Started
 
