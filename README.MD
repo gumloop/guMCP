@@ -128,9 +128,9 @@ The following table provides an overview of the current servers implemented in g
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.11
 - Git
-- pip (Python package installer)
+- pip
 - For Windows users: A bash-compatible shell is recommended (Git Bash, WSL, etc.)
 
 ### Installation
