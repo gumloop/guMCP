@@ -2,6 +2,10 @@
 
 guMCP is an open-source collection of Model Context Protocol (MCP) servers that can be run both remotely and locally. The project aims to create the largest collection of MCP servers with a unified backend, fostering a community around AI integrations and the future of AGI.
 
+## What is MCP?
+
+Model Context Protocol (MCP) is a standardized way for AI models to interact with external tools and services. It allows AI assistants to perform actions like searching the web, accessing databases, or using productivity tools—significantly expanding their capabilities beyond simple text generation.
+
 ## Overview
 
 While many MCP server providers are closed source, and open-source alternatives typically only support local hosting through stdio, guMCP provides:
@@ -15,11 +19,11 @@ While many MCP server providers are closed source, and open-source alternatives 
 
 guMCP aims to solve several key challenges in the MCP ecosystem:
 
-- **Unified Transport Layer**: We provide a consistent way to run each server via stdio locally or SSE remotely. Unlike existing providers that force you to choose between their hosted SSE service or running stdio locally, guMCP makes it simple to do either with minimal configuration. While options like Zapier's MCP are closed source, we're creating an open alternative that's easy to self-host.
+- **Unified Transport Layer**: We provide a consistent way to run each server via stdio locally or SSE remotely. Unlike existing providers that force you to choose between their hosted SSE service or running stdio locally, guMCP makes it simple to do either with minimal configuration. We're creating an open alternative that's easy to self-host.
 
 - **Standardized Authentication Framework**: We've developed a flexible and generic framework for integration auth across all MCP servers. Current authentication methods vary widely between servers, creating unnecessary complexity. Our unified mechanism uses a base 'AuthClient' across all servers, supporting any arbitrary implementation. For local use, we provide a LocalAuthClient that standardizes integrations and OAuth flows.
 
-- **Flexible Authentication Options**: The GumloopAuthClient lets you use your existing Gumloop credentials, similar to how Zapier or Composio handle MCP server authentication. The key difference is flexibility—you can host servers with your own custom AuthClient or run locally with stdio and local auth as needed.
+- **Flexible Authentication Options**: The GumloopAuthClient lets you use your existing Gumloop credentials *and* you can host servers with your own custom AuthClient or run locally with stdio and local auth as needed.
 
 - **Ready-to-Deploy SSE**: The repository comes ready to deploy with ALL SSE servers accessible under a single URL. If you want to self-host, you can be up and running immediately without complex configuration.
 
@@ -41,44 +45,122 @@ guMCP aims to solve several key challenges in the MCP ecosystem:
   - Productivity and communication
   - AI and specialized tools
 
+### Current MCP Landscape (Mar 2025)
+
+The MCP ecosystem is evolving rapidly with varying levels of implementation:
+
+- **MCP Client capabilities vary**: Different AI assistants have different MCP Client capabilities. Anthropic's Claude can use MCP servers through Claude Desktop, but not the web client. ChatGPT has announced support, but has not announced a timeline. Cursor has robust support for our remote servers.
+
+- **Authentication Challenges**: Currently, authentication methods vary widely between services. Some use API keys, others require OAuth flows, and many have unique authentication requirements that make standardization difficult. We're looking to solve this using Gumloop's authentication layer, but this requires more work for a smooth experience on Claude Desktop.
+
+- **Integration Complexity**: Some integrations use API keys, like Perplexity and are straightforward to implement, requiring simple API calls. Others, such as Google Drive or GitHub, require more complex OAuth authentication flows and permission handling.
+
+
+### guMCP - Client Compatibility
+
+- **Cursor Integration**: Tools like Cursor can easily leverage Gumloop's remote authentication layers, allowing seamless connection to our MCP servers without additional setup. This client works exceptionally well with the integrations on https://www.gumloop.com/mcp
+
+- **Claude Desktop**: For Claude Desktop users, we're developing an adapter that will enable connection to guMCP servers. This is currently in development and will be released soon. For now, intgrations vary in complexity from simple copy-pasting of API keys all the way through configuring new oauth connections in GCP. We aim to improve support here dramatically.
+
+## Supported Servers and Authentication Methods
+
+The following table provides an overview of the current servers implemented in guMCP and their authentication requirements:
+
+| Server | Authentication Method | Auth Type | Notes |
+|--------|----------------------|-----------|-------|
+| Slack | OAuth | OAuth 2.0 | Requires specific scopes (channels:history, channels:read, chat:write, chat:write.customize, users:read). Needs HTTPS redirect URI. |
+| Perplexity | API Key | API Key | Simple authentication with API key from Perplexity AI. |
+| Google Sheets | OAuth | OAuth 2.0 | Requires Google Cloud project with Sheets API enabled. Uses desktop application OAuth credentials. |
+| Airtable | OAuth | OAuth 2.0 | Requires Airtable OAuth application with specific scopes (data.records:read, data.records:write, schema.bases:read). |
+| Gmail | OAuth | OAuth 2.0 | Requires Google Cloud project with Gmail API enabled. |
+| Google Docs | OAuth | OAuth 2.0 | Requires Google Cloud project with Docs API enabled. |
+| Google Drive | OAuth | OAuth 2.0 | Requires Google Cloud project with Drive API enabled. |
+| Google Calendar | OAuth | OAuth 2.0 | Requires Google Cloud project with Calendar API enabled. |
+| Linear | OAuth | OAuth 2.0 | Requires Linear developer application setup. |
+| Outlook | OAuth | OAuth 2.0 | Requires Microsoft Azure application registration. |
+| Attio | OAuth/API Key | Mixed | May support multiple authentication methods. |
+
+> **Note for Claude Desktop Users**: Servers requiring OAuth (like Google services and Slack) will need additional setup when running locally. API key-based services like Perplexity are much simpler to configure and use with Claude Desktop.
+
 ## Getting Started
 
 [![Watch the video](https://www.gumloop.com/_next/image?url=%2Fimages%2Fmcp%2FGuideVideo.png&w=1920&q=75)](https://vimeo.com/1070438737/8dea56e6a1)
 
 ### Prerequisites
 
-- Python 3.11
+- Python 3.11 or higher
 - Git
+- pip (Python package installer)
+- For Windows users: A bash-compatible shell is recommended (Git Bash, WSL, etc.)
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
 
-```bash
-git clone https://github.com/gumloop/guMCP.git
-cd guMCP
-```
+   ```bash
+   git clone https://github.com/gumloop/guMCP.git
+   cd guMCP
+   ```
 
-2. Create and activate virtual environment:
+2. **Set up a virtual environment**:
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On Unix/macOS
-venv\Scripts\activate     # On Windows
-```
+   This isolates the project dependencies from your system Python installation.
 
-3. Install dependencies:
+   ```bash
+   # Create the virtual environment
+   python -m venv venv
+   
+   # Activate it (choose the appropriate command for your OS)
+   # On Unix/macOS:
+   source venv/bin/activate
+   
+   # On Windows (Command Prompt):
+   venv\Scripts\activate
+   
+   # On Windows (PowerShell):
+   .\venv\Scripts\Activate.ps1
+   
+   # On Windows (Git Bash):
+   source venv/Scripts/activate
+   ```
+   
+   You'll know your virtual environment is active when you see `(venv)` at the beginning of your command prompt.
 
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```
+3. **Install dependencies**:
 
-4. Set up environment variables:
+   ```bash
+   # Install core dependencies
+   pip install -r requirements.txt
+   
+   # Install development dependencies (for contributing)
+   pip install -r requirements-dev.txt
+   ```
 
-```bash
-cp .env.example .env  # Then edit with your configuration
-```
+4. **Configure environment variables**:
+
+   ```bash
+   # Create a local environment file from the template
+   cp .env.example .env
+   
+   # Open the .env file in your preferred text editor and update values as needed
+   # If you're using VS Code:
+   code .env
+   ```
+   
+   The `.env` file contains configuration for:
+   - API keys for service integrations
+   - Authentication settings
+   - Server configuration options
+   - Development environment settings
+
+5. **Verify installation**:
+
+   ```bash
+   # Run a simple test to ensure everything is working
+   python -m pytest tests/simple_verify.py
+   ```
+
+Now you're ready to start using guMCP! Continue to the Usage section below to learn how to run servers.
 
 ## Usage
 
