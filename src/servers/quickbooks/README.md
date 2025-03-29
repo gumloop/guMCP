@@ -1,6 +1,38 @@
-# QuickBooks Server
+# QuickBooks Server for guMCP
 
-guMCP server implementation for interacting with QuickBooks Online.
+This server provides integration with QuickBooks Online for financial data access and analysis.
+
+## Dependencies
+
+This server requires the following dependencies which have been added to the project requirements:
+- `python-quickbooks`: The QuickBooks Python SDK
+- `intuit-oauth`: For OAuth authentication with Intuit's API
+
+## Testing
+
+The tests for this server use pytest with asyncio support. To run the tests:
+
+```bash
+python tests/servers/test_runner.py --server=quickbooks
+```
+
+## Authentication
+
+To authenticate with QuickBooks:
+
+```bash
+python src/servers/quickbooks/main.py auth
+```
+
+This will start the OAuth flow and save your credentials locally.
+
+## Features
+
+- Access to QuickBooks resources like customers, invoices, accounts, bills, and payments
+- Financial analysis tools including cash flow analysis and financial metric generation
+- SR&ED expense analysis for Canadian tax credits
+- Duplicate transaction detection
+- Customer payment pattern analysis
 
 ### Prerequisites
 
