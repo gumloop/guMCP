@@ -8,14 +8,6 @@ This server requires the following dependencies which have been added to the pro
 - `python-quickbooks`: The QuickBooks Python SDK
 - `intuit-oauth`: For OAuth authentication with Intuit's API
 
-## Testing
-
-The tests for this server use pytest with asyncio support. To run the tests:
-
-```bash
-python tests/servers/test_runner.py --server=quickbooks
-```
-
 ## Authentication
 
 To authenticate with QuickBooks:
@@ -24,7 +16,7 @@ To authenticate with QuickBooks:
 python src/servers/quickbooks/main.py auth
 ```
 
-This will start the OAuth flow and save your credentials locally.
+This will start the OAuth flow and save your credentials locally. By default, the credentials will be stored at `~/.config/gumcp/quickbooks/local.json`. Each user's credentials are stored in separate files based on their user ID.
 
 ## Features
 
@@ -46,19 +38,13 @@ This will start the OAuth flow and save your credentials locally.
 2. [Register a new application](https://developer.intuit.com/app/developer/qbo/docs/get-started)
 3. Configure a redirect URI for your application (e.g., http://localhost:8080)
 4. Get your application's client ID and client secret
-5. Create an `oauth.json` file:
+5. Set the following environment variables:
 
-```json
-{
-  "client_id": "xxxxxxxxxxxxxxxxxxxxx",
-  "client_secret": "xxxxxxxxxxxxxxxxxxxxx",
-  "redirect_uri": "http://localhost:8080"
-}
-```
-
-Save this file at:
-```
-local_auth/oauth_configs/quickbooks/oauth.json
+```bash
+export QUICKBOOKS_CLIENT_ID="your_client_id_here"
+export QUICKBOOKS_CLIENT_SECRET="your_client_secret_here"
+export QUICKBOOKS_REDIRECT_URI="http://localhost:8080"  # Optional, defaults to OAuth Playground URL
+export QUICKBOOKS_ENVIRONMENT="sandbox"  # Optional, defaults to sandbox
 ```
 
 6. To set up and verify authentication, run:
@@ -70,7 +56,7 @@ python src/servers/quickbooks/main.py auth
 7. To test the integration, run:
 
 ```bash
-python src/servers/quickbooks/main.py test
+python -m tests.servers.test_runner --server=quickbooks
 ```
 
 ### Available Tools
@@ -96,18 +82,55 @@ The server provides access to the following QuickBooks resources:
 
 ### Run
 
-#### Local Development
+There are two ways to run the QuickBooks server:
 
-```bash
-python src/servers/local.py --server quickbooks --user-id local
-```
-
-#### Standalone Server
+#### 1. Standalone Server (Recommended)
 
 ```bash
 python src/servers/quickbooks/main.py server
 ```
 
+This runs the server in standalone mode on http://localhost:8001 using the "local" user ID (credentials stored at `~/.config/gumcp/quickbooks/local.json`).
+
+#### 2. guMCP Local Framework
+
+```bash
+python src/servers/local.py --server quickbooks --user-id <your-user-id>
+```
+
+This runs the server through the guMCP local framework. The `user-id` parameter determines which credentials file is used for authentication (stored at `~/.config/gumcp/quickbooks/{user_id}.json`). For local testing, you can use "local" as your user ID.
+
+> **Note:** The standalone server method is simpler and more reliable, especially if you encounter import errors with the local framework approach.
+
+### API Keys (Optional)
+
+The server also supports API key authentication for additional security. If you're using API keys, you'll need to include both the user ID and API key when connecting:
+
+```bash
+python src/servers/local.py --server quickbooks --user-id <your-user-id> --api-key <your-api-key>
+```
+
+For remote endpoints, the format is:
+```
+https://mcp.gumloop.com/quickbooks/{user_id}%3A{api_key}
+```
+
+### Credentials Storage
+
+Your QuickBooks credentials are stored locally at:
+```
+~/.config/gumcp/quickbooks/{user_id}.json
+```
+
+Different user IDs will have separate credential files, allowing multiple QuickBooks accounts to be used with the same server installation.
+
+## Testing
+
+The tests for this server use pytest. To run the tests:
+
+```bash
+python -m tests.servers.test_runner --server=quickbooks
+```
 
 #### Running Tests
 
@@ -128,7 +151,6 @@ For testing against a specific hosted guMCP server:
 ```bash
 python tests/servers/test_runner.py --server=quickbooks --remote --endpoint=https://mcp.gumloop.com/quickbooks/{user_id}%3A{api_key}
 ```
-
 #### Test Coverage
 
 The QuickBooks tests cover:
@@ -141,4 +163,5 @@ The QuickBooks tests cover:
 6. Error handling
 7. Resource reading and listing
 8. Server initialization and authentication
+
 
