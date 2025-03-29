@@ -35,22 +35,6 @@ async def handle_search_customers(server, arguments):
     result_text = json.dumps(formatted_customers, indent=2)
     return [TextContent(type="text", text=f"Found {len(formatted_customers)} customers:\n\n{result_text}")]
 
-async def validate_company_connection(qb_client):
-    """Validate that the user is connected to a company and return company info"""
-    from quickbooks.objects.company import CompanyInfo
-    
-    try:
-        company_info = CompanyInfo.all(qb_client)[0]
-        logger.info(f"Connected to QuickBooks company: {company_info.CompanyName}")
-        return company_info
-    except Exception as e:
-        logger.error(f"Failed to get company info: {str(e)}")
-        raise ValueError(
-            "Unable to access company information. Please ensure you're connected to "
-            "the correct QuickBooks company. You may need to re-authenticate at "
-            "https://app.quickbooks.com and select your company."
-        )
-
 async def handle_analyze_sred(server, arguments):
     """Handle SR&ED analysis tool"""
     logger.debug("Starting SR&ED analysis with arguments: %s", arguments)
@@ -65,11 +49,8 @@ async def handle_analyze_sred(server, arguments):
     try:
         logger.debug("Creating QuickBooks client...")
         qb_client = await create_quickbooks_client(server.user_id)
+        logger.debug("QuickBooks client created successfully: %s", type(qb_client))
         
-        # Validate company connection first
-        company_info = await validate_company_connection(qb_client)
-        logger.info(f"Running analysis for company: {company_info.CompanyName}")
-
         # Get journal entries using the client library
         logger.debug("Fetching journal entries...")
         query = f"SELECT * FROM JournalEntry WHERE TxnDate >= '{start_date}' AND TxnDate <= '{end_date}' ORDER BY TxnDate"

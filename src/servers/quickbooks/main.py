@@ -25,7 +25,7 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from src.utils.quickbooks.util import authenticate_and_save_credentials
+from src.utils.quickbooks.util import authenticate_and_save_credentials, get_credentials
 from intuitlib.enums import Scopes
 from quickbooks.objects.customer import Customer
 from quickbooks.objects.invoice import Invoice
@@ -39,11 +39,11 @@ from quickbooks.objects.payment import Payment
 if __name__ == "__main__":
     from src.servers.quickbooks.utils.client import create_quickbooks_client
     from src.servers.quickbooks.utils.formatters import format_customer, format_invoice, format_account
-    from src.servers.quickbooks.handlers.tools import handle_search_customers, handle_analyze_sred, validate_company_connection
+    from src.servers.quickbooks.handlers.tools import handle_search_customers, handle_analyze_sred
 else:
     from .utils.client import create_quickbooks_client
     from .utils.formatters import format_customer, format_invoice, format_account
-    from .handlers.tools import handle_search_customers, handle_analyze_sred, validate_company_connection
+    from .handlers.tools import handle_search_customers, handle_analyze_sred
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
@@ -317,21 +317,17 @@ if __name__ == "__main__":
         # Create a test server instance
         server = create_server(user_id)
         
-        # Ensure we have valid authentication
+        # Check if we have valid authentication
         print("\nChecking authentication...")
-        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
-        
-        # Test company connection
-        print("\nValidating company connection...")
-        qb_client = await create_quickbooks_client(user_id)
         try:
-            company_info = await validate_company_connection(qb_client)
-            print(f"Connected to company: {company_info.CompanyName}")
-        except ValueError as e:
-            print(f"Company validation failed: {str(e)}")
-            print("\nPlease visit https://app.quickbooks.com to select your company and re-authenticate.")
-            return
-            
+            # Try to get existing credentials
+            await get_credentials(user_id, SERVICE_NAME)
+            print("Using existing credentials...")
+        except ValueError:
+            # Only authenticate if no credentials exist
+            print("No existing credentials found. Running authentication...")
+            authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
+        
         # Test customer listing with fresh client
         print("\nCreating fresh QuickBooks client...")
         qb_client = await create_quickbooks_client(user_id)
