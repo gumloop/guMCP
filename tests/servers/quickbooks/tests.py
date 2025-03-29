@@ -7,11 +7,13 @@ from quickbooks.objects.payment import Payment
 from quickbooks.objects.bill import Bill
 from quickbooks.objects.account import Account
 from quickbooks.objects.item import Item
+from pathlib import Path
+from intuitlib.enums import Scopes
 
 from mcp.types import TextContent
-from src.servers.quickbooks.main import create_server, authenticate_and_save_credentials, SERVICE_NAME, SCOPES, get_credentials_path, get_credentials
+from src.servers.quickbooks.main import create_server, get_credentials_path
+from src.utils.quickbooks.util import authenticate_and_save_credentials, get_credentials as get_credentials_util
 from src.servers.quickbooks.utils.client import create_quickbooks_client
-from src.utils.quickbooks.util import get_credentials as get_credentials_util
 from src.servers.quickbooks.handlers.tools import (
     handle_search_customers,
     handle_analyze_cash_flow,
@@ -19,6 +21,13 @@ from src.servers.quickbooks.handlers.tools import (
     handle_analyze_customer_payment_patterns,
     handle_generate_financial_metrics,
 )
+
+# Define constants that were moved out of main.py
+SERVICE_NAME = "quickbooks"
+SCOPES = [
+    Scopes.ACCOUNTING,
+    Scopes.PAYMENT,
+]
 
 @pytest.fixture
 def mock_qb_client() -> MagicMock:

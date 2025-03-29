@@ -443,7 +443,14 @@ if __name__ == "__main__":
     command = sys.argv[1].lower()
     
     if command == "auth":
-        from src.utils.quickbooks.util import authenticate_and_save_credentials
+        try:
+            from src.utils.quickbooks.util import authenticate_and_save_credentials
+        except ModuleNotFoundError:
+            # Handle when run as a module directly
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+            from src.utils.quickbooks.util import authenticate_and_save_credentials
         from intuitlib.enums import Scopes
         
         SERVICE_NAME = Path(__file__).parent.name
