@@ -46,11 +46,10 @@ python src/servers/quickbooks/main.py test
 The QuickBooks server provides the following tools:
 
 - `search_customers`: Search for customers by name, email, or phone
-- `analyze_sred`: Analyze expenses for potential SR&ED eligibility
+- `generate_financial_metrics`: Generate key financial metrics and ratios
 - `analyze_cash_flow`: Analyze cash flow trends and patterns
 - `find_duplicate_transactions`: Identify potential duplicate transactions
 - `analyze_customer_payment_patterns`: Analyze customer payment behavior
-- `generate_financial_metrics`: Generate key financial metrics and ratios
 
 ### Available Resources
 
@@ -75,4 +74,39 @@ python src/servers/local.py --server quickbooks --user-id local
 
 ```bash
 python src/servers/quickbooks/main.py server
-``` 
+```
+
+
+#### Running Tests
+
+From the project root directory:
+
+```bash
+python tests/servers/test_runner.py --server=quickbooks
+```
+
+For testing with the SSE server (requires the SSE server to be running):
+
+```bash
+python tests/servers/test_runner.py --server=quickbooks --remote
+```
+
+For testing against a specific hosted guMCP server:
+
+```bash
+python tests/servers/test_runner.py --server=quickbooks --remote --endpoint=https://mcp.gumloop.com/quickbooks/{user_id}%3A{api_key}
+```
+
+#### Test Coverage
+
+The QuickBooks tests cover:
+
+1. Customer search functionality
+2. Cash flow analysis
+3. Duplicate transaction detection
+4. Customer payment pattern analysis
+5. Financial metrics generation
+6. Error handling
+7. Resource reading and listing
+8. Server initialization and authentication
+

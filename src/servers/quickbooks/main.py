@@ -25,6 +25,15 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
+# Import QuickBooks objects
+from quickbooks.objects.customer import Customer
+from quickbooks.objects.invoice import Invoice
+from quickbooks.objects.account import Account
+from quickbooks.objects.item import Item
+from quickbooks.objects.bill import Bill
+from quickbooks.objects.vendor import Vendor
+from quickbooks.objects.payment import Payment
+
 # Import local modules using absolute imports
 from src.utils.quickbooks.util import authenticate_and_save_credentials, get_credentials
 from intuitlib.enums import Scopes
@@ -57,15 +66,8 @@ logger = logging.getLogger(SERVICE_NAME)
 
 def create_server(user_id, api_key=None):
     """Create a new server instance with optional user context"""
-    # Import QuickBooks objects and client here to avoid circular imports
-    from quickbooks.objects.customer import Customer
-    from quickbooks.objects.invoice import Invoice
-    from quickbooks.objects.account import Account
-    from quickbooks.objects.item import Item
-    from quickbooks.objects.bill import Bill
-    from quickbooks.objects.vendor import Vendor
-    from quickbooks.objects.payment import Payment
-
+    # Remove redundant imports since they're already available from top-level imports
+    
     server = Server("quickbooks-server")
     server.user_id = user_id
     server.api_key = api_key
@@ -143,18 +145,25 @@ def create_server(user_id, api_key=None):
             return []
 
     @server.read_resource()
-    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
-        """Read data from a QuickBooks resource"""
-        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
-
-        uri_str = str(uri)
-        if not uri_str.startswith("quickbooks://"):
-            raise ValueError(f"Invalid QuickBooks URI: {uri_str}")
-
-        # Parse the URI to get resource type
-        resource_type = uri_str.replace("quickbooks://", "")
-
+    async def handle_read_resource(
+        resource_uri: AnyUrl,
+        cursor: Optional[str] = None,
+    ) -> ReadResourceContents:
+        """Read QuickBooks resource contents"""
         try:
+            # Validate URI format
+            if not str(resource_uri).startswith("quickbooks://"):
+                raise ValueError("Invalid QuickBooks URI")
+
+            # Extract resource type
+            resource_type = str(resource_uri).split("://")[1].lower()
+            
+            # Validate resource type
+            valid_types = ["customers", "invoices", "accounts", "items", "bills", "payments"]
+            if resource_type not in valid_types:
+                raise ValueError("Unknown resource type")
+
+            # Get QuickBooks client
             qb_client = await create_quickbooks_client(server.user_id)
             result = []
             
@@ -214,16 +223,14 @@ def create_server(user_id, api_key=None):
             else:
                 raise ValueError(f"Unknown resource type: {resource_type}")
 
-            return [ReadResourceContents(
+            return ReadResourceContents(
                 content=json.dumps(result, indent=2),
                 mime_type="application/json"
-            )]
+            )
 
         except Exception as e:
             logger.error(f"Error reading QuickBooks resource: {e}")
-            return [
-                ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
-            ]
+            return ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
@@ -426,69 +433,12 @@ def get_credentials_path(user_id: str) -> Path:
 
 # Main handler allows users to auth
 if __name__ == "__main__":
-    import asyncio
-    
-    async def test_quickbooks():
-        user_id = "local"
-        # Print the credentials path
-        creds_path = get_credentials_path(user_id)
-        print(f"\nLooking for credentials at: {creds_path}")
-        
-        # Create a test server instance
-        server = create_server(user_id)
-        
-        # Check if we have valid authentication
-        print("\nChecking authentication...")
-        try:
-            # Try to get existing credentials
-            await get_credentials(user_id, SERVICE_NAME)
-            print("Using existing credentials...")
-        except ValueError as e:
-            # Only authenticate if no credentials exist
-            print(f"No existing credentials found ({str(e)}). Running authentication...")
-            authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
-            print(f"Credentials should now be saved at: {creds_path}")
-            if creds_path.exists():
-                print("Credentials file was created successfully")
-            else:
-                print("Warning: Credentials file was not created!")
-        
-        # Test customer listing with fresh client
-        print("\nCreating fresh QuickBooks client...")
-        qb_client = await create_quickbooks_client(user_id)
-        customers = Customer.all(qb=qb_client)
-        print("\nFound customers:")
-        for customer in customers:
-            print(f"- {customer.DisplayName}")
-            
-        # Test SR&ED analysis with fresh client
-        print("\nTesting SR&ED analysis...")
-        # Get current date and date 6 months ago
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=180)).strftime("%Y-%m-%d")
-        
-        # Create fresh client for SR&ED analysis
-        print("Creating fresh QuickBooks client for SR&ED analysis...")
-        qb_client = await create_quickbooks_client(user_id)
-        
-        # Call the analyze_sred tool
-        result = await handle_analyze_sred(server, {
-            "start_date": start_date,
-            "end_date": end_date,
-            "keywords": ["research", "development", "experiment", "testing", "prototype", "engineering"]
-        })
-        
-        print("\nSR&ED Analysis Results:")
-        for content in result:
-            if isinstance(content, TextContent):
-                print(content.text)
-    
     if len(sys.argv) < 2:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
-        print("  python main.py test - Test QuickBooks integration")
         print("  python main.py server - Start the QuickBooks server")
         print("\nNote: To run the server normally, use the guMCP server framework.")
+        print("To run tests, use: python tests/servers/test_runner.py --server=quickbooks")
         sys.exit(1)
         
     command = sys.argv[1].lower()
@@ -497,9 +447,6 @@ if __name__ == "__main__":
         user_id = "local"
         # Run authentication flow
         authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
-    elif command == "test":
-        # Run the test function
-        asyncio.run(test_quickbooks())
     elif command == "server":
         # Start the server
         import uvicorn
@@ -508,6 +455,7 @@ if __name__ == "__main__":
         print(f"Unknown command: {command}")
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
-        print("  python main.py test - Test QuickBooks integration")
         print("  python main.py server - Start the QuickBooks server")
+        print("\nNote: To run the server normally, use the guMCP server framework.")
+        print("To run tests, use: python tests/servers/test_runner.py --server=quickbooks")
         sys.exit(1)
