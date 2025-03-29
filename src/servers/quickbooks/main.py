@@ -6,12 +6,12 @@ import logging
 import json
 from datetime import datetime, timedelta
 
-# Add project root to Python path when running directly
-if __name__ == "__main__":
-    project_root = os.path.abspath(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    )
-    sys.path.insert(0, project_root)
+# Add both project root and src directory to Python path
+project_root = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+)
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, "src"))
 
 from mcp.types import (
     AnyUrl,
@@ -25,25 +25,23 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
+# Import local modules using absolute imports
 from src.utils.quickbooks.util import authenticate_and_save_credentials, get_credentials
 from intuitlib.enums import Scopes
-from quickbooks.objects.customer import Customer
-from quickbooks.objects.invoice import Invoice
-from quickbooks.objects.account import Account
-from quickbooks.objects.item import Item
-from quickbooks.objects.bill import Bill
-from quickbooks.objects.vendor import Vendor
-from quickbooks.objects.payment import Payment
 
-# Use absolute imports when running directly
-if __name__ == "__main__":
-    from src.servers.quickbooks.utils.client import create_quickbooks_client
-    from src.servers.quickbooks.utils.formatters import format_customer, format_invoice, format_account
-    from src.servers.quickbooks.handlers.tools import handle_search_customers, handle_analyze_sred
-else:
-    from .utils.client import create_quickbooks_client
-    from .utils.formatters import format_customer, format_invoice, format_account
-    from .handlers.tools import handle_search_customers, handle_analyze_sred
+# Import local modules using absolute imports
+from src.servers.quickbooks.utils.formatters import format_customer, format_invoice, format_account
+from src.servers.quickbooks.handlers.tools import (
+    handle_search_customers,
+    handle_analyze_sred,
+    handle_analyze_cash_flow,
+    handle_find_duplicate_transactions,
+    handle_analyze_customer_payment_patterns,
+    handle_generate_financial_metrics,
+)
+
+# Move this import to the top level, after the other imports
+from src.servers.quickbooks.utils.client import create_quickbooks_client
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
@@ -59,6 +57,15 @@ logger = logging.getLogger(SERVICE_NAME)
 
 def create_server(user_id, api_key=None):
     """Create a new server instance with optional user context"""
+    # Import QuickBooks objects and client here to avoid circular imports
+    from quickbooks.objects.customer import Customer
+    from quickbooks.objects.invoice import Invoice
+    from quickbooks.objects.account import Account
+    from quickbooks.objects.item import Item
+    from quickbooks.objects.bill import Bill
+    from quickbooks.objects.vendor import Vendor
+    from quickbooks.objects.payment import Payment
+
     server = Server("quickbooks-server")
     server.user_id = user_id
     server.api_key = api_key
@@ -265,6 +272,99 @@ def create_server(user_id, api_key=None):
                     "required": ["start_date", "end_date"],
                 },
             ),
+            Tool(
+                name="analyze_cash_flow",
+                description="Analyze cash flow trends and patterns",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "Start date for analysis (YYYY-MM-DD)",
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "End date for analysis (YYYY-MM-DD)",
+                        },
+                        "group_by": {
+                            "type": "string",
+                            "description": "Group results by 'month' or 'quarter'",
+                            "enum": ["month", "quarter"],
+                            "default": "month"
+                        }
+                    },
+                    "required": ["start_date", "end_date"],
+                },
+            ),
+            Tool(
+                name="find_duplicate_transactions",
+                description="Identify potential duplicate transactions",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "Start date for analysis (YYYY-MM-DD)",
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "End date for analysis (YYYY-MM-DD)",
+                        },
+                        "amount_threshold": {
+                            "type": "number",
+                            "description": "Minimum amount to consider for duplicate detection",
+                            "default": 100
+                        }
+                    },
+                    "required": ["start_date", "end_date"],
+                },
+            ),
+            Tool(
+                name="analyze_customer_payment_patterns",
+                description="Analyze customer payment behavior and patterns",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "customer_id": {
+                            "type": "string",
+                            "description": "QuickBooks customer ID to analyze",
+                        },
+                        "months": {
+                            "type": "integer",
+                            "description": "Number of months to analyze",
+                            "default": 12
+                        }
+                    },
+                    "required": ["customer_id"],
+                },
+            ),
+            Tool(
+                name="generate_financial_metrics",
+                description="Generate key financial metrics and ratios",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "Start date for analysis (YYYY-MM-DD)",
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "End date for analysis (YYYY-MM-DD)",
+                        },
+                        "metrics": {
+                            "type": "array",
+                            "description": "List of metrics to calculate",
+                            "items": {
+                                "type": "string",
+                                "enum": ["current_ratio", "quick_ratio", "debt_to_equity", "gross_margin", "operating_margin", "net_margin"]
+                            },
+                            "default": ["current_ratio", "gross_margin", "net_margin"]
+                        }
+                    },
+                    "required": ["start_date", "end_date"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -286,6 +386,14 @@ def create_server(user_id, api_key=None):
                 return await handle_search_customers(server, arguments)
             elif tool_name == "analyze_sred":
                 return await handle_analyze_sred(server, arguments)
+            elif tool_name == "analyze_cash_flow":
+                return await handle_analyze_cash_flow(server, arguments)
+            elif tool_name == "find_duplicate_transactions":
+                return await handle_find_duplicate_transactions(server, arguments)
+            elif tool_name == "analyze_customer_payment_patterns":
+                return await handle_analyze_customer_payment_patterns(server, arguments)
+            elif tool_name == "generate_financial_metrics":
+                return await handle_generate_financial_metrics(server, arguments)
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
 
@@ -308,12 +416,24 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
         ),
     )
 
+# Add this function after the imports
+def get_credentials_path(user_id: str) -> Path:
+    """Get the path to the credentials file"""
+    config_dir = Path.home() / ".config" / "gumcp" / "quickbooks"
+    # Create directories if they don't exist
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir / f"{user_id}.json"
+
 # Main handler allows users to auth
 if __name__ == "__main__":
     import asyncio
     
     async def test_quickbooks():
         user_id = "local"
+        # Print the credentials path
+        creds_path = get_credentials_path(user_id)
+        print(f"\nLooking for credentials at: {creds_path}")
+        
         # Create a test server instance
         server = create_server(user_id)
         
@@ -323,10 +443,15 @@ if __name__ == "__main__":
             # Try to get existing credentials
             await get_credentials(user_id, SERVICE_NAME)
             print("Using existing credentials...")
-        except ValueError:
+        except ValueError as e:
             # Only authenticate if no credentials exist
-            print("No existing credentials found. Running authentication...")
+            print(f"No existing credentials found ({str(e)}). Running authentication...")
             authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
+            print(f"Credentials should now be saved at: {creds_path}")
+            if creds_path.exists():
+                print("Credentials file was created successfully")
+            else:
+                print("Warning: Credentials file was not created!")
         
         # Test customer listing with fresh client
         print("\nCreating fresh QuickBooks client...")
