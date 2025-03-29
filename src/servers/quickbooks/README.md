@@ -78,7 +78,7 @@ This runs the server in standalone mode on http://localhost:8001 using the "loca
 python src/servers/local.py --server quickbooks --user-id <your-user-id>
 ```
 
-This runs the server through the guMCP local framework. The `user-id` parameter determines which credentials file is used.
+This runs the server through the guMCP local framework. The `user-id` parameter determines which credentials file is used, and can use the placeholder `local`.
 
 
 ## API Keys (Optional)
