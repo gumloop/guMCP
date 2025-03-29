@@ -2,6 +2,28 @@
 
 guMCP is an open-source collection of Model Context Protocol (MCP) servers that can be run both remotely and locally. The project aims to create the largest collection of MCP servers with a unified backend, fostering a community around AI integrations and the future of AGI.
 
+## Table of Contents
+
+- [What is MCP?](#what-is-mcp)
+- [Overview](#overview)
+- [What We're Building](#what-were-building)
+- [Features](#features)
+- [Current MCP Landscape](#current-mcp-landscape)
+- [Client Compatibility](#client-compatibility)
+- [Supported Servers and Authentication Methods](#supported-servers-and-authentication-methods)
+  - [Authentication Method Summary](#authentication-method-summary)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+  - [Running Stdio Servers](#running-stdio-servers)
+  - [Running SSE Servers](#running-sse-servers)
+- [Contributing](#contributing)
+- [License](#license)
+- [Security](#security)
+- [Community](#community)
+- [Acknowledgments](#acknowledgments)
+
 ## What is MCP?
 
 Model Context Protocol (MCP) is a standardized way for AI models to interact with external tools and services. It allows AI assistants to perform actions like searching the web, accessing databases, or using productivity tools—significantly expanding their capabilities beyond simple text generation.
@@ -45,7 +67,7 @@ guMCP aims to solve several key challenges in the MCP ecosystem:
   - Productivity and communication
   - AI and specialized tools
 
-### Current MCP Landscape (Mar 2025)
+## Current MCP Landscape
 
 The MCP ecosystem is evolving rapidly with varying levels of implementation:
 
@@ -55,8 +77,7 @@ The MCP ecosystem is evolving rapidly with varying levels of implementation:
 
 - **Integration Complexity**: Some integrations use API keys, like Perplexity and are straightforward to implement, requiring simple API calls. Others, such as Google Drive or GitHub, require more complex OAuth authentication flows and permission handling.
 
-
-### guMCP - Client Compatibility
+## Client Compatibility
 
 - **Cursor Integration**: Tools like Cursor can easily leverage Gumloop's remote authentication layers, allowing seamless connection to our MCP servers without additional setup. This client works exceptionally well with the integrations on https://www.gumloop.com/mcp
 
@@ -84,7 +105,7 @@ The following table provides an overview of the current servers implemented in g
 | **Search Tools** | | | | |
 | Perplexity | API Key | ✅ Seamless with Gumloop auth | ✅ Easy - Simple API key setup | [Perplexity Docs](/src/servers/perplexity/README.md) |
 
-### Authentication Method Summary:
+### Authentication Method Summary
 
 - **Remote Auth** (used by clients like Cursor): 
   - Uses Gumloop's authentication layer
@@ -99,7 +120,11 @@ The following table provides an overview of the current servers implemented in g
 
 ## Getting Started
 
-[![Watch the video](https://www.gumloop.com/_next/image?url=%2Fimages%2Fmcp%2FGuideVideo.png&w=1920&q=75)](https://vimeo.com/1070438737/8dea56e6a1)
+> **🎬 RECOMMENDED: Watch our quick setup video before getting started!** 
+> 
+> This under 5-minute walkthrough will save you time and help you understand the key concepts.
+> 
+> [![Watch the guMCP Getting Started Video](https://www.gumloop.com/_next/image?url=%2Fimages%2Fmcp%2FGuideVideo.png&w=1920&q=75)](https://vimeo.com/1070438737/8dea56e6a1)
 
 ### Prerequisites
 
