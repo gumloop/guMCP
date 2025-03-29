@@ -68,35 +68,37 @@ cp .env.example .env  # Then edit with your configuration
 
 ## Usage
 
-### Running Servers Locally (stdio)
+### Running Stdio Servers
 
 ```bash
-python tests/servers/test_runner.py --server=simple-tools-server
+python src/servers/local.py --server=simple-tools-server
 ```
 
-### Running Servers Remotely (SSE)
+For convenience, we also provide a lightweight MCP Client to start and connect to stdio servers. Usage:
 
-1. Start the remote development server:
+```bash
+ python tests/clients/LocalMCPTestClient.py --server=simple-tools-server
+```
+
+### Running SSE Servers
+
+An SSE server can be run locally. This will provide a single URL and host every server available.
+
+To start the SSE development server, run:
 
 ```bash
 ./start_remote_dev_server.sh
 ```
 
-2. Run tests:
+For convenience, we also prove a lightweight MCP Client to connect to SSE servers. Usage:
 
 ```bash
-python tests/servers/test_runner.py --server=simple-tools-server --remote
-```
-
-### Testing with Hosted Servers
-
-```bash
-python tests/servers/test_runner.py --server=simple-tools-server --remote --endpoint=https://mcp.gumloop.com/gdrive/{user_id}%3A{api_key}
+python tests/clients/RemoteMCPTestClient.py --endpoint=http://localhost:8000/simple-tools-server/local
 ```
 
 ## Contributing
 
-We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.MD) for guidelines.
 
 Key areas for contribution:
 
@@ -112,7 +114,9 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0) - s
 
 ## Security
 
-Security is the single highest priority for us. That's why [Gumloop is SOC 2 Type II and HIPAA compliant](https://trust.gumloop.com/), and why for this OSS repo, we've actively reward those who quitely disclose serious vulnerabilities and exploits to security@gumloop.com.
+Security is the single highest priority for us.
+
+That's why [Gumloop is SOC 2 Type II, GDPR, and HIPAA compliant](https://trust.gumloop.com/), and why for this OSS repo, we're actively rewarding those who responsibly disclose serious vulnerabilities and exploits to security@gumloop.com.
 
 ## Community
 

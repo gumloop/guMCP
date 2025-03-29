@@ -1,4 +1,5 @@
 import os
+import argparse
 
 from asyncio import StreamReader, StreamWriter
 from contextlib import AsyncExitStack
@@ -189,3 +190,27 @@ class LocalMCPTestClient:
                         print(f"\nError during cleanup: {e}")
         except Exception as e:
             print(f"Cleanup error: {e}")
+
+
+async def main():
+    parser = argparse.ArgumentParser(description="Local MCP Test Client")
+    parser.add_argument(
+        "--server",
+        required=True,
+        help="Name of the server (e.g., simple-tools-server, slack)",
+    )
+
+    args = parser.parse_args()
+
+    client = LocalMCPTestClient()
+    try:
+        await client.connect_to_server_by_name(args.server)
+        await client.chat_loop()
+    finally:
+        await client.cleanup()
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main())
