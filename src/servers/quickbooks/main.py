@@ -33,10 +33,10 @@ logging.basicConfig(
 logger = logging.getLogger("quickbooks-server")
 
 
-async def create_quickbooks_client(user_id: str) -> QuickBooks:
+async def create_quickbooks_client(user_id: str, api_key=None) -> QuickBooks:
     """Create a QuickBooks client with stored credentials"""
     try:
-        credentials = await get_credentials(user_id, "quickbooks")
+        credentials = await get_credentials(user_id, "quickbooks", api_key=api_key)
 
         # Get auth client
         auth_client = create_auth_client()
@@ -85,7 +85,7 @@ def create_server(user_id, api_key=None):
 
     async def get_quickbooks_client():
         """Create and return a QuickBooks client instance"""
-        return await create_quickbooks_client(server.user_id)
+        return await create_quickbooks_client(server.user_id, api_key=server.api_key)
 
     @server.list_resources()
     async def handle_list_resources(
@@ -475,7 +475,7 @@ def create_server(user_id, api_key=None):
                 handle_generate_financial_metrics,
             )
 
-            qb_client = create_quickbooks_client(server.user_id)
+            qb_client = create_quickbooks_client(server.user_id, api_key=server.api_key)
             if tool_name == "search_customers":
                 return await handle_search_customers(qb_client, server, arguments)
             elif tool_name == "analyze_sred":
@@ -514,13 +514,6 @@ def get_initialization_options(server_instance) -> dict:
         "title": "QuickBooks Server for guMCP",
         "description": "Access and analyze QuickBooks financial data",
     }
-
-
-def get_credentials_path(user_id: str) -> Path:
-    """Get the path to the credentials file for a user"""
-    config_dir = Path.home() / ".config" / "gumcp" / "quickbooks"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    return config_dir / f"{user_id}.json"
 
 
 # If this is being run directly, execute the main function
