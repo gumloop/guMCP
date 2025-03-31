@@ -20,6 +20,7 @@ from intuitlib.client import AuthClient
 
 from quickbooks import QuickBooks
 
+from src.auth.factory import create_auth_client
 from src.utils.quickbooks.util import get_credentials, authenticate_and_save_credentials
 
 SERVICE_NAME = Path(__file__).parent.name
@@ -35,18 +36,21 @@ logger = logging.getLogger("quickbooks-server")
 async def create_quickbooks_client(user_id: str) -> QuickBooks:
     """Create a QuickBooks client with stored credentials"""
     try:
-        # Get credentials from storage
         credentials = await get_credentials(user_id, "quickbooks")
-        # Create auth client
+
+        # Get auth client
+        auth_client = create_auth_client()
+        # Get OAuth config
+        oauth_config = auth_client.get_oauth_config("quickbooks")
+
         auth_client = AuthClient(
-            client_id=credentials["client_id"],
-            client_secret=credentials["client_secret"],
-            environment=credentials["environment"],
-            redirect_uri=credentials["redirect_uri"],
+            client_id=oauth_config["client_id"],
+            client_secret=oauth_config["client_secret"],
+            redirect_uri=oauth_config["redirect_uri"],
+            environment=oauth_config.get("environment", "sandbox"),
+            access_token=credentials["access_token"],
         )
-        # Set tokens
-        auth_client.token = credentials["access_token"]
-        # Create QuickBooks client
+
         client = QuickBooks(
             auth_client=auth_client,
             refresh_token=credentials["refresh_token"],

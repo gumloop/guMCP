@@ -60,10 +60,6 @@ def process_quickbooks_token_response(token_response: dict) -> dict:
             f"Token exchange failed: {token_response.get('error_description', 'Unknown error')}"
         )
 
-    # Get auth client
-    auth_client = create_auth_client()
-    # Get OAuth config
-    oauth_config = auth_client.get_oauth_config("quickbooks")
     # Store credentials with additional QuickBooks-specific fields
     return {
         "access_token": token_response.get("access_token"),
@@ -72,7 +68,6 @@ def process_quickbooks_token_response(token_response: dict) -> dict:
         "expires_in": token_response.get("expires_in", 3600),
         "expires_at": int(time.time()) + token_response.get("expires_in", 3600),
         "realm_id": token_response.get("realmId"),
-        "environment": oauth_config.get("environment", "sandbox"),
     }
 
 
@@ -88,6 +83,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         },
         token_header_builder=build_quickbooks_token_headers,
         api_key=api_key,
+        return_full_credentials=True,
     )
 
 

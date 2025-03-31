@@ -201,6 +201,7 @@ async def refresh_token_if_needed(
     process_token_response: Callable[[Dict[str, Any]], Dict[str, Any]] = None,
     token_header_builder: Callable[[Dict[str, Any]], Dict[str, str]] = None,
     api_key: Optional[str] = None,
+    return_full_credentials: Optional[bool] = False,
 ) -> str:
     """
     Checks if token needs refresh and handles the refresh process
@@ -286,6 +287,9 @@ async def refresh_token_if_needed(
             auth_client.save_user_credentials(service_name, user_id, new_credentials)
 
             return new_credentials.get("access_token")
+
+    if return_full_credentials:
+        return credentials_data
 
     return credentials_data.get("access_token")
 

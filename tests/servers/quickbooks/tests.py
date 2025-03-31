@@ -15,7 +15,7 @@ from src.utils.quickbooks.util import (
     authenticate_and_save_credentials,
     get_credentials as get_credentials_util,
 )
-from src.servers.quickbooks.utils.client import create_quickbooks_client
+from src.servers.quickbooks.main import create_quickbooks_client
 from src.servers.quickbooks.handlers.tools import (
     handle_search_customers,
     handle_analyze_cash_flow,
@@ -159,13 +159,15 @@ async def test_search_customers(
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.filter.return_value = mock_customers
 
         # Test
-        result = await handle_search_customers(mock_server, {"query": "test"})
+        result = await handle_search_customers(
+            mock_qb_client, mock_server, {"query": "test"}
+        )
 
         # Assertions
         assert len(result) == 1
@@ -196,13 +198,14 @@ async def test_analyze_cash_flow(
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.side_effect = [[mock_payment], [mock_bill]]
 
         # Test
         result = await handle_analyze_cash_flow(
+            mock_qb_client,
             mock_server,
             {"start_date": "2023-01-01", "end_date": "2023-01-31", "group_by": "month"},
         )
@@ -238,7 +241,7 @@ async def test_find_duplicate_transactions(
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         # Return both payments in the first call to all()
@@ -249,6 +252,7 @@ async def test_find_duplicate_transactions(
 
         # Test
         result = await handle_find_duplicate_transactions(
+            mock_qb_client,
             mock_server,
             {
                 "start_date": "2023-01-01",
@@ -298,7 +302,7 @@ async def test_analyze_customer_payment_patterns(
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         # Fix customer retrieval
@@ -310,7 +314,7 @@ async def test_analyze_customer_payment_patterns(
 
         # Test
         result = await handle_analyze_customer_payment_patterns(
-            mock_server, {"customer_id": "123", "months": 12}
+            mock_qb_client, mock_server, {"customer_id": "123", "months": 12}
         )
 
         # Assertions
@@ -354,7 +358,7 @@ async def test_generate_financial_metrics(
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.side_effect = [
@@ -365,6 +369,7 @@ async def test_generate_financial_metrics(
 
         # Test
         result = await handle_generate_financial_metrics(
+            mock_qb_client,
             mock_server,
             {
                 "start_date": "2023-01-01",
@@ -393,23 +398,27 @@ async def test_error_handling(
     """
     # Test error handling for search_customers
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.filter.side_effect = Exception("API Error")
 
-        result = await handle_search_customers(mock_server, {"query": "test"})
+        result = await handle_search_customers(
+            mock_qb_client, mock_server, {"query": "test"}
+        )
         assert "Error" in result[0].text
 
     # Test error handling for analyze_cash_flow
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.side_effect = Exception("API Error")
 
         result = await handle_analyze_cash_flow(
-            mock_server, {"start_date": "2023-01-01", "end_date": "2023-01-31"}
+            mock_qb_client,
+            mock_server,
+            {"start_date": "2023-01-01", "end_date": "2023-01-31"},
         )
         assert "Error" in result[0].text
 
@@ -425,23 +434,27 @@ async def test_empty_results(mock_server: AsyncMock, mock_qb_client: MagicMock) 
     """
     # Test empty results for search_customers
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.filter.return_value = []
 
-        result = await handle_search_customers(mock_server, {"query": "nonexistent"})
+        result = await handle_search_customers(
+            mock_qb_client, mock_server, {"query": "nonexistent"}
+        )
         assert "No customers found" in result[0].text
 
     # Test empty results for find_duplicate_transactions
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = []
 
         result = await handle_find_duplicate_transactions(
-            mock_server, {"start_date": "2023-01-01", "end_date": "2023-01-31"}
+            mock_qb_client,
+            mock_server,
+            {"start_date": "2023-01-01", "end_date": "2023-01-31"},
         )
         assert "No potential duplicates found" in result[0].text
 
@@ -468,7 +481,7 @@ async def test_list_resources(
         mock_qb_client: The mocked QuickBooks client
     """
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_server.handle_list_resources.return_value = [
@@ -533,7 +546,7 @@ async def test_find_invoices(mock_server: AsyncMock, mock_qb_client: MagicMock) 
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = [mock_invoice]
@@ -567,7 +580,7 @@ async def test_find_accounts(mock_server: AsyncMock, mock_qb_client: MagicMock) 
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = [mock_account]
@@ -602,7 +615,7 @@ async def test_find_items(mock_server: AsyncMock, mock_qb_client: MagicMock) -> 
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = [mock_item]
@@ -638,7 +651,7 @@ async def test_find_bills(mock_server: AsyncMock, mock_qb_client: MagicMock) -> 
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = [mock_bill]
@@ -673,7 +686,7 @@ async def test_find_payments(mock_server: AsyncMock, mock_qb_client: MagicMock) 
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = [mock_payment]
@@ -710,7 +723,7 @@ async def test_customer_list_formatting(
 
     # Setup mock
     with patch(
-        "src.servers.quickbooks.handlers.tools.create_quickbooks_client",
+        "src.servers.quickbooks.main.create_quickbooks_client",
         return_value=mock_qb_client,
     ):
         mock_qb_client.all.return_value = mock_customers
@@ -747,20 +760,26 @@ async def test_date_range_validation(
     # Test invalid date format
     with pytest.raises(ValueError, match="Invalid date format"):
         await handle_analyze_cash_flow(
-            mock_server, {"start_date": "invalid-date", "end_date": "2024-02-29"}
+            mock_qb_client,
+            mock_server,
+            {"start_date": "invalid-date", "end_date": "2024-02-29"},
         )
 
     # Test end date before start date
     with pytest.raises(ValueError, match="End date must be after start date"):
         await handle_analyze_cash_flow(
-            mock_server, {"start_date": "2024-02-29", "end_date": "2024-01-01"}
+            mock_qb_client,
+            mock_server,
+            {"start_date": "2024-02-29", "end_date": "2024-01-01"},
         )
 
     # Test future dates
     future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
     with pytest.raises(ValueError, match="End date cannot be in the future"):
         await handle_find_duplicate_transactions(
-            mock_server, {"start_date": future_date, "end_date": future_date}
+            mock_qb_client,
+            mock_server,
+            {"start_date": future_date, "end_date": future_date},
         )
 
 
@@ -901,6 +920,7 @@ async def test_quickbooks() -> None:
     # Test duplicate transactions
     print("\nTesting duplicate transaction detection...")
     result = await handle_find_duplicate_transactions(
+        qb_client,
         server,
         {"start_date": "2023-01-01", "end_date": "2023-01-31", "amount_threshold": 100},
     )
