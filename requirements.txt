@@ -24,7 +24,9 @@ anyio==4.9.0
 attrs==25.3.0
     # via aiohttp
 beautifulsoup4==4.13.3
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   google
 cachetools==5.5.2
     # via google-auth
 certifi==2025.1.31
@@ -48,9 +50,11 @@ frozenlist==1.5.0
     # via
     #   aiohttp
     #   aiosignal
+google==3.0.0
+    # via -r requirements.in
 google-api-core==2.24.2
     # via google-api-python-client
-google-api-python-client==2.165.0
+google-api-python-client==2.166.0
     # via -r requirements.in
 google-auth==2.38.0
     # via
@@ -107,7 +111,7 @@ propcache==0.3.1
     #   yarl
 proto-plus==1.26.1
     # via google-api-core
-protobuf==6.30.1
+protobuf==6.30.2
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -116,17 +120,17 @@ pyasn1==0.6.1
     # via
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.4.1
+pyasn1-modules==0.4.2
     # via google-auth
+
 pycparser==2.22
     # via cffi
-pydantic==2.7.4
+pydantic==2.11.1
     # via
-    #   -r requirements.in
     #   anthropic
     #   mcp
     #   pydantic-settings
-pydantic-core==2.18.4
+pydantic-core==2.33.0
     # via pydantic
 pydantic-settings==2.8.1
     # via mcp
@@ -137,6 +141,9 @@ pyparsing==3.2.1
 python-dateutil==2.9.0.post0
     # via python-quickbooks
 python-dotenv==1.0.1
+pyparsing==3.2.3
+    # via httplib2
+python-dotenv==1.1.0
     # via
     #   -r requirements.in
     #   pydantic-settings
@@ -144,6 +151,7 @@ python-quickbooks==0.9.11
     # via -r requirements.in
 requests==2.32.3
     # via
+    #   -r requirements.in
     #   google-api-core
     #   intuit-oauth
     #   python-quickbooks
@@ -174,13 +182,16 @@ starlette==0.46.1
     #   -r requirements.in
     #   mcp
     #   sse-starlette
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via
     #   anthropic
     #   anyio
     #   beautifulsoup4
     #   pydantic
     #   pydantic-core
+    #   typing-inspection
+typing-inspection==0.4.0
+    # via pydantic
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==2.3.0
