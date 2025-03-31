@@ -67,7 +67,7 @@ def process_quickbooks_token_response(token_response: dict) -> dict:
         "token_type": token_response.get("token_type", "Bearer"),
         "expires_in": token_response.get("expires_in", 3600),
         "expires_at": int(time.time()) + token_response.get("expires_in", 3600),
-        "realm_id": token_response.get("realmId"),
+        "realmId": token_response.get("realmId"),
     }
 
 

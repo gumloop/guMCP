@@ -1,20 +1,20 @@
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
 from quickbooks.objects.customer import Customer
 from quickbooks.objects.invoice import Invoice
 from quickbooks.objects.payment import Payment
 from quickbooks.objects.bill import Bill
 from quickbooks.objects.account import Account
 from quickbooks.objects.item import Item
+
 from intuitlib.enums import Scopes
 
 from mcp.types import TextContent
-from src.servers.quickbooks.main import create_server, get_credentials_path
-from src.utils.quickbooks.util import (
-    authenticate_and_save_credentials,
-    get_credentials as get_credentials_util,
-)
+
+from src.servers.quickbooks.main import create_server
 from src.servers.quickbooks.main import create_quickbooks_client
 from src.servers.quickbooks.handlers.tools import (
     handle_search_customers,
@@ -23,6 +23,8 @@ from src.servers.quickbooks.handlers.tools import (
     handle_analyze_customer_payment_patterns,
     handle_generate_financial_metrics,
 )
+
+from src.utils.quickbooks.util import get_credentials
 
 # Define constants that were moved out of main.py
 SERVICE_NAME = "quickbooks"
@@ -823,28 +825,11 @@ async def test_quickbooks() -> None:
     Integration test for QuickBooks server functionality.
     """
     user_id = "local"
-    # Print the credentials path
-    creds_path = get_credentials_path(user_id)
-    print(f"\nLooking for credentials at: {creds_path}")
-
     # Create a test server instance
     server = create_server(user_id)
 
-    # Check if we have valid authentication
-    print("\nChecking authentication...")
-    try:
-        # Try to get existing credentials
-        await get_credentials_util(user_id, SERVICE_NAME)
-        print("Using existing credentials...")
-    except ValueError as e:
-        # Only authenticate if no credentials exist
-        print(f"No existing credentials found ({str(e)}). Running authentication...")
-        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
-        print(f"Credentials should now be saved at: {creds_path}")
-        if creds_path.exists():
-            print("Credentials file was created successfully")
-        else:
-            print("Warning: Credentials file was not created!")
+    # Get existing credentials
+    await get_credentials(user_id, SERVICE_NAME)
 
     # Create fresh QuickBooks client
     print("\nCreating fresh QuickBooks client...")
@@ -909,6 +894,7 @@ async def test_quickbooks() -> None:
     # Test cash flow analysis
     print("\nTesting cash flow analysis...")
     result = await handle_analyze_cash_flow(
+        qb_client,
         server,
         {"start_date": "2023-01-01", "end_date": "2023-01-31", "group_by": "month"},
     )
@@ -932,6 +918,7 @@ async def test_quickbooks() -> None:
     # Test financial metrics
     print("\nTesting financial metrics...")
     result = await handle_generate_financial_metrics(
+        qb_client,
         server,
         {
             "start_date": "2023-01-01",

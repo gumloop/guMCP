@@ -54,7 +54,7 @@ async def create_quickbooks_client(user_id: str, api_key=None) -> QuickBooks:
         client = QuickBooks(
             auth_client=auth_client,
             refresh_token=credentials["refresh_token"],
-            company_id=credentials["realm_id"],
+            company_id=credentials["realmId"],
         )
 
         return client

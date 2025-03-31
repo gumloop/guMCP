@@ -33,6 +33,9 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         parsed_path = urllib.parse.urlparse(self.path)
         query_params = urllib.parse.parse_qs(parsed_path.query)
 
+        # Initialize additional parameters dictionary
+        self.server.additional_params = {}
+
         if "code" in query_params:
             self.server.auth_code = query_params["code"][0]
             success_message = "Authentication successful! You can close this window."
@@ -46,6 +49,12 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
                         self.server.code_verifier = state_data["code_verifier"]
                 except (json.JSONDecodeError, KeyError) as e:
                     logger.warning(f"Failed to parse state parameter: {e}")
+
+            # Store any additional parameters from the callback
+            for key, value in query_params.items():
+                if key not in ["code", "state"]:
+                    self.server.additional_params[key] = value[0]
+
         elif "error" in query_params:
             self.server.auth_error = query_params["error"][0]
             success_message = f"Authentication error: {self.server.auth_error}. You can close this window."
@@ -121,6 +130,7 @@ def run_oauth_flow(
     server = HTTPServer(("localhost", port), OAuthCallbackHandler)
     server.auth_code = None
     server.auth_error = None
+    server.additional_params = {}
 
     # Start server in a thread
     server_thread = threading.Thread(target=server.serve_forever)
@@ -185,6 +195,10 @@ def run_oauth_flow(
         token_response["expires_at"] = int(time.time()) + token_response.get(
             "expires_in", 3600
         )
+
+    # Add any additional parameters from the callback
+    if hasattr(server, "additional_params"):
+        token_response.update(server.additional_params)
 
     # Save credentials using auth client
     auth_client.save_user_credentials(service_name, user_id, token_response)
@@ -270,6 +284,11 @@ async def refresh_token_if_needed(
 
             new_credentials = response.json()
 
+            # Preserve any keys from old credentials that aren't in the new credentials -- sometimes there may be data that is only sent upon initial access token, not fetching, that is necessary
+            for key, value in credentials_data.items():
+                if key not in new_credentials:
+                    new_credentials[key] = value
+
             # Process the token response if needed
             if process_token_response:
                 new_credentials = process_token_response(new_credentials)
@@ -285,6 +304,9 @@ async def refresh_token_if_needed(
 
             # Save the updated credentials
             auth_client.save_user_credentials(service_name, user_id, new_credentials)
+
+            if return_full_credentials:
+                return new_credentials
 
             return new_credentials.get("access_token")
 
