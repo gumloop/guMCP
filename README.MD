@@ -90,7 +90,7 @@ To start the SSE development server, run:
 ./start_remote_dev_server.sh
 ```
 
-For convenience, we also prove a lightweight MCP Client to connect to SSE servers. Usage:
+For convenience, we also provide a lightweight MCP Client to connect to SSE servers. Usage:
 
 ```bash
 python tests/clients/RemoteMCPTestClient.py --endpoint=http://localhost:8000/simple-tools-server/local
