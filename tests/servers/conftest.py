@@ -10,6 +10,11 @@ from tests.clients.RemoteMCPTestClient import RemoteMCPTestClient
 pytest_plugins = ["pytest_asyncio"]
 
 
+# Set asyncio default fixture loop scope to function
+def pytest_configure(config):
+    config.option.asyncio_default_fixture_loop_scope = "function"
+
+
 def pytest_addoption(parser):
     """Add command-line options for tests"""
     parser.addoption(
