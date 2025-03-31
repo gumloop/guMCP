@@ -5,6 +5,7 @@ This server provides integration with QuickBooks Online for financial data acces
 ## Overview
 
 The QuickBooks server enables:
+
 - Access to QuickBooks resources (customers, invoices, accounts, etc.)
 - Financial analysis tools (cash flow, metrics, duplicate detection)
 - Customer payment pattern analysis
@@ -15,27 +16,30 @@ The QuickBooks server enables:
 - Python 3.11+
 - A QuickBooks Online Developer account
 
-## Dependencies
-
-Required packages (already added to project requirements):
-- `python-quickbooks`: The QuickBooks Python SDK
-- `intuit-oauth`: For OAuth authentication with Intuit's API
-
 ## Setup
 
 ### Local Authentication
 
 1. [Create a QuickBooks Online Developer account](https://developer.intuit.com/)
 2. [Register a new application](https://developer.intuit.com/app/developer/qbo/docs/get-started)
+   - The app should have the following scopes: `com.intuit.quickbooks.accounting`, `com.intuit.quickbooks.payment`
 3. Configure a redirect URI for your application (e.g., http://localhost:8080)
 4. Get your application's client ID and client secret
-5. Set the following environment variables:
+5. Local authentication uses a OAuth Configuration JSON file:
 
-```bash
-export QUICKBOOKS_CLIENT_ID="your_client_id_here"
-export QUICKBOOKS_CLIENT_SECRET="your_client_secret_here"
-export QUICKBOOKS_REDIRECT_URI="http://localhost:8080"  # Optional, defaults to OAuth Playground URL
-export QUICKBOOKS_ENVIRONMENT="sandbox"  # Optional, defaults to sandbox
+```
+local_auth/oauth_configs/quickbooks/oauth.json
+```
+
+Create the following file with the relevant attributes for your app:
+
+```json
+{
+  "client_id": "xxxxxxxxxxxxxxxxxxxxx",
+  "client_secret": "xxxxxxxxxxxxxxxxxxxxx",
+  "redirect_uri": "http://localhost:8080",
+  "quickbooks_environment": "sandbox" // Optional, defaults to sandbox
+}
 ```
 
 6. To set up and verify authentication, run:
@@ -44,27 +48,19 @@ export QUICKBOOKS_ENVIRONMENT="sandbox"  # Optional, defaults to sandbox
 python src/servers/quickbooks/main.py auth
 ```
 
+This will start the OAuth flow and save your credentials locally. By default, the credentials will be stored at `~/.config/gumcp/quickbooks/local.json`. Each user's credentials are stored in separate files based on their user ID.
+
 7. To test the integration, run:
 
 ```bash
 python -m tests.servers.test_runner --server=quickbooks
 ```
 
-### Authentication
-
-To authenticate with QuickBooks:
-
-```bash
-python src/servers/quickbooks/main.py auth
-```
-
-This will start the OAuth flow and save your credentials locally. By default, the credentials will be stored at `~/.config/gumcp/quickbooks/local.json`. Each user's credentials are stored in separate files based on their user ID.
-
 ## Running the Server
 
 There are two ways to run the QuickBooks server:
 
-### 1. Standalone Server 
+### 1. Standalone Server
 
 ```bash
 python src/servers/quickbooks/main.py server
@@ -80,7 +76,6 @@ python src/servers/local.py --server quickbooks --user-id <your-user-id>
 
 This runs the server through the guMCP local framework. The `user-id` parameter determines which credentials file is used, and can use the placeholder `local`.
 
-
 ## API Keys (Optional)
 
 For additional security, you can use API key authentication:
@@ -90,6 +85,7 @@ python src/servers/local.py --server quickbooks --user-id <your-user-id> --api-k
 ```
 
 For remote endpoints, the format is:
+
 ```
 https://mcp.gumloop.com/quickbooks/{user_id}%3A{api_key}
 ```
@@ -97,6 +93,7 @@ https://mcp.gumloop.com/quickbooks/{user_id}%3A{api_key}
 ## Credentials Storage
 
 QuickBooks credentials are stored locally at:
+
 ```
 ~/.config/gumcp/quickbooks/{user_id}.json
 ```
@@ -155,5 +152,3 @@ The QuickBooks tests cover:
 6. Error handling
 7. Resource reading and listing
 8. Server initialization and authentication
-
-
