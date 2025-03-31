@@ -1,1 +1,0 @@
-"""QuickBooks utility functions."""

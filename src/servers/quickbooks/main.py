@@ -1,18 +1,63 @@
-#!/usr/bin/env python3
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
+
+# Add both project root and src directory to Python path
+# Get the project root directory and add to path
+project_root = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+)
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, "src"))
+
 from typing import Optional, Sequence
 from pathlib import Path
 import logging
 import json
 import asyncio
 
+from intuitlib.enums import Scopes
+from intuitlib.client import AuthClient
+
+from quickbooks import QuickBooks
+
+from src.utils.quickbooks.util import get_credentials, authenticate_and_save_credentials
+
+SERVICE_NAME = Path(__file__).parent.name
+SCOPES = [Scopes.ACCOUNTING.value, Scopes.PAYMENT.value]
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("quickbooks-server")
+
+
+async def create_quickbooks_client(user_id: str) -> QuickBooks:
+    """Create a QuickBooks client with stored credentials"""
+    try:
+        # Get credentials from storage
+        credentials = await get_credentials(user_id, "quickbooks")
+        # Create auth client
+        auth_client = AuthClient(
+            client_id=credentials["client_id"],
+            client_secret=credentials["client_secret"],
+            environment=credentials["environment"],
+            redirect_uri=credentials["redirect_uri"],
+        )
+        # Set tokens
+        auth_client.token = credentials["access_token"]
+        # Create QuickBooks client
+        client = QuickBooks(
+            auth_client=auth_client,
+            refresh_token=credentials["refresh_token"],
+            company_id=credentials["realm_id"],
+        )
+
+        return client
+
+    except Exception as e:
+        logger.error(f"Error creating QuickBooks client: {e}")
+        raise
 
 
 # Create server function with simple imports
@@ -36,9 +81,6 @@ def create_server(user_id, api_key=None):
 
     async def get_quickbooks_client():
         """Create and return a QuickBooks client instance"""
-        # Import here to avoid top-level import issues
-        from src.servers.quickbooks.utils.client import create_quickbooks_client
-
         return await create_quickbooks_client(server.user_id)
 
     @server.list_resources()
@@ -129,7 +171,7 @@ def create_server(user_id, api_key=None):
             import quickbooks.objects.vendor
             import quickbooks.objects.payment
 
-            from src.servers.quickbooks.utils.formatters import (
+            from src.utils.quickbooks.util import (
                 format_customer,
                 format_invoice,
                 format_account,
@@ -429,18 +471,25 @@ def create_server(user_id, api_key=None):
                 handle_generate_financial_metrics,
             )
 
+            qb_client = create_quickbooks_client(server.user_id)
             if tool_name == "search_customers":
-                return await handle_search_customers(server, arguments)
+                return await handle_search_customers(qb_client, server, arguments)
             elif tool_name == "analyze_sred":
-                return await handle_analyze_sred(server, arguments)
+                return await handle_analyze_sred(qb_client, server, arguments)
             elif tool_name == "analyze_cash_flow":
-                return await handle_analyze_cash_flow(server, arguments)
+                return await handle_analyze_cash_flow(qb_client, server, arguments)
             elif tool_name == "find_duplicate_transactions":
-                return await handle_find_duplicate_transactions(server, arguments)
+                return await handle_find_duplicate_transactions(
+                    qb_client, server, arguments
+                )
             elif tool_name == "analyze_customer_payment_patterns":
-                return await handle_analyze_customer_payment_patterns(server, arguments)
+                return await handle_analyze_customer_payment_patterns(
+                    qb_client, server, arguments
+                )
             elif tool_name == "generate_financial_metrics":
-                return await handle_generate_financial_metrics(server, arguments)
+                return await handle_generate_financial_metrics(
+                    qb_client, server, arguments
+                )
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
 
@@ -493,14 +542,10 @@ if __name__ == "__main__":
         # Restore original argv
         sys.argv = original_argv
     elif command == "auth":
-        # Run the authentication flow
-        from src.utils.quickbooks.util import authenticate_and_save_credentials
-        from intuitlib.enums import Scopes
-
         authenticate_and_save_credentials(
             "local",
-            "quickbooks",
-            [Scopes.ACCOUNTING, Scopes.PAYMENT],
+            SERVICE_NAME,
+            SCOPES,
         )
     else:
         print(f"Unknown command: {command}")

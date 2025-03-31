@@ -1,115 +1,162 @@
-import json
-import os
-import logging
-from pathlib import Path
+from typing import Dict, Any
 
-from intuitlib.client import AuthClient
+import time
+import base64
+import logging
+
+from src.auth.factory import create_auth_client
+from src.utils.oauth.util import run_oauth_flow, refresh_token_if_needed
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+QUICKBOOKS_OAUTH_AUTHORIZE_URL = "https://appcenter.intuit.com/connect/oauth2"
+QUICKBOOKS_OAUTH_TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
 
-async def get_credentials(user_id: str, service_name: str, api_key=None) -> dict:
-    """Get stored credentials for the user"""
-    creds_dir = Path.home() / ".config" / "gumcp" / service_name
-    creds_file = creds_dir / f"{user_id}.json"
 
-    if not creds_file.exists():
+def build_quickbooks_auth_params(
+    oauth_config: dict, redirect_uri: str, scopes: list[str]
+) -> dict:
+    """Build the authorization parameters for QuickBooks OAuth."""
+    return {
+        "client_id": oauth_config.get("client_id"),
+        "scope": " ".join(scopes),
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "state": "state",
+    }
+
+
+def build_quickbooks_token_headers(oauth_config: Dict[str, Any]) -> Dict[str, str]:
+    """Build the token request headers for Quickbooks OAuth."""
+    # Concatenate client_id and client_secret with a colon
+    credentials = f'{oauth_config.get("client_id")}:{oauth_config.get("client_secret")}'
+
+    # Encode the credentials in base64 format
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+
+    return {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": f"Basic {encoded_credentials}",
+    }
+
+
+def build_quickbooks_token_data(
+    oauth_config: dict, redirect_uri: str, scopes: list[str], auth_code: str
+) -> dict:
+    """Build the token request data for QuickBooks OAuth."""
+    return {
+        "code": auth_code,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+
+
+def process_quickbooks_token_response(token_response: dict) -> dict:
+    """Process QuickBooks token response."""
+    if "error" in token_response:
         raise ValueError(
-            f"No credentials found for user {user_id}. Please run authentication flow first."
+            f"Token exchange failed: {token_response.get('error_description', 'Unknown error')}"
         )
 
-    with open(creds_file) as f:
-        return json.load(f)
+    # Get auth client
+    auth_client = create_auth_client()
+    # Get OAuth config
+    oauth_config = auth_client.get_oauth_config("quickbooks")
+    # Store credentials with additional QuickBooks-specific fields
+    return {
+        "access_token": token_response.get("access_token"),
+        "refresh_token": token_response.get("refresh_token"),
+        "token_type": token_response.get("token_type", "Bearer"),
+        "expires_in": token_response.get("expires_in", 3600),
+        "expires_at": int(time.time()) + token_response.get("expires_in", 3600),
+        "realm_id": token_response.get("realmId"),
+        "environment": oauth_config.get("environment", "sandbox"),
+    }
+
+
+async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
+    """Get Quickbooks credentials"""
+    return await refresh_token_if_needed(
+        user_id=user_id,
+        service_name=service_name,
+        token_url=QUICKBOOKS_OAUTH_TOKEN_URL,
+        token_data_builder=lambda _, refresh_token, __: {
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        },
+        token_header_builder=build_quickbooks_token_headers,
+        api_key=api_key,
+    )
 
 
 def authenticate_and_save_credentials(
     user_id: str, service_name: str, scopes: list[str]
-) -> None:
-    """Run OAuth flow and save credentials"""
-    try:
-        # Create config directory if it doesn't exist
-        creds_dir = Path.home() / ".config" / "gumcp" / service_name
-        creds_dir.mkdir(parents=True, exist_ok=True)
+) -> dict:
+    """Authenticate with QuickBooks and save credentials"""
 
-        # Get OAuth credentials from environment
-        client_id = os.getenv("QUICKBOOKS_CLIENT_ID")
-        client_secret = os.getenv("QUICKBOOKS_CLIENT_SECRET")
-        redirect_uri = os.getenv(
-            "QUICKBOOKS_REDIRECT_URI",
-            "https://developer.intuit.com/v2/OAuth2Playground/RedirectUrl",
-        )
-        environment = os.getenv("QUICKBOOKS_ENVIRONMENT", "sandbox")
+    # QuickBooks OAuth endpoints
+    return run_oauth_flow(
+        service_name=service_name,
+        user_id=user_id,
+        scopes=scopes,
+        auth_url_base=QUICKBOOKS_OAUTH_AUTHORIZE_URL,
+        token_url=QUICKBOOKS_OAUTH_TOKEN_URL,
+        auth_params_builder=build_quickbooks_auth_params,
+        token_data_builder=build_quickbooks_token_data,
+        token_header_builder=build_quickbooks_token_headers,
+        process_token_response=process_quickbooks_token_response,
+    )
 
-        if not all([client_id, client_secret]):
-            raise ValueError(
-                "Missing required environment variables: QUICKBOOKS_CLIENT_ID, QUICKBOOKS_CLIENT_SECRET"
-            )
 
-        logger.info(f"Initializing auth client with environment: {environment}")
+# Formatters
 
-        # Initialize auth client
-        auth_client = AuthClient(
-            client_id=client_id,
-            client_secret=client_secret,
-            environment=environment,
-            redirect_uri=redirect_uri,
-        )
 
-        # Get authorization URL
-        auth_url = auth_client.get_authorization_url(scopes)
-        print("\n=== QuickBooks Authentication ===")
-        print("1. Visit this URL to authorize access:")
-        print(f"\n{auth_url}\n")
-        print("2. On the QuickBooks authorization page:")
-        print("   - Log in to your QuickBooks account if needed")
-        print("   - Review and approve the requested permissions")
-        print("   - You will be redirected to the OAuth Playground")
-        print("\n3. On the OAuth Playground page:")
-        print("   - Look for the 'Authorization Code' field")
-        print("   - Look for the 'Realm ID' field")
-        print("   - Copy both values")
-        print("\n4. Enter the values below:")
+def format_customer(customer):
+    """Format a QuickBooks customer object for display"""
+    return {
+        "id": customer.Id,
+        "display_name": customer.DisplayName,
+        "company_name": getattr(customer, "CompanyName", ""),
+        "email": (
+            getattr(customer.PrimaryEmailAddr, "Address", "")
+            if hasattr(customer, "PrimaryEmailAddr")
+            else ""
+        ),
+        "phone": (
+            getattr(customer.PrimaryPhone, "FreeFormNumber", "")
+            if hasattr(customer, "PrimaryPhone")
+            else ""
+        ),
+        "balance": getattr(customer, "Balance", 0),
+    }
 
-        # Get values from user
-        auth_code = input("\nEnter the Authorization Code: ").strip()
-        realm_id = input("Enter the Realm ID: ").strip()
 
-        if not auth_code or not realm_id:
-            raise ValueError("Both Authorization Code and Realm ID are required")
+def format_invoice(invoice):
+    """Format a QuickBooks invoice for display"""
+    return {
+        "id": invoice.Id,
+        "doc_number": getattr(invoice, "DocNumber", ""),
+        "customer": (
+            getattr(invoice.CustomerRef, "name", "")
+            if hasattr(invoice, "CustomerRef")
+            else ""
+        ),
+        "date": getattr(invoice, "TxnDate", ""),
+        "due_date": getattr(invoice, "DueDate", ""),
+        "total": getattr(invoice, "TotalAmt", 0),
+        "balance": getattr(invoice, "Balance", 0),
+        "status": "Paid" if getattr(invoice, "Balance", 0) == 0 else "Outstanding",
+    }
 
-        print(f"\nFound QuickBooks company ID: {realm_id}")
 
-        logger.info("Exchanging authorization code for tokens...")
-
-        # Exchange auth code for tokens
-        auth_client.get_bearer_token(auth_code, realm_id=realm_id)
-
-        logger.info("Successfully obtained tokens")
-
-        # Save credentials
-        creds = {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "access_token": auth_client.access_token,
-            "refresh_token": auth_client.refresh_token,
-            "realm_id": realm_id,
-            "redirect_uri": redirect_uri,
-            "environment": environment,
-        }
-
-        creds_file = creds_dir / f"{user_id}.json"
-        with open(creds_file, "w") as f:
-            json.dump(creds, f, indent=2)
-
-        logger.info(f"Credentials saved to {creds_file}")
-        print("\nAuthentication successful! Credentials have been saved.")
-
-    except Exception as e:
-        logger.error(f"Authentication failed: {str(e)}")
-        print("\nAuthentication failed. Please try again.")
-        print(
-            "Make sure to copy both the Authorization Code and Realm ID from the OAuth Playground page."
-        )
-        raise
+def format_account(account):
+    """Format a QuickBooks account for display"""
+    return {
+        "id": account.Id,
+        "name": account.Name,
+        "account_type": account.AccountType,
+        "account_sub_type": getattr(account, "AccountSubType", ""),
+        "current_balance": getattr(account, "CurrentBalance", 0),
+    }

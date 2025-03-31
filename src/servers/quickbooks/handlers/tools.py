@@ -1,8 +1,13 @@
+import sys
 import json
 import logging
+import traceback
+
 from datetime import datetime, timedelta
 from typing import List
+
 from mcp.types import TextContent
+
 from quickbooks.objects.customer import Customer
 from quickbooks.objects.journalentry import JournalEntry
 from quickbooks.objects.bill import Bill
@@ -10,11 +15,9 @@ from quickbooks.objects.account import Account
 from quickbooks.objects.invoice import Invoice
 from quickbooks.objects.payment import Payment
 from quickbooks.exceptions import QuickbooksException
-import traceback
-import sys
 
-from ..utils.client import create_quickbooks_client
-from ..utils.formatters import format_customer
+from src.utils.quickbooks.util import format_customer
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +52,7 @@ def validate_resource_uri(uri: str) -> None:
         )
 
 
-async def handle_search_customers(server, arguments):
+async def handle_search_customers(qb_client, server, arguments):
     """Handle customer search tool"""
     if "query" not in arguments:
         raise ValueError("Missing query parameter")
@@ -88,7 +91,6 @@ async def handle_search_customers(server, arguments):
             return [TextContent(type="text", text=result_text)]
 
     try:
-        qb_client = await create_quickbooks_client(server.user_id)
         customers = Customer.filter(
             qb_client,
             f"DisplayName LIKE '%{query}%' OR "
@@ -118,7 +120,7 @@ async def handle_search_customers(server, arguments):
         return [TextContent(type="text", text=f"Error: {str(e)}")]
 
 
-async def handle_analyze_sred(server, arguments: dict) -> List[TextContent]:
+async def handle_analyze_sred(qb_client, server, arguments: dict) -> List[TextContent]:
     """Analyze SR&ED expenses"""
     try:
         if not all(k in arguments for k in ["start_date", "end_date"]):
@@ -140,8 +142,6 @@ async def handle_analyze_sred(server, arguments: dict) -> List[TextContent]:
             raise ValueError("End date cannot be in the future")
 
         try:
-            qb_client = await create_quickbooks_client(server.user_id)
-
             # Get journal entries and bills
             journal_entries = JournalEntry.query(
                 f"SELECT * FROM JournalEntry WHERE TxnDate >= '{start_date}' AND TxnDate <= '{end_date}'",
@@ -229,7 +229,9 @@ async def handle_analyze_sred(server, arguments: dict) -> List[TextContent]:
         ]
 
 
-async def handle_analyze_cash_flow(server, arguments: dict) -> List[TextContent]:
+async def handle_analyze_cash_flow(
+    qb_client, server, arguments: dict
+) -> List[TextContent]:
     """Analyze cash flow trends and patterns"""
     if not all(k in arguments for k in ["start_date", "end_date"]):
         raise ValueError("Missing required parameters: start_date, end_date")
@@ -273,8 +275,6 @@ async def handle_analyze_cash_flow(server, arguments: dict) -> List[TextContent]
         return [TextContent(type="text", text=report)]
 
     try:
-        qb_client = await create_quickbooks_client(server.user_id)
-
         # Get all payments and bills in the date range
         payments = Payment.all(qb=qb_client)
         bills = Bill.all(qb=qb_client)
@@ -320,7 +320,7 @@ async def handle_analyze_cash_flow(server, arguments: dict) -> List[TextContent]
 
 
 async def handle_find_duplicate_transactions(
-    server, arguments: dict
+    qb_client, server, arguments: dict
 ) -> List[TextContent]:
     """Identify potential duplicate transactions"""
     if not all(k in arguments for k in ["start_date", "end_date"]):
@@ -371,8 +371,6 @@ async def handle_find_duplicate_transactions(
             return [TextContent(type="text", text=report)]
 
     try:
-        qb_client = await create_quickbooks_client(server.user_id)
-
         # Get all payments and bills
         payments = Payment.all(qb=qb_client)
         bills = Bill.all(qb=qb_client)
@@ -490,7 +488,7 @@ async def handle_find_duplicate_transactions(
 
 
 async def handle_analyze_customer_payment_patterns(
-    server, arguments: dict
+    qb_client, server, arguments: dict
 ) -> List[TextContent]:
     """Analyze customer payment behavior and patterns"""
     if "customer_id" not in arguments:
@@ -521,8 +519,6 @@ async def handle_analyze_customer_payment_patterns(
         return [TextContent(type="text", text=report)]
 
     try:
-        qb_client = await create_quickbooks_client(server.user_id)
-
         # Get customer details
         customer = Customer.get(customer_id, qb=qb_client)
 
@@ -610,7 +606,7 @@ async def handle_analyze_customer_payment_patterns(
 
 
 async def handle_generate_financial_metrics(
-    server, arguments: dict
+    qb_client, server, arguments: dict
 ) -> List[TextContent]:
     """Generate key financial metrics and ratios"""
     if not all(k in arguments for k in ["start_date", "end_date"]):
@@ -636,8 +632,6 @@ async def handle_generate_financial_metrics(
     )
 
     try:
-        qb_client = await create_quickbooks_client(server.user_id)
-
         # Get all necessary accounts and transactions
         accounts = Account.all(qb=qb_client)
         invoices = Invoice.all(qb=qb_client)
@@ -763,7 +757,7 @@ async def handle_generate_financial_metrics(
         ]
 
 
-async def handle_send_payment(server, arguments):
+async def handle_send_payment(qb_client, server, arguments):
     """Handle sending a payment through QuickBooks"""
     logger.debug("Starting payment send with arguments: %s", arguments)
 
@@ -777,8 +771,6 @@ async def handle_send_payment(server, arguments):
     payment_method = arguments["payment_method"]
 
     try:
-        qb_client = await create_quickbooks_client(server.user_id)
-
         # Get customer details to verify existence
         customer = await Customer.get(customer_id, qb=qb_client)
 
