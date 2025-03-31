@@ -8,6 +8,7 @@ google-auth-oauthlib
 mcp==1.4.1
 slack-sdk
 python-dotenv
+python-quickbooks
 starlette
 uvicorn
 requests
