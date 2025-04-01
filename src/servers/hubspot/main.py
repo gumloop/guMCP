@@ -45,7 +45,7 @@ logging.basicConfig(
 logger = logging.getLogger(SERVICE_NAME)
 
 
-async def get_hubspot_client(user_id, api_key=None):
+async def get_hubspot_access_token(user_id, api_key=None):
     """Create a new HubSpot API client instance for this request by getting fresh credentials"""
     credentials = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
 
@@ -106,7 +106,9 @@ def create_server(user_id, api_key=None):
         )
 
         # Get access token
-        access_token = await get_hubspot_client(server.user_id, api_key=server.api_key)
+        access_token = await get_hubspot_access_token(
+            server.user_id, api_key=server.api_key
+        )
 
         # API endpoint for listing contacts
         url = "https://api.hubapi.com/crm/v3/objects/contacts"
@@ -173,7 +175,9 @@ def create_server(user_id, api_key=None):
         contact_id = uri_str.replace("hubspot:///contacts/", "")
 
         # Get access token
-        access_token = await get_hubspot_client(server.user_id, api_key=server.api_key)
+        access_token = await get_hubspot_access_token(
+            server.user_id, api_key=server.api_key
+        )
 
         # Get all available properties
         properties = await get_contact_properties(access_token)
@@ -571,14 +575,11 @@ def create_server(user_id, api_key=None):
         )
 
         # Get access token once for any tool that needs it
-        access_token = await get_hubspot_client(server.user_id, api_key=server.api_key)
+        access_token = await get_hubspot_access_token(
+            server.user_id, api_key=server.api_key
+        )
 
         if name == "list_contacts":
-            # Get access token
-            access_token = await get_hubspot_client(
-                server.user_id, api_key=server.api_key
-            )
-
             # Get contact properties to return
             if arguments and "properties" in arguments and arguments["properties"]:
                 # Use the properties specified in the request
@@ -715,11 +716,6 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            # Get access token
-            access_token = await get_hubspot_client(
-                server.user_id, api_key=server.api_key
-            )
-
             # API endpoint for creating a contact
             url = "https://api.hubapi.com/crm/v3/objects/contacts"
 
@@ -788,11 +784,6 @@ def create_server(user_id, api_key=None):
                         text="Error: Contact ID is required to update a contact.",
                     )
                 ]
-
-            # Get access token
-            access_token = await get_hubspot_client(
-                server.user_id, api_key=server.api_key
-            )
 
             contact_id = arguments["contact_id"]
 
@@ -880,11 +871,6 @@ def create_server(user_id, api_key=None):
                         text="Error: Missing required search parameters (filter_property, filter_operator, filter_value).",
                     )
                 ]
-
-            # Get access token
-            access_token = await get_hubspot_client(
-                server.user_id, api_key=server.api_key
-            )
 
             # Get properties to return
             if "properties" in arguments and arguments["properties"]:
