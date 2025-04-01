@@ -88,7 +88,6 @@ def authenticate_and_save_credentials(
     user_id: str, service_name: str, scopes: List[str]
 ) -> Dict[str, Any]:
     """Authenticate with HubSpot and save credentials"""
-    print(f"Authenticating with HubSpot using scopes: {scopes}")
     return run_oauth_flow(
         service_name=service_name,
         user_id=user_id,
