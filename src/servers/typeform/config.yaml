@@ -1,0 +1,13 @@
+name: "Typeform guMCP Server"
+icon: "assets/icon.png"
+description: "Retrieve Typeform forms and responses"
+documentation_path: "README.md"
+tools:
+  - name: "list_workspaces"
+    description: "List all workspaces in your Typeform account"
+  - name: "list_forms_by_workspace"
+    description: "List forms in a specific workspace"
+  - name: "search_forms"
+    description: "Search for forms in Typeform"
+  - name: "get_form_responses"
+    description: "Get responses for a specific form"
