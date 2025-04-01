@@ -81,7 +81,7 @@ def create_server(user_id, api_key=None):
 
     server.user_id = user_id
 
-    async def get_typeform_client():
+    async def get_typeform_access_token():
         """Get Typeform access token for the current user"""
         try:
             credentials = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
@@ -102,7 +102,7 @@ def create_server(user_id, api_key=None):
         )
 
         try:
-            access_token = await get_typeform_client()
+            access_token = await get_typeform_access_token()
             resources = []
 
             # Get workspaces first
@@ -172,7 +172,7 @@ def create_server(user_id, api_key=None):
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
         try:
-            access_token = await get_typeform_client()
+            access_token = await get_typeform_access_token()
 
             uri_str = str(uri)
 
@@ -336,7 +336,7 @@ def create_server(user_id, api_key=None):
         )
 
         try:
-            access_token = await get_typeform_client()
+            access_token = await get_typeform_access_token()
 
             if name == "list_workspaces":
                 workspaces_result = await execute_typeform_request(
