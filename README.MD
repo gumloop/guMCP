@@ -2,32 +2,6 @@
 
 guMCP is an open-source collection of Model Context Protocol (MCP) servers that can be run both remotely and locally. The project aims to create the largest collection of MCP servers with a unified backend, fostering a community around AI integrations and the future of AGI.
 
-## Table of Contents
-
-- [What is MCP?](#what-is-mcp)
-- [Overview](#overview)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-  - [Running SSE Servers](#running-sse-servers)
-  - [Running Stdio Servers](#running-stdio-servers)
-- [Client Compatibility](#client-compatibility)
-- [Supported Servers and Authentication Methods](#supported-servers-and-authentication-methods)
-  - [Authentication Method Summary](#authentication-method-summary)
-- [What We're Building](#what-were-building)
-- [Features](#features)
-- [Current MCP Landscape](#current-mcp-landscape)
-- [Contributing](#contributing)
-- [License](#license)
-- [Security](#security)
-- [Community](#community)
-- [Acknowledgments](#acknowledgments)
-
-## What is MCP?
-
-Model Context Protocol (MCP) is a standardized way for AI models to interact with external tools and services. It allows AI assistants to perform actions like searching the web, accessing databases, or using productivity tools—significantly expanding their capabilities beyond simple text generation.
-
 ## Overview
 
 While many MCP server providers are closed source, and open-source alternatives typically only support local hosting through stdio, guMCP provides:
@@ -49,7 +23,6 @@ While many MCP server providers are closed source, and open-source alternatives 
 
 - Python 3.11
 - Git
-- pip
 - For Windows users: A bash-compatible shell is recommended (Git Bash, WSL, etc.)
 
 ### Installation
@@ -112,14 +85,6 @@ While many MCP server providers are closed source, and open-source alternatives 
    - Server configuration options
    - Development environment settings
 
-5. **Verify installation**:
-
-   ```bash
-   # Run a simple test to ensure everything is working
-   python tests/servers/test_runner.py --server=simple-tools-server
-   ```
-
-Now you're ready to start using guMCP! Continue to the Usage section below to learn how to run servers.
 
 ## Usage
 
@@ -151,12 +116,6 @@ For convenience, we also provide a lightweight MCP Client to start and connect t
  python tests/clients/LocalMCPTestClient.py --server=simple-tools-server
 ```
 
-## Client Compatibility
-
-- **Cursor Integration**: Tools like Cursor can easily leverage Gumloop's remote authentication layers, allowing seamless connection to our MCP servers without additional setup. This client works exceptionally well with the integrations on https://www.gumloop.com/mcp
-
-- **Claude Desktop**: For Claude Desktop users, we're developing an adapter that will enable connection to guMCP servers. This is currently in development and will be released soon. For now, intgrations vary in complexity from simple copy-pasting of API keys all the way through configuring new oauth connections in GCP. We aim to improve support here dramatically.
-
 ## Supported Servers and Authentication Methods
 
 The following table provides an overview of the current servers implemented in guMCP, their authentication requirements, and relative ease of use with different authentication methods:
@@ -164,73 +123,21 @@ The following table provides an overview of the current servers implemented in g
 | Server | Auth Type | Remote Auth<br>(e.g., Cursor) | Local Auth<br>(e.g., Claude Desktop) | Documentation |
 |--------|-----------|-------------------------------|--------------------------------------|---------------|
 | **Google Services** | | | | |
-| Google Sheets | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gsheets) | ⚠️ Complex - Requires GCP project & OAuth setup | [GSheets Docs](/src/servers/gsheets/README.md) |
-| Gmail | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gmail) | ⚠️ Complex - Requires GCP project & OAuth setup | [Gmail Docs](/src/servers/gmail/README.md) |
-| Google Docs | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gdocs) | ⚠️ Complex - Requires GCP project & OAuth setup | [GDocs Docs](/src/servers/gdocs/README.md) |
-| Google Drive | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gdrive) | ⚠️ Complex - Requires GCP project & OAuth setup | [GDrive Docs](/src/servers/gdrive/README.md) |
-| Google Calendar | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gcalendar) | ⚠️ Complex - Requires GCP project & OAuth setup | [GCalendar Docs](/src/servers/gcalendar/README.md) |
+| Google Sheets | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gsheets) | ⚠️ Requires GCP project & OAuth setup | [GSheets Docs](/src/servers/gsheets/README.md) |
+| Gmail | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gmail) | ⚠️ Requires GCP project & OAuth setup | [Gmail Docs](/src/servers/gmail/README.md) |
+| Google Docs | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gdocs) | ⚠️ Requires GCP project & OAuth setup | [GDocs Docs](/src/servers/gdocs/README.md) |
+| Google Drive | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gdrive) | ⚠️ Requires GCP project & OAuth setup | [GDrive Docs](/src/servers/gdrive/README.md) |
+| Google Calendar | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/gcalendar) | ⚠️ Requires GCP project & OAuth setup | [GCalendar Docs](/src/servers/gcalendar/README.md) |
 | **Communication Tools** | | | | |
-| Slack | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/slack) | ⚠️ Complex - Requires OAuth setup with HTTPS redirect | [Slack Docs](/src/servers/slack/README.md) |
-| Outlook | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/outlook) | ⚠️ Complex - Requires Azure app registration | [Outlook Docs](/src/servers/outlook/README.md) |
+| Slack | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/slack) | ⚠️ Requires OAuth setup with HTTPS redirect | [Slack Docs](/src/servers/slack/README.md) |
+| Outlook | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/outlook) | ⚠️ Requires Azure app registration | [Outlook Docs](/src/servers/outlook/README.md) |
 | **Productivity Tools** | | | | |
-| Airtable | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/airtable) | ⚠️ Complex - Requires Airtable OAuth application | [Airtable Docs](/src/servers/airtable/README.md) |
-| Linear | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/linear) | ⚠️ Complex - Requires Linear developer setup | [Linear Docs](/src/servers/linear/README.md) |
-| Attio | Mixed | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/attio) | ⚠️ Moderate - Depends on auth method used | [Attio Docs](/src/servers/attio/README.md) |
+| Airtable | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/airtable) | ⚠️ Requires Airtable OAuth application | [Airtable Docs](/src/servers/airtable/README.md) |
+| Linear | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/linear) | ⚠️ Requires Linear OAuth application | [Linear Docs](/src/servers/linear/README.md) |
+| Attio | Mixed | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/attio) | ⚠️ Requires Attio OAuth application | [Attio Docs](/src/servers/attio/README.md) |
 | **Search Tools** | | | | |
 | Perplexity | API Key | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/perplexity) | ✅ Easy - Simple API key setup | [Perplexity Docs](/src/servers/perplexity/README.md) |
 
-### Authentication Method Summary
-
-- **Remote Auth** (used by clients like Cursor): 
-  - Uses Gumloop's authentication layer
-  - Works seamlessly with all servers
-  - Requires minimal setup from users
-  - Handles complex OAuth flows behind the scenes
-
-- **Local Auth** (used by clients like Claude Desktop): 
-  - API key-based services (like Perplexity) are simple to configure and use
-  - OAuth-based services require significant local setup, including creating developer applications and configuring OAuth flows
-  - We're developing an adapter to simplify Claude Desktop connections to guMCP servers
-
-## What We're Building
-
-guMCP aims to solve several key challenges in the MCP ecosystem:
-
-- **Unified Transport Layer**: We provide a consistent way to run each server via stdio locally or SSE remotely. Unlike existing providers that force you to choose between their hosted SSE service or running stdio locally, guMCP makes it simple to do either with minimal configuration. We're creating an open alternative that's easy to self-host.
-
-- **Standardized Authentication Framework**: We've developed a flexible and generic framework for integration auth across all MCP servers. Current authentication methods vary widely between servers, creating unnecessary complexity. Our unified mechanism uses a base 'AuthClient' across all servers, supporting any arbitrary implementation. For local use, we provide a LocalAuthClient that standardizes integrations and OAuth flows.
-
-- **Flexible Authentication Options**: The GumloopAuthClient lets you use your existing Gumloop credentials *and* you can host servers with your own custom AuthClient or run locally with stdio and local auth as needed.
-
-- **Ready-to-Deploy SSE**: The repository comes ready to deploy with ALL SSE servers accessible under a single URL. If you want to self-host, you can be up and running immediately without complex configuration.
-
-- **Instant Deployment for Contributors**: Open source contributors don't need to worry about DevOps or infrastructure. Your server implementation will be deployed and hosted instantly, making it easier for everyone, regardless of technical background, to bring their ideas to life.
-
-## Features
-
-- **Dual Transport Support**: All servers support both:
-
-  - Local hosting through stdio
-  - Remote hosting through SSE
-
-- **Unified Backend**: Consistent implementation patterns across all servers
-
-- **Extensive Server Collection**: Including servers for:
-  - File systems and databases
-  - Development tools
-  - Web and browser automation
-  - Productivity and communication
-  - AI and specialized tools
-
-## Current MCP Landscape
-
-The MCP ecosystem is evolving rapidly with varying levels of implementation:
-
-- **MCP Client capabilities vary**: Different AI assistants have different MCP Client capabilities. Anthropic's Claude can use MCP servers through Claude Desktop, but not the web client. ChatGPT has announced support, but has not announced a timeline. Cursor has robust support for our remote servers.
-
-- **Authentication Challenges**: Currently, authentication methods vary widely between services. Some use API keys, others require OAuth flows, and many have unique authentication requirements that make standardization difficult. We're looking to solve this using Gumloop's authentication layer, but this requires more work for a smooth experience on Claude Desktop.
-
-- **Integration Complexity**: Some integrations use API keys, like Perplexity and are straightforward to implement, requiring simple API calls. Others, such as Google Drive or GitHub, require more complex OAuth authentication flows and permission handling.
 
 ## Contributing
 
