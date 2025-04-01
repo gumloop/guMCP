@@ -30,17 +30,12 @@ from src.utils.hubspot.util import authenticate_and_save_credentials, get_creden
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
-    "oauth",  # Required scope for all app installs
     "crm.objects.contacts.read",
     "crm.objects.contacts.write",
     "crm.objects.companies.read",
     "crm.objects.companies.write",
     "crm.objects.deals.read",
     "crm.objects.deals.write",
-    "crm.schemas.contacts.read",
-    "crm.schemas.contacts.write",
-    "content",
-    "settings.users.read",
 ]
 
 # Configure logging
