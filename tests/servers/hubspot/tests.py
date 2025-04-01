@@ -248,7 +248,7 @@ async def test_update_company(client):
 
     # Now update the company with new information
     new_description = f"Updated description {uuid.uuid4()}"
-    new_industry = "AI Testing"
+    new_industry = "Accounting"
 
     response = await client.process_query(
         f"Use the update_company tool to update the company with ID {company_id}. "
