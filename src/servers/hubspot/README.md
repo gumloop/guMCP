@@ -12,19 +12,12 @@ guMCP server implementation for interacting with HubSpot CRM.
 
 The following OAuth scopes are required for the server to function:
 
-- `oauth` - Required scope for all app installs (mandatory)
 - `crm.objects.contacts.read` - Read access to contacts
 - `crm.objects.contacts.write` - Write access to contacts
 - `crm.objects.companies.read` - Read access to companies
 - `crm.objects.companies.write` - Write access to companies
 - `crm.objects.deals.read` - Read access to deals
 - `crm.objects.deals.write` - Write access to deals
-- `crm.schemas.contacts.read` - Read access to contact schemas
-- `crm.schemas.contacts.write` - Write access to contact schemas
-- `content` - Access to content
-- `settings.users.read` - Read access to user settings
-
-Note: Only the `oauth` scope is mandatory, other scopes may be required for specific functionality and missing scopes may cause errors.
 
 ### Local Authentication
 
