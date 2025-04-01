@@ -1,5 +1,7 @@
-import sys
 import os
+import sys
+import json
+import logging
 
 # Add both project root and src directory to Python path
 # Get the project root directory and add to path
@@ -11,9 +13,9 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 
 from typing import Optional, Sequence
 from pathlib import Path
-import logging
-import json
-import asyncio
+
+from mcp.server.models import InitializationOptions
+from mcp.server import NotificationOptions
 
 from intuitlib.enums import Scopes
 from intuitlib.client import AuthClient
@@ -475,7 +477,9 @@ def create_server(user_id, api_key=None):
                 handle_generate_financial_metrics,
             )
 
-            qb_client = create_quickbooks_client(server.user_id, api_key=server.api_key)
+            qb_client = await create_quickbooks_client(
+                server.user_id, api_key=server.api_key
+            )
             if tool_name == "search_customers":
                 return await handle_search_customers(qb_client, server, arguments)
             elif tool_name == "analyze_sred":
@@ -510,41 +514,23 @@ server = create_server
 
 def get_initialization_options(server_instance) -> dict:
     """Get options for server initialization"""
-    return {
-        "title": "QuickBooks Server for guMCP",
-        "description": "Access and analyze QuickBooks financial data",
-    }
+    return InitializationOptions(
+        server_name="quickbooks-server",
+        server_version="1.0.0",
+        capabilities=server_instance.get_capabilities(
+            notification_options=NotificationOptions(),
+            experimental_capabilities={},
+        ),
+    )
 
 
-# If this is being run directly, execute the main function
+# Main handler allows users to auth
 if __name__ == "__main__":
-    # Ensure arguments are provided
-    if len(sys.argv) < 2:
-        print("Usage: python main.py [server|auth]")
-        sys.exit(1)
-
-    command = sys.argv[1]
-
-    if command == "server":
-        # Run as a standalone server
-        import sys
-
-        original_argv = sys.argv
-        sys.argv = [original_argv[0], "--server", "quickbooks", "--user-id", "local"]
-
-        from src.servers.local import main
-
-        asyncio.run(main())
-
-        # Restore original argv
-        sys.argv = original_argv
-    elif command == "auth":
-        authenticate_and_save_credentials(
-            "local",
-            SERVICE_NAME,
-            SCOPES,
-        )
+    if sys.argv[1].lower() == "auth":
+        user_id = "local"
+        # Run authentication flow
+        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
     else:
-        print(f"Unknown command: {command}")
-        print("Usage: python main.py [server|auth]")
-        sys.exit(1)
+        print("Usage:")
+        print("  python main.py auth - Run authentication flow for a user")
+        print("Note: To run the server normally, use the guMCP server framework.")

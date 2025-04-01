@@ -91,13 +91,30 @@ async def handle_search_customers(qb_client, server, arguments):
             return [TextContent(type="text", text=result_text)]
 
     try:
-        customers = Customer.filter(
-            qb_client,
-            f"DisplayName LIKE '%{query}%' OR "
-            f"CompanyName LIKE '%{query}%' OR "
-            f"PrimaryEmailAddr LIKE '%{query}%'",
-            max_results=limit,
+        customers = Customer.query(
+            f"""SELECT * FROM Customer 
+            WHERE DisplayName LIKE '%{query}%' 
+            MAXRESULTS {limit}""",
+            qb=qb_client,
         )
+
+        # If no results, try company name
+        if not customers:
+            customers = Customer.query(
+                f"""SELECT * FROM Customer 
+                WHERE CompanyName LIKE '%{query}%' 
+                MAXRESULTS {limit}""",
+                qb=qb_client,
+            )
+
+        # If still no results, try email
+        if not customers:
+            customers = Customer.query(
+                f"""SELECT * FROM Customer 
+                WHERE PrimaryEmailAddr LIKE '%{query}%' 
+                MAXRESULTS {limit}""",
+                qb=qb_client,
+            )
 
         formatted_customers = [format_customer(c) for c in customers]
 
