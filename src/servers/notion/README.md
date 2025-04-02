@@ -1,20 +1,43 @@
-
 # Notion GuMCP Server
 
-GuMCP server implementation for interacting with Notion.
+GuMCP server implementation for interacting with Notion using OAuth authentication.
 
 ---
 
 ### 📦 Prerequisites
 
 - Python 3.11+
-- A Notion integration token (see [Creating integrations](https://developers.notion.com/docs/create-a-notion-integration))
-- A `.env` file with your `NOTION_TOKEN` set
+- A Notion integration created at [Notion Developer Portal](https://www.notion.com/my-integrations)
+- A local OAuth config file with your Notion `client_id`, `client_secret`, and `redirect_uri`
 
-Example `.env` content:
+Create a file named `oauth.json`:
+
+```json
+{
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "redirect_uri": "http://localhost:8080"
+}
 ```
-NOTION_TOKEN=secret_abc123...
+
+**⚠️ Do not commit this file to version control. Add it to your `.gitignore`.**
+
+---
+
+### 🔐 Authentication
+
+Before running the server, you need to authenticate and store your OAuth token:
+
+```bash
+python main.py auth
 ```
+
+This will:
+1. Print a Notion OAuth URL for you to open in your browser.
+2. Prompt you to paste the `code` after granting access.
+3. Store the token securely using your `auth_client`.
+
+You only need to do this once per user.
 
 ---
 
@@ -22,14 +45,14 @@ NOTION_TOKEN=secret_abc123...
 
 This server exposes the following tools for interacting with Notion:
 
-- `list-all-users` – List all users
-- `search-pages` – Search all pages
-- `list-databases` – List all databases
-- `query-database` – Query a Notion database
-- `get-page` – Retrieve a page by ID
-- `create-page` – Create a new page in a database
-- `append-blocks` – Append content blocks to a page or block
-- `get-block-children` – List content blocks of a page or block
+- `list_all_users` – List all users
+- `search_pages` – Search all pages
+- `list_databases` – List all databases
+- `query_database` – Query a Notion database
+- `get_page` – Retrieve a page by ID
+- `create_page` – Create a new page in a database
+- `append_blocks` – Append content blocks to a page or block
+- `get_block_children` – List content blocks of a page or block
 
 ---
 
@@ -37,7 +60,7 @@ This server exposes the following tools for interacting with Notion:
 
 #### Local Development
 
-You can launch the server for local development using (example script):
+You can launch the server for local development using:
 
 ```bash
 ./start_remote_dev_server.sh
@@ -57,10 +80,11 @@ Adjust the endpoint path as needed based on your deployment setup.
 
 ### 📎 Notes
 
-- Ensure you have created a Notion integration and saved its secret token in your `.env` file under `NOTION_TOKEN`.
-- If you're testing with multiple users or environments, you may need different token values or `user_id` values.
+- This implementation uses OAuth instead of a static token for improved security and multi-user support.
+- Each user’s OAuth access token is securely stored via your `auth_client`.
+- The `notion_oauth_client.json` file contains your app’s secret credentials and should never be committed to version control.
 - This server integrates with GuMCP agents for tool-based LLM workflows.
-- Make sure you have mentioned the Anthropic API key in the `.env` file if you're using it for additional LLM features.
+- Make sure you’ve set the Anthropic API key in your `.env` if you're using LLM toolchains.
 
 ---
 

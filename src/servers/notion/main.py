@@ -3,6 +3,7 @@ import sys
 import logging
 import json
 from pathlib import Path
+from typing import Optional
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -11,123 +12,96 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-# mcp is a custom package containing types, server definitions, and related models
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-# notion_client is the official Notion SDK for Python (async version)
 from notion_client import AsyncClient
-
-# create_auth_client is a custom function for handling user authentication
 from src.auth.factory import create_auth_client
+from src.utils.notion.util import authenticate_and_save_credentials
 
-# Configure logging to capture info-level logs and above
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("notion-server")
-
-# SERVICE_NAME is derived from the parent directory's name
 SERVICE_NAME = Path(__file__).parent.name
+SCOPES = ["all"]  # Notion doesn't use granular OAuth scopes like Google
 
-def authenticate_and_save_notion_key(user_id):
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(SERVICE_NAME)
+
+
+async def get_credentials(user_id, api_key=None):
     """
-    Authenticate with Notion and save API key for the specified user ID.
-    Prompts for an API key locally (if ENVIRONMENT=local) and saves
-    it via the auth client.
+    Retrieves the OAuth access token for a specific Notion user.
+
+    Args:
+        user_id (str): The identifier of the user.
+        api_key (Optional[str]): Optional API key passed during server creation.
+
+    Returns:
+        str: The access token to authenticate with the Notion API.
+
+    Raises:
+        ValueError: If credentials are missing or invalid.
     """
-    logger = logging.getLogger("notion")
-    logger.info(f"Starting Notion authentication for user {user_id}...")
-
-    # Get auth client
-    auth_client = create_auth_client()
-
-    # Prompt user for API key if running locally
-    api_key = input("Please enter your Notion API key: ").strip()
-    if not api_key:
-        raise ValueError("API key cannot be empty")
-
-    # Save API key using auth client
-    auth_client.save_user_credentials("notion", user_id, {"api_key": api_key})
-    logger.info(f"Notion API key saved for user {user_id}. You can now run the server.")
-    return api_key
-
-
-def get_notion_credentials(user_id, api_key=None):
-    """
-    Get the Notion API key for the specified user.
-
-    If api_key is provided, it will be used to instantiate the
-    auth client. Then we retrieve and validate the user's
-    stored Notion API key. Raises ValueError if not found.
-    """
-    logger = logging.getLogger("notion")
     auth_client = create_auth_client(api_key=api_key)
-    credentials_data = auth_client.get_user_credentials("notion", user_id)
+    credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
 
-    def handle_missing_credentials():
-        error_str = f"Notion API key not found for user {user_id}."
+    def handle_missing():
+        err = f"Notion credentials not found for user {user_id}."
         if os.environ.get("ENVIRONMENT", "local") == "local":
-            error_str += " Please run authentication first."
-        logger.error(error_str)
-        raise ValueError(error_str)
+            err += " Please run with 'auth' argument first."
+        logger.error(err)
+        raise ValueError(err)
 
     if not credentials_data:
-        handle_missing_credentials()
+        handle_missing()
 
-    # For some auth clients, credentials_data might already be the API key string
-    api_key = (
-        credentials_data.get("api_key")
-        if not isinstance(credentials_data, str)
-        else credentials_data
-    )
-    if not api_key:
-        handle_missing_credentials()
+    token = credentials_data.get("access_token") or credentials_data.get("api_key")
+    if token:
+        return token
+    handle_missing()
 
-    return api_key
+
+async def create_notion_client(user_id, api_key=None):
+    """
+    Creates an authorized Notion AsyncClient instance.
+
+    Args:
+        user_id (str): The user identifier.
+        api_key (Optional[str]): Optional API key.
+
+    Returns:
+        AsyncClient: An authenticated Notion client object.
+    """
+    token = await get_credentials(user_id, api_key)
+    return AsyncClient(auth=token)
 
 
 def create_server(user_id, api_key=None):
     """
-    Creates and configures a Notion server instance.
-
-    This function sets up a GuMCP server with tooling for interacting with
-    the Notion API. It includes endpoints for listing, searching, creating,
-    and retrieving data from Notion.
+    Initializes and configures a Notion MCP server instance.
 
     Args:
-        user_id (str): The user identifier (for authentication or context).
-        api_key (str, optional): An optional API key. Defaults to None.
+        user_id (str): The unique user identifier for session context.
+        api_key (Optional[str]): Optional API key for user auth context.
 
     Returns:
-        Server: A configured GuMCP server instance ready to handle requests.
+        Server: Configured server instance with all Notion tools registered.
     """
     server = Server("notion-server")
     server.user_id = user_id
     server.api_key = api_key
 
-    # Retrieve an API key from stored credentials (or from the passed argument)
-    api_key = get_notion_credentials(server.user_id, api_key=server.api_key)
-    # Create an AsyncClient and store it on the server instance
-    server.notion = AsyncClient(auth=api_key)
-
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
         """
-        Lists available tools.
-
-        Each tool is described with a corresponding JSON Schema definition
-        for input validation. This function can be extended to register
-        additional tools in the future.
+        Lists all available tools for interacting with the Notion API.
 
         Returns:
-            list[types.Tool]: A list of tool definitions with name, description, and schema.
+            list[types.Tool]: A list of tool metadata with schema definitions.
         """
-        current_user = getattr(server, "user_id", None)
-        logger.info(f"Listing tools for user: {current_user}")
-
+        logger.info(f"Listing tools for user: {user_id}")
         return [
             types.Tool(
                 name="list_all_users",
@@ -136,7 +110,7 @@ def create_server(user_id, api_key=None):
             ),
             types.Tool(
                 name="search_pages",
-                description="Search all pages",
+                description="Search pages by text",
                 inputSchema={
                     "type": "object",
                     "properties": {"query": {"type": "string"}},
@@ -202,154 +176,73 @@ def create_server(user_id, api_key=None):
         ]
 
     @server.call_tool()
-    async def handle_call_tool(
-        name: str, arguments: dict | None
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+    async def handle_call_tool(name: str, arguments: dict | None):
         """
-        Handles the invocation of a tool by name, passing the necessary arguments.
-
-        This function dispatches calls to various Notion API methods depending on
-        the tool name. It returns text content in JSON format for consistency.
+        Dispatches a tool call to the corresponding Notion API method.
 
         Args:
-            name (str): The name of the tool to call (e.g., 'list-all-users').
-            arguments (dict|None): A dictionary of arguments as required by the chosen tool.
+            name (str): The tool name to execute.
+            arguments (dict | None): Arguments to pass to the tool.
 
         Returns:
-            list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-            A list of content objects containing the tool's response data.
+            list[types.TextContent]: The JSON-formatted result of the API call.
+
+        Raises:
+            ValueError: If an unknown tool name is provided.
         """
-        current_user = getattr(server, "user_id", None)
-        logger.info(f"User {current_user} calling tool: {name} with arguments: {arguments}")
+        logger.info(f"User {user_id} calling tool: {name} with args: {arguments}")
 
-        notion = getattr(server, "notion", None)
-        if not notion:
-            return [
-                types.TextContent(
-                    type="text",
-                    text="Error: Notion client not initialized.",
+        notion = await create_notion_client(server.user_id, server.api_key)
+
+        if arguments is None:
+            arguments = {}
+
+        try:
+            if name == "list_all_users":
+                result = await notion.users.list()
+            elif name == "search_pages":
+                result = await notion.search(query=arguments["query"])
+            elif name == "list_databases":
+                result = await notion.search(filter={"property": "object", "value": "database"})
+            elif name == "query_database":
+                result = await notion.databases.query(database_id=arguments["database_id"])
+            elif name == "get_page":
+                result = await notion.pages.retrieve(page_id=arguments["page_id"])
+            elif name == "create_page":
+                result = await notion.pages.create(
+                    parent={"database_id": arguments["database_id"]},
+                    properties=arguments["properties"],
                 )
-            ]
-
-        # If the closure's 'api_key' ended up not being set, fail early
-        if not api_key:
-            return [
-                types.TextContent(
-                    type="text",
-                    text="Error: Notion API key not provided. Please configure your API key.",
+            elif name == "append_blocks":
+                result = await notion.blocks.children.append(
+                    block_id=arguments["block_id"], children=arguments["children"]
                 )
-            ]
+            elif name == "get_block_children":
+                result = await notion.blocks.children.list(block_id=arguments["block_id"])
+            else:
+                raise ValueError(f"Unknown tool: {name}")
 
-        if not arguments:
-            return [
-                types.TextContent(
-                    type="text",
-                    text="Error: No arguments provided."
-                )
-            ]
+            return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
-        if name == "list_all_users":
-            result = await notion.users.list()
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result.get("results", []), indent=2)
-                )
-            ]
-
-        elif name == "search_pages":
-            result = await notion.search(query=arguments["query"])
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result.get("results", []), indent=2)
-                )
-            ]
-
-        elif name == "list_databases":
-            result = await notion.search(filter={"property": "object", "value": "database"})
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result.get("results", []), indent=2)
-                )
-            ]
-
-        elif name == "query_database":
-            result = await notion.databases.query(database_id=arguments["database_id"])
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result.get("results", []), indent=2)
-                )
-            ]
-
-        elif name == "get_page":
-            result = await notion.pages.retrieve(page_id=arguments["page_id"])
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result, indent=2)
-                )
-            ]
-
-        elif name == "create_page":
-            result = await notion.pages.create(
-                parent={"database_id": arguments["database_id"]},
-                properties=arguments["properties"],
-            )
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result, indent=2)
-                )
-            ]
-
-        elif name == "append_blocks":
-            result = await notion.blocks.children.append(
-                block_id=arguments["block_id"],
-                children=arguments["children"]
-            )
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result, indent=2)
-                )
-            ]
-
-        elif name == "get_block_children":
-            result = await notion.blocks.children.list(block_id=arguments["block_id"])
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(result.get("results", []), indent=2)
-                )
-            ]
-
-        # If the tool name is unrecognized
-        raise ValueError(f"Unknown tool: {name}")
+        except Exception as e:
+            logger.error(f"Error calling Notion API: {e}")
+            return [types.TextContent(type="text", text=str(e))]
 
     return server
 
 
-# Assigning the create_server function to a variable for use by external modules
 server = create_server
 
 
 def get_initialization_options(server_instance: Server) -> InitializationOptions:
     """
-    Retrieves the initialization options for the server.
-
-    This constructs and returns InitializationOptions by leveraging the
-    server's built-in capability methods, along with notification options
-    and experimental capabilities.
+    Provides initialization options required for registering the server.
 
     Args:
-        server_instance (Server): A configured GuMCP server instance.
+        server_instance (Server): The GuMCP server instance.
 
     Returns:
-        InitializationOptions: The initialization options for this server,
-        including capabilities and version information.
+        InitializationOptions: The initialization configuration block.
     """
     return InitializationOptions(
         server_name="notion-server",
@@ -362,12 +255,9 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
 
 
 if __name__ == "__main__":
-    # Safeguard in case user didn't provide any command-line args
-    if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
-        # In a local development flow, the user_id defaults to "local"
+    if sys.argv[1].lower() == "auth":
         user_id = "local"
-        authenticate_and_save_notion_key(user_id)
+        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
-        print("Note: To run the server normally, use the GuMCP server framework.")
