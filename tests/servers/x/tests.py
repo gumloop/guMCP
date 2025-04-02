@@ -165,7 +165,7 @@ async def test_get_user_posts(client):
 async def test_get_user_home_timeline(client):
     """Test getting user home timeline"""
     # Use the current official account since we need a username
-    test_username = "X"
+    test_username = "gumloop_ai"
 
     response = await client.process_query(
         f"Use the get_user_home_timeline tool to get tweets from @{test_username}'s home timeline. Set max_results to 5. Start your response with 'TIMELINE_SUCCESS:' if you successfully retrieved the timeline, or 'TIMELINE_FAILED:' if there was an error."
@@ -242,7 +242,7 @@ async def test_get_tweet_by_id(client):
 async def test_create_and_delete_tweet(client):
     """Test creating and then deleting a tweet"""
     # Create a unique test message to avoid duplicates
-    test_message = f"Test tweet {uuid.uuid4()} - Please ignore this automated test."
+    test_message = f"This tweet is being made from guMCP! {uuid.uuid4()} - Please ignore this automated test."
 
     # Create the tweet
     create_response = await client.process_query(
