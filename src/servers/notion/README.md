@@ -20,8 +20,6 @@ Create a file named `oauth.json`:
 }
 ```
 
-**⚠️ Do not commit this file to version control. Add it to your `.gitignore`.**
-
 ---
 
 ### 🔐 Authentication
@@ -31,13 +29,6 @@ Before running the server, you need to authenticate and store your OAuth token:
 ```bash
 python main.py auth
 ```
-
-This will:
-1. Print a Notion OAuth URL for you to open in your browser.
-2. Prompt you to paste the `code` after granting access.
-3. Store the token securely using your `auth_client`.
-
-You only need to do this once per user.
 
 ---
 
@@ -63,7 +54,7 @@ This server exposes the following tools for interacting with Notion:
 You can launch the server for local development using:
 
 ```bash
-./start_remote_dev_server.sh
+./start_remote_sse_server.sh
 ```
 
 This will start the GuMCP server and make it available for integration and testing.
@@ -75,16 +66,6 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/notion/local
 ```
 
 Adjust the endpoint path as needed based on your deployment setup.
-
----
-
-### 📎 Notes
-
-- This implementation uses OAuth instead of a static token for improved security and multi-user support.
-- Each user’s OAuth access token is securely stored via your `auth_client`.
-- The `notion_oauth_client.json` file contains your app’s secret credentials and should never be committed to version control.
-- This server integrates with GuMCP agents for tool-based LLM workflows.
-- Make sure you’ve set the Anthropic API key in your `.env` if you're using LLM toolchains.
 
 ---
 
