@@ -6,6 +6,7 @@ google-auth
 google-auth-httplib2
 google-auth-oauthlib
 mcp==1.4.1
+notion-client
 slack-sdk
 prometheus-client
 python-dotenv

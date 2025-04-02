@@ -85,6 +85,7 @@ httpx==0.28.1
     # via
     #   anthropic
     #   mcp
+    #   notion-client
 httpx-sse==0.4.0
     # via mcp
 idna==3.10
@@ -103,6 +104,8 @@ multidict==6.2.0
     # via
     #   aiohttp
     #   yarl
+notion-client==2.3.0
+    # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
 prometheus-client==0.21.1
