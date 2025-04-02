@@ -1,6 +1,6 @@
 # YouTube Server
 
-GuMCP server implementation for interacting with the **YouTube Data API v3**.
+guMCP server implementation for interacting with the **YouTube Data API v3**.
 
 ---
 
@@ -72,7 +72,6 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/youtube/local
 
 - Ensure your OAuth app has **YouTube Data API v3** access enabled in the Google Cloud console.
 - If you're testing with multiple users or environments, use different `user_id` values.
-- This server integrates with GuMCP agents for tool-based LLM workflows.
 - Make sure your `.env` file contains the appropriate API keys if you're using external LLM services like Anthropic.
 
 ---

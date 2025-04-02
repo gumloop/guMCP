@@ -203,9 +203,13 @@ def create_server(user_id, api_key=None):
             elif name == "search_pages":
                 result = await notion.search(query=arguments["query"])
             elif name == "list_databases":
-                result = await notion.search(filter={"property": "object", "value": "database"})
+                result = await notion.search(
+                    filter={"property": "object", "value": "database"}
+                )
             elif name == "query_database":
-                result = await notion.databases.query(database_id=arguments["database_id"])
+                result = await notion.databases.query(
+                    database_id=arguments["database_id"]
+                )
             elif name == "get_page":
                 result = await notion.pages.retrieve(page_id=arguments["page_id"])
             elif name == "create_page":
@@ -218,7 +222,9 @@ def create_server(user_id, api_key=None):
                     block_id=arguments["block_id"], children=arguments["children"]
                 )
             elif name == "get_block_children":
-                result = await notion.blocks.children.list(block_id=arguments["block_id"])
+                result = await notion.blocks.children.list(
+                    block_id=arguments["block_id"]
+                )
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
@@ -239,7 +245,7 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
     Provides initialization options required for registering the server.
 
     Args:
-        server_instance (Server): The GuMCP server instance.
+        server_instance (Server): The guMCP server instance.
 
     Returns:
         InitializationOptions: The initialization configuration block.

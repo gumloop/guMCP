@@ -1,4 +1,4 @@
-name: "Notion GuMCP Server"
+name: "Notion guMCP Server"
 icon: "assets/icon.png"
 description: "Server for interacting with Notion"
 documentation_path: "README.md"
