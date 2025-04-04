@@ -70,9 +70,10 @@ async def test_update_subscription(client):
     email = f"update_sub_{uuid.uuid4().hex[:6]}@example.com"
     prod_name = f"UpdateSub Product {uuid.uuid4().hex[:6]}"
 
-    # Step 1: Create customer
+    # Step 1: Create customer with test card token
     cust_res = await client.process_query(
-        f"Create a customer with email {email}. If successful, start with 'CUSTOMER_CREATED:'"
+        f"Use the create_customer tool to create a customer with email '{email}' "
+        f"and source='tok_visa'. If successful, start with 'CUSTOMER_CREATED:'"
     )
     customer_id = extract_id(cust_res, "cus_")
     assert customer_id, f"Customer creation failed: {cust_res}"
@@ -88,7 +89,7 @@ async def test_update_subscription(client):
 
     # Step 3: Create recurring price
     price_res = await client.process_query(
-        f"Create a recurring price for product {product_id} with 4000 cents in 'usd'. If successful, start with 'PRICE_CREATED:'"
+        f"Create a recurring monthly price for product {product_id} with 4000 cents in 'usd'. If successful, start with 'PRICE_CREATED:'"
     )
     price_id = extract_id(price_res, "price_")
     assert price_id, f"Price creation failed: {price_res}"
@@ -271,10 +272,10 @@ async def test_cancel_subscription(client):
     email = f"cancel_{uuid.uuid4().hex[:6]}@example.com"
     product_name = f"Cancel Product {uuid.uuid4().hex[:6]}"
 
-    # Step 1: Create customer
+    # Step 1: Create customer with test card token
     cust_res = await client.process_query(
-        f"Use the create_customer tool to create a customer with email '{email}'. "
-        "If successful, start with 'CUSTOMER_CREATED:' followed by the ID only."
+        f"Use the create_customer tool to create a customer with email '{email}' "
+        f"and source='tok_visa'. If successful, start with 'CUSTOMER_CREATED:' followed by the ID only."
     )
     customer_id = extract_id(cust_res, "cus_")
     assert customer_id, f"Invalid customer ID: {cust_res}"
@@ -291,7 +292,7 @@ async def test_cancel_subscription(client):
 
     # Step 3: Create recurring price
     price_res = await client.process_query(
-        f"Use the create_price tool to create a recurring price for product {product_id} "
+        f"Use the create_price tool to create a recurring monthly price for product {product_id} "
         "with unit_amount 6000 and currency 'usd'. If successful, start with 'PRICE_CREATED:' followed by the ID only."
     )
     price_id = extract_id(price_res, "price_")
@@ -327,7 +328,7 @@ async def test_retrieve_subscription(client):
         "List all Stripe subscriptions. If successful, start your response with 'SUBSCRIPTIONS_LIST:' and include subscription IDs."
     )
     sub_id = extract_id(list_res, "sub_")
-    assert sub_id, f"Subscription list failed: {list_res}"
+    assert "SUBSCRIPTIONS_LIST:" in list_res, f"Subscription list failed: {list_res}"
     print(f"Response: {list_res}")
 
     # Step 2: Retrieve subscription
@@ -351,7 +352,7 @@ async def test_create_price(client):
     print(f"Response: {product_res}")
 
     price_res = await client.process_query(
-        f"Create a recurring price for product {product_id} with unit_amount 2000 and currency 'usd'. "
+        f"Create a recurring monthly price for product {product_id} with unit_amount 2000 and currency 'usd'. "
         "If successful, start with 'PRICE_CREATED:'"
     )
     assert extract_id(price_res, "price_"), f"Price creation failed: {price_res}"
@@ -365,10 +366,10 @@ async def test_create_subscription(client):
     email = f"sub_create_{uuid.uuid4().hex[:6]}@example.com"
     product_name = f"Product {uuid.uuid4().hex[:6]}"
 
-    # Step 1: Create customer
+    # Step 1: Create customer with test card token
     cust_res = await client.process_query(
-        f"Use the create_customer tool to create a customer with email '{email}'. "
-        "If successful, start the response with 'CUSTOMER_CREATED:' followed by the ID only."
+        f"Use the create_customer tool to create a customer with email '{email}' "
+        f"and source='tok_visa'. If successful, start the response with 'CUSTOMER_CREATED:' followed by the ID only."
     )
     customer_id = extract_id(cust_res, "cus_")
     assert customer_id, f"Invalid customer ID: {cust_res}"
@@ -385,7 +386,7 @@ async def test_create_subscription(client):
 
     # Step 3: Create recurring price
     price_res = await client.process_query(
-        f"Use the create_price tool to create a recurring price for product {product_id} "
+        f"Use the create_price tool to create a recurring monthly price for product {product_id} "
         "with unit_amount 800 and currency 'usd'. If successful, start with 'PRICE_CREATED:' followed by the ID only."
     )
     price_id = extract_id(price_res, "price_")

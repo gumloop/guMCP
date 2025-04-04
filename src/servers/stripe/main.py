@@ -132,7 +132,44 @@ def create_server(user_id, api_key=None):
                 description="Create a new customer",
                 inputSchema={
                     "type": "object",
-                    "properties": {"email": {"type": "string"}},
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "description": "Customer's email address. It's displayed alongside the customer in your dashboard and can be useful for searching and tracking.",
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The customer's full name or business name.",
+                        },
+                        "phone": {
+                            "type": "string",
+                            "description": "The customer's phone number.",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "An arbitrary string that you can attach to a customer object. It is displayed alongside the customer in the dashboard.",
+                        },
+                        "address": {
+                            "type": "object",
+                            "description": "The customer's address. Required if calculating taxes.",
+                        },
+                        "shipping": {
+                            "type": "object",
+                            "description": "The customer's shipping information. Appears on invoices emailed to this customer.",
+                        },
+                        "metadata": {
+                            "type": "object",
+                            "description": "Set of key-value pairs that you can attach to an object for storing additional information.",
+                        },
+                        "payment_method": {
+                            "type": "string",
+                            "description": "The ID of the PaymentMethod to attach to the customer.",
+                        },
+                        "source": {
+                            "type": "string",
+                            "description": "When using payment sources created via the Token or Sources APIs, passing source will create a new source object, make it the new customer default source, and delete the old customer default if one exists. If you want to add additional sources instead of replacing the existing default, use the card creation API. Whenever you attach a card to a customer, Stripe will automatically validate the card.",
+                        },
+                    },
                     "required": ["email"],
                 },
             ),
@@ -253,6 +290,85 @@ def create_server(user_id, api_key=None):
                     "required": ["customer_id", "fields"],
                 },
             ),
+            Tool(
+                name="create_payment_method",
+                description="Create a new payment method",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "The type of payment method (e.g., 'card', 'us_bank_account')",
+                        },
+                        "card": {
+                            "type": "object",
+                            "properties": {
+                                "number": {"type": "string"},
+                                "exp_month": {"type": "integer"},
+                                "exp_year": {"type": "integer"},
+                                "cvc": {"type": "string"},
+                            },
+                            "required": ["number", "exp_month", "exp_year", "cvc"],
+                        },
+                        "us_bank_account": {
+                            "type": "object",
+                            "properties": {
+                                "account_holder_type": {
+                                    "type": "string",
+                                    "enum": ["individual", "company"],
+                                },
+                                "account_number": {"type": "string"},
+                                "routing_number": {"type": "string"},
+                            },
+                            "required": [
+                                "account_holder_type",
+                                "account_number",
+                                "routing_number",
+                            ],
+                        },
+                        "billing_details": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "email": {"type": "string"},
+                                "address": {
+                                    "type": "object",
+                                    "properties": {
+                                        "line1": {"type": "string"},
+                                        "city": {"type": "string"},
+                                        "state": {"type": "string"},
+                                        "postal_code": {"type": "string"},
+                                        "country": {"type": "string"},
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "required": ["type"],
+                },
+            ),
+            Tool(
+                name="attach_payment_method",
+                description="Attach a payment method to a customer",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "payment_method": {
+                            "type": "string",
+                            "description": "The ID of the payment method to attach",
+                        },
+                        "customer_id": {
+                            "type": "string",
+                            "description": "The ID of the customer to attach the payment method to",
+                        },
+                        "set_as_default": {
+                            "type": "boolean",
+                            "description": "Whether to set this as the default payment method",
+                        },
+                    },
+                    "required": ["payment_method", "customer_id"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -330,6 +446,23 @@ def create_server(user_id, api_key=None):
                     result = stripe.Customer.modify(
                         cust_id, **arguments.get("fields", {})
                     )
+                case "create_payment_method":
+                    result = stripe.PaymentMethod.create(**arguments)
+                case "attach_payment_method":
+                    payment_method = stripe.PaymentMethod.attach(
+                        arguments["payment_method"], customer=arguments["customer_id"]
+                    )
+
+                    # If set_as_default is True, update the customer's default payment method
+                    if arguments.get("set_as_default", False):
+                        stripe.Customer.modify(
+                            arguments["customer_id"],
+                            invoice_settings={
+                                "default_payment_method": arguments["payment_method"]
+                            },
+                        )
+
+                    result = payment_method
                 case _:
                     return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
