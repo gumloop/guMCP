@@ -1,0 +1,377 @@
+import uuid
+import pytest
+import os
+import sys
+import re
+
+# Force-add the root directory (GuMCP) to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+sys.path.insert(0, project_root)
+
+def extract_id(text: str, prefix: str) -> str | None:
+    match = re.search(rf"{prefix}[:\s]*([a-zA-Z0-9_]+)", text)
+    return match.group(1) if match else None
+
+@pytest.mark.asyncio
+async def test_list_customers(client):
+    response = await client.process_query(
+        "Use the list_customers tool to get all customers. Start with 'CUSTOMERS_LISTED:'"
+    )
+    assert "CUSTOMERS_LISTED:" in response or "CUSTOMER" in response
+    print("✅ Customers listed")
+
+
+@pytest.mark.asyncio
+async def test_retrieve_balance(client):
+    response = await client.process_query(
+        "Use the retrieve_balance tool to check the account balance. Start with 'BALANCE_RETRIEVED:'"
+    )
+    assert "BALANCE_RETRIEVED:" in response or "available" in response.lower()
+    print("✅ Balance retrieved")
+
+
+@pytest.mark.asyncio
+async def test_list_subscriptions(client):
+    response = await client.process_query(
+        "Use the list_subscriptions tool to get all subscriptions. Start with 'SUBSCRIPTIONS_LISTED:'"
+    )
+    assert "SUBSCRIPTIONS_LISTED:" in response or "subscription" in response.lower()
+    print("✅ Subscriptions listed")
+
+
+@pytest.mark.asyncio
+async def test_create_payment_intent(client):
+    """Test creating a payment intent in Stripe."""
+    response = await client.process_query(
+        "Use the create_payment_intent tool to create a payment intent with amount 5000 and currency 'usd'. "
+        "Start your response with 'PAYMENT_INTENT_CREATED:' followed by the payment intent ID."
+    )
+    match = re.search(r"PAYMENT_INTENT_CREATED:\s*(\w+)", response)
+    assert match, f"Payment intent creation failed: {response}"
+    print("✅ Payment intent creation successful")
+
+
+@pytest.mark.asyncio
+async def test_update_subscription(client):
+    """Test updating a Stripe subscription."""
+    email = f"update_sub_{uuid.uuid4().hex[:6]}@example.com"
+    prod_name = f"UpdateSub Product {uuid.uuid4().hex[:6]}"
+
+    # Step 1: Create customer
+    cust_res = await client.process_query(
+        f"Create a customer with email {email}. Start with 'CUSTOMER_CREATED:'"
+    )
+    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
+    assert customer_id, f"Customer creation failed: {cust_res}"
+
+    # Step 2: Create product
+    prod_res = await client.process_query(
+        f"Create a product named '{prod_name}'. Start with 'PRODUCT_CREATED:'"
+    )
+    product_id = extract_id(prod_res, "PRODUCT_CREATED")
+    assert product_id, f"Product creation failed: {prod_res}"
+
+    # Step 3: Create recurring price
+    price_res = await client.process_query(
+        f"Create a recurring price for product {product_id} with 4000 cents in 'usd'. Start with 'PRICE_CREATED:'"
+    )
+    price_id = extract_id(price_res, "PRICE_CREATED")
+    assert price_id, f"Price creation failed: {price_res}"
+
+    # Step 4: Create subscription
+    sub_res = await client.process_query(
+        f"Create a subscription for customer {customer_id} and price {price_id}. Start with 'SUBSCRIPTION_CREATED:'"
+    )
+    subscription_id = extract_id(sub_res, "SUBSCRIPTION_CREATED")
+    assert subscription_id, f"Subscription creation failed: {sub_res}"
+
+    # Step 5: Update subscription
+    update_res = await client.process_query(
+        f"Update the subscription with ID {subscription_id}. Add metadata: purpose = 'test-update'. "
+        f"Start with 'SUBSCRIPTION_UPDATED:'"
+    )
+    assert "SUBSCRIPTION_UPDATED:" in update_res, f"Subscription update failed: {update_res}"
+    print(f"✅ Subscription {subscription_id} updated successfully")
+
+
+
+
+@pytest.mark.asyncio
+async def test_list_payment_intents(client):
+    response = await client.process_query(
+        "Use the list_payment_intents tool to list all payment intents. Start with 'PAYMENT_INTENTS_LISTED:'"
+    )
+    assert "PAYMENT_INTENTS_LISTED:" in response or "payment_intent" in response.lower()
+    print("✅ Payment intents listed")
+
+
+@pytest.mark.asyncio
+async def test_list_charges(client):
+    response = await client.process_query(
+        "Use the list_charges tool to list all charges. Start with 'CHARGES_LISTED:'"
+    )
+    assert "CHARGES_LISTED:" in response or "charge" in response.lower()
+    print("✅ Charges listed")
+
+
+@pytest.mark.asyncio
+async def test_create_customer(client):
+    """Test creating a Stripe customer."""
+    email = f"create_{uuid.uuid4().hex[:6]}@example.com"
+    response = await client.process_query(
+        f"Use the create_customer tool to create a customer with email {email}. "
+        "Start with 'CUSTOMER_CREATED:'"
+    )
+
+    # Safety fallback if response is None or empty
+    assert response, "No response returned from process_query"
+    assert "CUSTOMER_CREATED:" in response, f"Customer creation failed: {response}"
+
+    print("✅ Customer created:", response)
+
+@pytest.mark.asyncio
+async def test_create_invoice(client):
+    """Test creating a draft invoice for a Stripe customer."""
+    email = f"invoice_{uuid.uuid4().hex[:6]}@example.com"
+
+    # Step 1: Create customer
+    cust_res = await client.process_query(
+        f"Use the create_customer tool to create a customer with email '{email}'. "
+        "Start with 'CUSTOMER_CREATED:' followed by the customer ID only."
+    )
+    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
+    assert customer_id and customer_id.startswith("cus_"), f"Invalid customer ID: {cust_res}"
+
+    # Step 2: Create invoice for that customer
+    invoice_res = await client.process_query(
+        f"Use the create_invoice tool to create a draft invoice for customer ID {customer_id}. "
+        "Start with 'INVOICE_CREATED:' followed by the invoice ID only."
+    )
+    invoice_id = extract_id(invoice_res, "INVOICE_CREATED")
+    assert invoice_id and invoice_id.startswith("in_"), f"Invoice creation failed: {invoice_res}"
+
+    print(f"✅ Invoice created: {invoice_id}")
+
+@pytest.mark.asyncio
+async def test_list_invoices(client):
+    """Test listing all Stripe invoices."""
+    response = await client.process_query(
+        "Use the list_invoices tool to get all invoices. Start with 'INVOICES_LISTED:'"
+    )
+
+    # Validate response presence and content
+    assert response, "No response returned from process_query"
+    assert "INVOICES_LISTED:" in response, f"Invoices not listed properly: {response}"
+
+    print("✅ Invoices listed successfully")
+
+
+@pytest.mark.asyncio
+async def test_retrieve_customer(client):
+    """Test retrieving the first listed customer."""
+    
+    # Step 1: List customers
+    list_res = await client.process_query(
+        "Use the list_customers tool to fetch existing customers. Start with 'CUSTOMERS_LISTED:' and include their IDs."
+    )
+    customer_ids = re.findall(r"cus_[a-zA-Z0-9]+", list_res)
+    assert customer_ids, f"No valid customer ID found in list: {list_res}"
+
+    customer_id = customer_ids[0]
+
+    # Step 2: Retrieve that customer
+    retrieve_res = await client.process_query(
+        f"Use the retrieve_customer tool to get info for customer ID {customer_id}. Start with 'CUSTOMER_INFO:'"
+    )
+    assert "CUSTOMER_INFO:" in retrieve_res, f"Failed to retrieve customer: {retrieve_res}"
+
+    print(f"✅ Retrieved customer {customer_id}")
+
+@pytest.mark.asyncio
+async def test_create_product(client):
+    """Test creating a new Stripe product."""
+    name = f"Product {uuid.uuid4().hex[:6]}"
+    response = await client.process_query(
+        f"Use the create_product tool to create product '{name}'. Start with 'PRODUCT_CREATED:'"
+    )
+
+    # Defensive check
+    assert response, "No response returned from process_query"
+    assert "PRODUCT_CREATED:" in response, f"Product creation failed: {response}"
+    print("✅ Product created successfully")
+
+@pytest.mark.asyncio
+async def test_confirm_payment_intent(client):
+    """Test confirming a payment intent created just before confirmation."""
+
+    # Step 1: Create a payment intent
+    create_response = await client.process_query(
+        "Use the create_payment_intent tool to create a payment intent for 5000 cents in USD. "
+        "Start with 'PAYMENT_INTENT_CREATED:' followed by the payment intent ID."
+    )
+    payment_intent_id = extract_id(create_response, "PAYMENT_INTENT_CREATED")
+    assert payment_intent_id, f"Payment intent creation failed: {create_response}"
+
+    # Step 2: Confirm the payment intent
+    confirm_response = await client.process_query(
+        f"Use the confirm_payment_intent tool to confirm payment intent ID {payment_intent_id}. "
+        "Start with 'PAYMENT_CONFIRMED:'"
+    )
+    assert "PAYMENT_CONFIRMED:" in confirm_response, f"Confirmation failed: {confirm_response}"
+    print(f"✅ Confirmed payment intent {payment_intent_id}")
+
+@pytest.mark.asyncio
+async def test_list_products(client):
+    """Test listing all Stripe products."""
+    response = await client.process_query(
+        "Use the list_products tool to get all products. Start with 'PRODUCTS_LISTED:'"
+    )
+
+    assert response, "No response returned from process_query"
+    assert "PRODUCTS_LISTED:" in response, f"Product listing failed: {response}"
+    print("✅ Products listed successfully")
+
+@pytest.mark.asyncio
+async def test_cancel_subscription(client):
+    """Test canceling a subscription after creating customer, product, and price."""
+    email = f"cancel_{uuid.uuid4().hex[:6]}@example.com"
+    product_name = f"Cancel Product {uuid.uuid4().hex[:6]}"
+
+    # Step 1: Create customer
+    cust_res = await client.process_query(
+        f"Use the create_customer tool to create a customer with email '{email}'. "
+        "Start with 'CUSTOMER_CREATED:' followed by the ID only."
+    )
+    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
+    assert customer_id and customer_id.startswith("cus_"), f"Invalid customer ID: {cust_res}"
+
+    # Step 2: Create product
+    prod_res = await client.process_query(
+        f"Use the create_product tool to create a product named '{product_name}'. "
+        "Start with 'PRODUCT_CREATED:' followed by the ID only."
+    )
+    product_id = extract_id(prod_res, "PRODUCT_CREATED")
+    assert product_id and product_id.startswith("prod_"), f"Invalid product ID: {prod_res}"
+
+    # Step 3: Create recurring price
+    price_res = await client.process_query(
+        f"Use the create_price tool to create a recurring price for product {product_id} "
+        "with unit_amount 6000 and currency 'usd'. Start with 'PRICE_CREATED:' followed by the ID only."
+    )
+    price_id = extract_id(price_res, "PRICE_CREATED")
+    assert price_id and price_id.startswith("price_"), f"Invalid price ID: {price_res}"
+
+    # Step 4: Create subscription
+    sub_res = await client.process_query(
+        f"Use the create_subscription tool to create a subscription for customer {customer_id} "
+        f"with price ID {price_id}. Start with 'SUBSCRIPTION_CREATED:' followed by the ID only."
+    )
+    subscription_id = extract_id(sub_res, "SUBSCRIPTION_CREATED")
+    assert subscription_id and subscription_id.startswith("sub_"), f"Subscription creation failed: {sub_res}"
+
+    # Step 5: Cancel subscription
+    cancel_res = await client.process_query(
+        f"Use the cancel_subscription tool to cancel subscription ID {subscription_id}. "
+        "Start with 'SUBSCRIPTION_CANCELLED:' followed by the ID only."
+    )
+    cancel_id = extract_id(cancel_res, "SUBSCRIPTION_CANCELLED")
+    assert cancel_id == subscription_id, f"Cancel failed: {cancel_res}"
+
+
+@pytest.mark.asyncio
+async def test_retrieve_subscription(client):
+    """Test retrieving a subscription by listing first and then fetching it."""
+    # Step 1: List subscriptions
+    list_res = await client.process_query(
+        "List all Stripe subscriptions. Start your response with 'SUBSCRIPTIONS_LIST:' and include subscription IDs."
+    )
+    match = re.search(r"SUBSCRIPTIONS_LIST:\s*(\w+)", list_res)
+    assert match, f"Subscription list failed: {list_res}"
+    sub_id = match.group(1)
+
+    # Step 2: Retrieve subscription
+    retrieve_res = await client.process_query(
+        f"Use the retrieve_subscription tool to get details of subscription ID {sub_id}. "
+        f"Start your response with 'SUBSCRIPTION_RETRIEVED:'"
+    )
+    assert "SUBSCRIPTION_RETRIEVED:" in retrieve_res, f"Retrieve failed: {retrieve_res}"
+    print("✅ Subscription retrieve via listing successful")
+
+
+@pytest.mark.asyncio
+async def test_create_price(client):
+    """Test creating a price for a product in Stripe."""
+    product_res = await client.process_query(
+        "Create a product named 'Test Priceable'. Start with 'PRODUCT_CREATED:'"
+    )
+    prod_id = re.search(r"PRODUCT_CREATED:\s*(\w+)", product_res)
+    assert prod_id, f"Product creation failed: {product_res}"
+
+    price_res = await client.process_query(
+        f"Create a recurring price for product {prod_id.group(1)} with unit_amount 2000 and currency 'usd'. "
+        "Start with 'PRICE_CREATED:'"
+    )
+    assert "PRICE_CREATED:" in price_res, f"Price creation failed: {price_res}"
+    print("✅ Price creation successful")
+
+
+@pytest.mark.asyncio
+async def test_create_subscription(client):
+    """Test creating a subscription with valid customer and recurring price."""
+    email = f"sub_create_{uuid.uuid4().hex[:6]}@example.com"
+    product_name = f"Product {uuid.uuid4().hex[:6]}"
+
+    # Step 1: Create customer
+    cust_res = await client.process_query(
+        f"Use the create_customer tool to create a customer with email '{email}'. "
+        "Start the response with 'CUSTOMER_CREATED:' followed by the ID only."
+    )
+    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
+    assert customer_id and customer_id.startswith("cus_"), f"Invalid customer ID: {cust_res}"
+
+    # Step 2: Create product
+    prod_res = await client.process_query(
+        f"Use the create_product tool to create a product named '{product_name}'. "
+        "Start the response with 'PRODUCT_CREATED:' followed by the ID only."
+    )
+    product_id = extract_id(prod_res, "PRODUCT_CREATED")
+    assert product_id and product_id.startswith("prod_"), f"Invalid product ID: {prod_res}"
+
+    # Step 3: Create recurring price
+    price_res = await client.process_query(
+        f"Use the create_price tool to create a recurring price for product {product_id} "
+        "with unit_amount 800 and currency 'usd'. Start with 'PRICE_CREATED:' followed by the ID only."
+    )
+    price_id = extract_id(price_res, "PRICE_CREATED")
+    assert price_id and price_id.startswith("price_"), f"Invalid price ID: {price_res}"
+
+    # Step 4: Create subscription
+    sub_res = await client.process_query(
+        f"Use the create_subscription tool to create a subscription for customer {customer_id} "
+        f"with price ID {price_id}. Start with 'SUBSCRIPTION_CREATED:' followed by the ID only."
+    )
+    subscription_id = extract_id(sub_res, "SUBSCRIPTION_CREATED")
+    assert subscription_id and subscription_id.startswith("sub_"), f"Subscription creation failed: {sub_res}"
+
+@pytest.mark.asyncio
+async def test_update_customer(client):
+    """Test creating and updating a Stripe customer."""
+    email = f"update_{uuid.uuid4().hex[:6]}@example.com"
+    new_name = f"Updated User {uuid.uuid4().hex[:4]}"
+
+    # Create customer first
+    response = await client.process_query(
+        f"Use the create_customer tool to create a customer with email {email}. "
+        "Only respond with 'CUSTOMER_CREATED:' followed by the customer ID."
+    )
+    customer_id = extract_id(response, "CUSTOMER_CREATED")
+    assert customer_id, f"Customer creation failed: {response}"
+
+    # Update the customer with new name
+    update_response = await client.process_query(
+        f"Use the update_customer tool to update the customer with ID {customer_id}. "
+        f"Set the name to '{new_name}'. Only respond with 'CUSTOMER_UPDATED:'"
+    )
+    assert "CUSTOMER_UPDATED:" in update_response, f"Customer update failed: {update_response}"
+    print(f"✅ Customer {customer_id} updated with name: {new_name}")
+
