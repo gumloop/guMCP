@@ -12,6 +12,8 @@ from prometheus_client import Counter, Gauge, generate_latest, CONTENT_TYPE_LATE
 
 from mcp.server.sse import SseServerTransport
 
+from fastmcp_utils import load_fastmcp_server
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -51,8 +53,24 @@ def discover_servers():
             server_file = item / "main.py"
 
             if server_file.exists():
+                # Try FastMCP first
+                server_factory, init_options_factory = load_fastmcp_server(
+                    server_file, server_name
+                )
+
+                if server_factory and init_options_factory:
+                    # Store the FastMCP server
+                    servers[server_name] = {
+                        "server": server_factory,
+                        "get_initialization_options": init_options_factory,
+                    }
+                    logger.info(f"Loaded FastMCP server: {server_name}")
+                    continue  # Skip guMCP server loading
+
+                # guMCP server loading approach (fallback)
                 try:
-                    # Load the server module
+
+                    # Load the server module (guMCP approach)
                     spec = importlib.util.spec_from_file_location(
                         f"{server_name}.server", server_file
                     )
