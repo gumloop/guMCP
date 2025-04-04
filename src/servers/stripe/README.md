@@ -20,9 +20,20 @@ Local authentication uses a Stripe OAuth Configuration JSON file located at:
 local_auth/oauth_configs/stripe/oauth.json
 ```
 
+Create the following file with the relevant attributes for your app:
+
+```json
+{
+  "client_id": "xxxxxxxxxxxxxxxxxxxxx",
+  "client_secret": "xxxxxxxxxxxxxxxxxxxxx", // The client_secret is your secret API key, see the Reference guides below
+  "redirect_uri": "http://localhost:8080"
+}
+```
+
 To set this up properly, refer to Stripe's official documentation for creating and managing OAuth applications:
 
-➡️ [Stripe OAuth Standard Accounts Guide](https://docs.stripe.com/connect/oauth-standard-accounts#connect-users)
+➡️ [Stripe OAuth Standard Accounts Guide](https://docs.stripe.com/connect/oauth-standard-accounts#integrating-oauth)
+➡️ [Stripe OAuth Reference](https://docs.stripe.com/connect/oauth-reference)
 
 To authenticate and save credentials for local testing, run:
 
