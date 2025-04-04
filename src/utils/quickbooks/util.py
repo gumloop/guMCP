@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, List, Any
 
 import time
 import base64
@@ -16,8 +16,8 @@ QUICKBOOKS_OAUTH_TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens
 
 
 def build_quickbooks_auth_params(
-    oauth_config: dict, redirect_uri: str, scopes: list[str]
-) -> dict:
+    oauth_config: Dict[str, Any], redirect_uri: str, scopes: List[str]
+) -> Dict[str, str]:
     """Build the authorization parameters for QuickBooks OAuth."""
     return {
         "client_id": oauth_config.get("client_id"),
@@ -43,8 +43,8 @@ def build_quickbooks_token_headers(oauth_config: Dict[str, Any]) -> Dict[str, st
 
 
 def build_quickbooks_token_data(
-    oauth_config: dict, redirect_uri: str, scopes: list[str], auth_code: str
-) -> dict:
+    oauth_config: Dict[str, Any], redirect_uri: str, scopes: List[str], auth_code: str
+) -> Dict[str, str]:
     """Build the token request data for QuickBooks OAuth."""
     return {
         "code": auth_code,
@@ -53,7 +53,7 @@ def build_quickbooks_token_data(
     }
 
 
-def process_quickbooks_token_response(token_response: dict) -> dict:
+def process_quickbooks_token_response(token_response: Dict[str, Any]) -> Dict[str, Any]:
     """Process QuickBooks token response."""
     if "error" in token_response:
         raise ValueError(
@@ -77,19 +77,18 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         user_id=user_id,
         service_name=service_name,
         token_url=QUICKBOOKS_OAUTH_TOKEN_URL,
-        token_data_builder=lambda _, refresh_token, __: {
+        token_data_builder=lambda oauth_config, refresh_token, credentials: {
             "refresh_token": refresh_token,
             "grant_type": "refresh_token",
         },
         token_header_builder=build_quickbooks_token_headers,
         api_key=api_key,
-        return_full_credentials=True,
     )
 
 
 def authenticate_and_save_credentials(
-    user_id: str, service_name: str, scopes: list[str]
-) -> dict:
+    user_id: str, service_name: str, scopes: List[str]
+) -> Dict[str, Any]:
     """Authenticate with QuickBooks and save credentials"""
 
     # QuickBooks OAuth endpoints

@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import logging
+import httpx
 
 # Add both project root and src directory to Python path
 # Get the project root directory and add to path
@@ -14,11 +15,17 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 from typing import Optional, Sequence
 from pathlib import Path
 
+from mcp.types import (
+    AnyUrl,
+    Resource,
+    TextContent,
+    Tool,
+    ImageContent,
+    EmbeddedResource,
+)
+from mcp.server.lowlevel.helper_types import ReadResourceContents
+from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from mcp.server import NotificationOptions
-
-from intuitlib.enums import Scopes
-from intuitlib.client import AuthClient
 
 from quickbooks import QuickBooks
 
@@ -26,7 +33,8 @@ from src.auth.factory import create_auth_client
 from src.utils.quickbooks.util import get_credentials, authenticate_and_save_credentials
 
 SERVICE_NAME = Path(__file__).parent.name
-SCOPES = [Scopes.ACCOUNTING.value, Scopes.PAYMENT.value]
+QUICKBOOKS_API_BASE_URL = "https://quickbooks.api.intuit.com/v3/company"
+SCOPES = ["com.intuit.quickbooks.accounting", "com.intuit.quickbooks.payment"]
 
 # Configure logging
 logging.basicConfig(
@@ -35,59 +43,36 @@ logging.basicConfig(
 logger = logging.getLogger("quickbooks-server")
 
 
-async def create_quickbooks_client(user_id: str, api_key=None) -> QuickBooks:
-    """Create a QuickBooks client with stored credentials"""
-    try:
-        credentials = await get_credentials(user_id, "quickbooks", api_key=api_key)
-
-        # Get auth client
-        auth_client = create_auth_client()
-        # Get OAuth config
-        oauth_config = auth_client.get_oauth_config("quickbooks")
-
-        auth_client = AuthClient(
-            client_id=oauth_config["client_id"],
-            client_secret=oauth_config["client_secret"],
-            redirect_uri=oauth_config["redirect_uri"],
-            environment=oauth_config.get("environment", "sandbox"),
-            access_token=credentials["access_token"],
-        )
-
-        client = QuickBooks(
-            auth_client=auth_client,
-            refresh_token=credentials["refresh_token"],
-            company_id=credentials["realmId"],
-        )
-
-        return client
-
-    except Exception as e:
-        logger.error(f"Error creating QuickBooks client: {e}")
-        raise
-
-
-# Create server function with simple imports
 def create_server(user_id, api_key=None):
     """Create a new server instance with optional user context"""
-    from mcp.types import (
-        AnyUrl,
-        Resource,
-        TextContent,
-        Tool,
-        ImageContent,
-        EmbeddedResource,
-    )
-    from mcp.server.lowlevel.helper_types import ReadResourceContents
-    from mcp.server import Server
-
-    # Delay importing QuickBooks-specific modules until needed
     server = Server("quickbooks-server")
     server.user_id = user_id
     server.api_key = api_key
 
     async def get_quickbooks_client():
         """Create and return a QuickBooks client instance"""
-        return await create_quickbooks_client(server.user_id, api_key=server.api_key)
+        try:
+            # Get credentials
+            access_token = await get_credentials(server.user_id, SERVICE_NAME, api_key=server.api_key)
+            
+            # Get full credentials to extract realm ID
+            auth_client = create_auth_client()
+            credentials = auth_client.get_user_credentials(SERVICE_NAME, server.user_id)
+            
+            if not credentials or "realmId" not in credentials:
+                raise ValueError("Missing QuickBooks credentials or realm ID")
+            
+            # Create a QuickBooks client using our access token
+            return QuickBooks(
+                access_token=access_token,
+                refresh_token=credentials.get("refresh_token", ""),
+                company_id=credentials["realmId"],
+                minorversion=65,  # Use the latest stable minor version
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating QuickBooks client: {e}")
+            raise
 
     @server.list_resources()
     async def handle_list_resources(
@@ -477,9 +462,7 @@ def create_server(user_id, api_key=None):
                 handle_generate_financial_metrics,
             )
 
-            qb_client = await create_quickbooks_client(
-                server.user_id, api_key=server.api_key
-            )
+            qb_client = await get_quickbooks_client()
             if tool_name == "search_customers":
                 return await handle_search_customers(qb_client, server, arguments)
             elif tool_name == "analyze_sred":
@@ -512,7 +495,7 @@ def create_server(user_id, api_key=None):
 server = create_server
 
 
-def get_initialization_options(server_instance) -> dict:
+def get_initialization_options(server_instance: Server) -> InitializationOptions:
     """Get options for server initialization"""
     return InitializationOptions(
         server_name="quickbooks-server",
