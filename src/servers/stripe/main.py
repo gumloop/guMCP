@@ -78,25 +78,181 @@ def create_server(user_id, api_key=None):
             list[Tool]: List of tool definitions supported by this server.
         """
         return [
-            Tool(name="list_customers", description="List customers from Stripe", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="retrieve_balance", description="Retrieve current balance", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="list_subscriptions", description="List subscriptions", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="create_payment_intent", description="Create a payment intent", inputSchema={"type": "object", "properties": {"amount": {"type": "integer"}, "currency": {"type": "string"}}, "required": ["amount", "currency"]}),
-            Tool(name="update_subscription", description="Update a subscription", inputSchema={"type": "object", "properties": {"subscription_id": {"type": "string"}, "fields": {"type": "object"}}, "required": ["subscription_id", "fields"]}),
-            Tool(name="list_payment_intents", description="List payment intents", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="list_charges", description="List charges", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="create_customer", description="Create a new customer", inputSchema={"type": "object", "properties": {"email": {"type": "string"}}, "required": ["email"]}),
-            Tool(name="create_invoice", description="Create a draft invoice", inputSchema={"type": "object", "properties": {"customer": {"type": "string"}}, "required": ["customer"]}),
-            Tool(name="list_invoices", description="List invoices", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="retrieve_customer", description="Retrieve customer info", inputSchema={"type": "object", "properties": {"customer_id": {"type": "string"}}, "required": ["customer_id"]}),
-            Tool(name="create_product", description="Create a new product", inputSchema={"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}),
-            Tool(name="confirm_payment_intent", description="Confirm payment intent", inputSchema={"type": "object", "properties": {"payment_intent_id": {"type": "string"}}, "required": ["payment_intent_id"]}),
-            Tool(name="list_products", description="List products", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="cancel_subscription", description="Cancel a subscription", inputSchema={"type": "object", "properties": {"subscription_id": {"type": "string"}}, "required": ["subscription_id"]}),
-            Tool(name="retrieve_subscription", description="Retrieve subscription", inputSchema={"type": "object", "properties": {"subscription_id": {"type": "string"}}, "required": ["subscription_id"]}),
-            Tool(name="create_price", description="Create a price for a product", inputSchema={"type": "object", "properties": {"product": {"type": "string"}, "unit_amount": {"type": "integer"}, "currency": {"type": "string"}}, "required": ["product", "unit_amount", "currency"]}),
-            Tool(name="create_subscription", description="Create subscription for a customer", inputSchema={"type": "object", "properties": {"customer": {"type": "string"}, "price_id": {"type": "string"}}, "required": ["customer", "price_id"]}),
-            Tool(name="update_customer", description="Update a customer's information", inputSchema={"type": "object", "properties": {"customer_id": {"type": "string"}, "fields": {"type": "object"}}, "required": ["customer_id", "fields"]}),
+            Tool(
+                name="list_customers",
+                description="List customers from Stripe",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="retrieve_balance",
+                description="Retrieve current balance",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="list_subscriptions",
+                description="List subscriptions",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="create_payment_intent",
+                description="Create a payment intent",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "amount": {"type": "integer"},
+                        "currency": {"type": "string"},
+                    },
+                    "required": ["amount", "currency"],
+                },
+            ),
+            Tool(
+                name="update_subscription",
+                description="Update a subscription",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "subscription_id": {"type": "string"},
+                        "fields": {"type": "object"},
+                    },
+                    "required": ["subscription_id", "fields"],
+                },
+            ),
+            Tool(
+                name="list_payment_intents",
+                description="List payment intents",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="list_charges",
+                description="List charges",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="create_customer",
+                description="Create a new customer",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"email": {"type": "string"}},
+                    "required": ["email"],
+                },
+            ),
+            Tool(
+                name="create_invoice",
+                description="Create a draft invoice",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"customer": {"type": "string"}},
+                    "required": ["customer"],
+                },
+            ),
+            Tool(
+                name="list_invoices",
+                description="List invoices",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="retrieve_customer",
+                description="Retrieve customer info",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"customer_id": {"type": "string"}},
+                    "required": ["customer_id"],
+                },
+            ),
+            Tool(
+                name="create_product",
+                description="Create a new product",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}},
+                    "required": ["name"],
+                },
+            ),
+            Tool(
+                name="confirm_payment_intent",
+                description="Confirm payment intent",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"payment_intent_id": {"type": "string"}},
+                    "required": ["payment_intent_id"],
+                },
+            ),
+            Tool(
+                name="list_products",
+                description="List products",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="cancel_subscription",
+                description="Cancel a subscription",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"subscription_id": {"type": "string"}},
+                    "required": ["subscription_id"],
+                },
+            ),
+            Tool(
+                name="retrieve_subscription",
+                description="Retrieve subscription",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"subscription_id": {"type": "string"}},
+                    "required": ["subscription_id"],
+                },
+            ),
+            Tool(
+                name="create_price",
+                description="Create a price for a product",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "product": {"type": "string"},
+                        "unit_amount": {"type": "integer"},
+                        "currency": {"type": "string"},
+                        "recurring": {
+                            "type": "object",
+                            "properties": {
+                                "interval": {
+                                    "type": "string",
+                                    "enum": ["day", "week", "month", "year"],
+                                },
+                                "interval_count": {"type": "integer"},
+                                "meter": {"type": "string"},
+                                "usage_type": {
+                                    "type": "string",
+                                    "enum": ["licensed", "metered"],
+                                },
+                            },
+                            "required": ["interval"],
+                        },
+                    },
+                    "required": ["product", "unit_amount", "currency"],
+                },
+            ),
+            Tool(
+                name="create_subscription",
+                description="Create subscription for a customer",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "customer": {"type": "string"},
+                        "price_id": {"type": "string"},
+                    },
+                    "required": ["customer", "price_id"],
+                },
+            ),
+            Tool(
+                name="update_customer",
+                description="Update a customer's information",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "customer_id": {"type": "string"},
+                        "fields": {"type": "object"},
+                    },
+                    "required": ["customer_id", "fields"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -114,7 +270,9 @@ def create_server(user_id, api_key=None):
             list[Union[TextContent, ImageContent, EmbeddedResource]]:
                 Output content from tool execution.
         """
-        logger.info(f"User {server.user_id} calling tool: {name} with arguments: {arguments}")
+        logger.info(
+            f"User {server.user_id} calling tool: {name} with arguments: {arguments}"
+        )
 
         if arguments is None:
             arguments = {}
@@ -133,7 +291,9 @@ def create_server(user_id, api_key=None):
                     result = stripe.PaymentIntent.create(**arguments)
                 case "update_subscription":
                     sub_id = arguments.pop("subscription_id")
-                    result = stripe.Subscription.modify(sub_id, **arguments.get("fields", {}))
+                    result = stripe.Subscription.modify(
+                        sub_id, **arguments.get("fields", {})
+                    )
                 case "list_payment_intents":
                     result = stripe.PaymentIntent.list()
                 case "list_charges":
@@ -149,7 +309,9 @@ def create_server(user_id, api_key=None):
                 case "create_product":
                     result = stripe.Product.create(**arguments)
                 case "confirm_payment_intent":
-                    result = stripe.PaymentIntent.confirm(arguments["payment_intent_id"])
+                    result = stripe.PaymentIntent.confirm(
+                        arguments["payment_intent_id"]
+                    )
                 case "list_products":
                     result = stripe.Product.list()
                 case "cancel_subscription":
@@ -161,11 +323,13 @@ def create_server(user_id, api_key=None):
                 case "create_subscription":
                     result = stripe.Subscription.create(
                         customer=arguments["customer"],
-                        items=[{"price": arguments["price_id"]}]
+                        items=[{"price": arguments["price_id"]}],
                     )
                 case "update_customer":
                     cust_id = arguments.pop("customer_id")
-                    result = stripe.Customer.modify(cust_id, **arguments.get("fields", {}))
+                    result = stripe.Customer.modify(
+                        cust_id, **arguments.get("fields", {})
+                    )
                 case _:
                     return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
