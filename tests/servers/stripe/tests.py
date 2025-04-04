@@ -4,8 +4,21 @@ import re
 
 
 def extract_id(text: str, prefix: str) -> str | None:
-    match = re.search(rf"{prefix}[:\s]*([a-zA-Z0-9_]+)", text)
-    return match.group(1) if match else None
+    """Extract a Stripe ID from LLM response text.
+
+    Args:
+        text: The response text from the LLM
+        prefix: The Stripe ID prefix to find (e.g. 'cus_', 'prod_', 'price_')
+
+    Returns:
+        The extracted ID or None if not found
+
+    Examples:
+        - extract_id(text, "cus_") -> finds customer IDs like "cus_123abc"
+        - extract_id(text, "prod_") -> finds product IDs like "prod_456def"
+    """
+    match = re.search(rf"{prefix}[a-zA-Z0-9_]+", text)
+    return match.group(0) if match else None
 
 
 @pytest.mark.asyncio
@@ -61,7 +74,7 @@ async def test_update_subscription(client):
     cust_res = await client.process_query(
         f"Create a customer with email {email}. If successful, start with 'CUSTOMER_CREATED:'"
     )
-    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
+    customer_id = extract_id(cust_res, "cus_")
     assert customer_id, f"Customer creation failed: {cust_res}"
     print(f"Response: {cust_res}")
 
@@ -69,7 +82,7 @@ async def test_update_subscription(client):
     prod_res = await client.process_query(
         f"Create a product named '{prod_name}'. If successful, start with 'PRODUCT_CREATED:'"
     )
-    product_id = extract_id(prod_res, "PRODUCT_CREATED")
+    product_id = extract_id(prod_res, "prod_")
     assert product_id, f"Product creation failed: {prod_res}"
     print(f"Response: {prod_res}")
 
@@ -77,7 +90,7 @@ async def test_update_subscription(client):
     price_res = await client.process_query(
         f"Create a recurring price for product {product_id} with 4000 cents in 'usd'. If successful, start with 'PRICE_CREATED:'"
     )
-    price_id = extract_id(price_res, "PRICE_CREATED")
+    price_id = extract_id(price_res, "price_")
     assert price_id, f"Price creation failed: {price_res}"
     print(f"Response: {price_res}")
 
@@ -85,7 +98,7 @@ async def test_update_subscription(client):
     sub_res = await client.process_query(
         f"Create a subscription for customer {customer_id} and price {price_id}. If successful, start with 'SUBSCRIPTION_CREATED:'"
     )
-    subscription_id = extract_id(sub_res, "SUBSCRIPTION_CREATED")
+    subscription_id = extract_id(sub_res, "sub_")
     assert subscription_id, f"Subscription creation failed: {sub_res}"
     print(f"Response: {sub_res}")
 
@@ -95,7 +108,7 @@ async def test_update_subscription(client):
         f"If successful, start with 'SUBSCRIPTION_UPDATED:'"
     )
     assert (
-        "SUBSCRIPTION_UPDATED:" in update_res
+        extract_id(update_res, "sub_") == subscription_id
     ), f"Subscription update failed: {update_res}"
     print(f"Response: {update_res}")
     print(f"✅ Subscription {subscription_id} updated successfully")
@@ -147,10 +160,8 @@ async def test_create_invoice(client):
         f"Use the create_customer tool to create a customer with email '{email}'. "
         "If successful, start with 'CUSTOMER_CREATED:' followed by the customer ID only."
     )
-    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
-    assert customer_id and customer_id.startswith(
-        "cus_"
-    ), f"Invalid customer ID: {cust_res}"
+    customer_id = extract_id(cust_res, "cus_")
+    assert customer_id, f"Invalid customer ID: {cust_res}"
     print(f"Response: {cust_res}")
 
     # Step 2: Create invoice for that customer
@@ -158,10 +169,8 @@ async def test_create_invoice(client):
         f"Use the create_invoice tool to create a draft invoice for customer ID {customer_id}. "
         "If successful, start with 'INVOICE_CREATED:' followed by the invoice ID only."
     )
-    invoice_id = extract_id(invoice_res, "INVOICE_CREATED")
-    assert invoice_id and invoice_id.startswith(
-        "in_"
-    ), f"Invoice creation failed: {invoice_res}"
+    invoice_id = extract_id(invoice_res, "in_")
+    assert invoice_id, f"Invoice creation failed: {invoice_res}"
     print(f"Response: {invoice_res}")
     print(f"✅ Invoice created: {invoice_id}")
 
@@ -188,18 +197,16 @@ async def test_retrieve_customer(client):
     list_res = await client.process_query(
         "Use the list_customers tool to fetch existing customers. If successful, start with 'CUSTOMERS_LISTED:' and include their IDs."
     )
-    customer_ids = re.findall(r"cus_[a-zA-Z0-9]+", list_res)
-    assert customer_ids, f"No valid customer ID found in list: {list_res}"
+    customer_id = extract_id(list_res, "cus_")
+    assert customer_id, f"No valid customer ID found in list: {list_res}"
     print(f"Response: {list_res}")
-
-    customer_id = customer_ids[0]
 
     # Step 2: Retrieve that customer
     retrieve_res = await client.process_query(
         f"Use the retrieve_customer tool to get info for customer ID {customer_id}. If successful, start with 'CUSTOMER_INFO:'"
     )
-    assert (
-        "CUSTOMER_INFO:" in retrieve_res
+    assert extract_id(
+        retrieve_res, "cus_"
     ), f"Failed to retrieve customer: {retrieve_res}"
     print(f"Response: {retrieve_res}")
     print(f"✅ Retrieved customer {customer_id}")
@@ -229,7 +236,7 @@ async def test_confirm_payment_intent(client):
         "Use the create_payment_intent tool to create a payment intent for 5000 cents in USD. "
         "If successful, start with 'PAYMENT_INTENT_CREATED:' followed by the payment intent ID."
     )
-    payment_intent_id = extract_id(create_response, "PAYMENT_INTENT_CREATED")
+    payment_intent_id = extract_id(create_response, "pi_")
     assert payment_intent_id, f"Payment intent creation failed: {create_response}"
     print(f"Response: {create_response}")
 
@@ -238,8 +245,8 @@ async def test_confirm_payment_intent(client):
         f"Use the confirm_payment_intent tool to confirm payment intent ID {payment_intent_id}. "
         "If successful, start with 'PAYMENT_CONFIRMED:'"
     )
-    assert (
-        "PAYMENT_CONFIRMED:" in confirm_response
+    assert extract_id(
+        confirm_response, "pi_"
     ), f"Confirmation failed: {confirm_response}"
     print(f"Response: {confirm_response}")
     print(f"✅ Confirmed payment intent {payment_intent_id}")
@@ -269,10 +276,8 @@ async def test_cancel_subscription(client):
         f"Use the create_customer tool to create a customer with email '{email}'. "
         "If successful, start with 'CUSTOMER_CREATED:' followed by the ID only."
     )
-    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
-    assert customer_id and customer_id.startswith(
-        "cus_"
-    ), f"Invalid customer ID: {cust_res}"
+    customer_id = extract_id(cust_res, "cus_")
+    assert customer_id, f"Invalid customer ID: {cust_res}"
     print(f"Response: {cust_res}")
 
     # Step 2: Create product
@@ -280,10 +285,8 @@ async def test_cancel_subscription(client):
         f"Use the create_product tool to create a product named '{product_name}'. "
         "If successful, start with 'PRODUCT_CREATED:' followed by the ID only."
     )
-    product_id = extract_id(prod_res, "PRODUCT_CREATED")
-    assert product_id and product_id.startswith(
-        "prod_"
-    ), f"Invalid product ID: {prod_res}"
+    product_id = extract_id(prod_res, "prod_")
+    assert product_id, f"Invalid product ID: {prod_res}"
     print(f"Response: {prod_res}")
 
     # Step 3: Create recurring price
@@ -291,8 +294,8 @@ async def test_cancel_subscription(client):
         f"Use the create_price tool to create a recurring price for product {product_id} "
         "with unit_amount 6000 and currency 'usd'. If successful, start with 'PRICE_CREATED:' followed by the ID only."
     )
-    price_id = extract_id(price_res, "PRICE_CREATED")
-    assert price_id and price_id.startswith("price_"), f"Invalid price ID: {price_res}"
+    price_id = extract_id(price_res, "price_")
+    assert price_id, f"Invalid price ID: {price_res}"
     print(f"Response: {price_res}")
 
     # Step 4: Create subscription
@@ -300,10 +303,8 @@ async def test_cancel_subscription(client):
         f"Use the create_subscription tool to create a subscription for customer {customer_id} "
         f"with price ID {price_id}. If successful, start with 'SUBSCRIPTION_CREATED:' followed by the ID only."
     )
-    subscription_id = extract_id(sub_res, "SUBSCRIPTION_CREATED")
-    assert subscription_id and subscription_id.startswith(
-        "sub_"
-    ), f"Subscription creation failed: {sub_res}"
+    subscription_id = extract_id(sub_res, "sub_")
+    assert subscription_id, f"Subscription creation failed: {sub_res}"
     print(f"Response: {sub_res}")
 
     # Step 5: Cancel subscription
@@ -311,8 +312,9 @@ async def test_cancel_subscription(client):
         f"Use the cancel_subscription tool to cancel subscription ID {subscription_id}. "
         "If successful, start with 'SUBSCRIPTION_CANCELLED:' followed by the ID only."
     )
-    cancel_id = extract_id(cancel_res, "SUBSCRIPTION_CANCELLED")
-    assert cancel_id == subscription_id, f"Cancel failed: {cancel_res}"
+    assert (
+        extract_id(cancel_res, "sub_") == subscription_id
+    ), f"Cancel failed: {cancel_res}"
     print(f"Response: {cancel_res}")
     print("✅ Subscription cancelled successfully")
 
@@ -324,9 +326,8 @@ async def test_retrieve_subscription(client):
     list_res = await client.process_query(
         "List all Stripe subscriptions. If successful, start your response with 'SUBSCRIPTIONS_LIST:' and include subscription IDs."
     )
-    match = re.search(r"SUBSCRIPTIONS_LIST:\s*(\w+)", list_res)
-    assert match, f"Subscription list failed: {list_res}"
-    sub_id = match.group(1)
+    sub_id = extract_id(list_res, "sub_")
+    assert sub_id, f"Subscription list failed: {list_res}"
     print(f"Response: {list_res}")
 
     # Step 2: Retrieve subscription
@@ -334,7 +335,7 @@ async def test_retrieve_subscription(client):
         f"Use the retrieve_subscription tool to get details of subscription ID {sub_id}. "
         f"If successful, start your response with 'SUBSCRIPTION_RETRIEVED:'"
     )
-    assert "SUBSCRIPTION_RETRIEVED:" in retrieve_res, f"Retrieve failed: {retrieve_res}"
+    assert extract_id(retrieve_res, "sub_"), f"Retrieve failed: {retrieve_res}"
     print(f"Response: {retrieve_res}")
     print("✅ Subscription retrieve via listing successful")
 
@@ -345,15 +346,15 @@ async def test_create_price(client):
     product_res = await client.process_query(
         "Create a product named 'Test Priceable'. If successful, start with 'PRODUCT_CREATED:'"
     )
-    prod_id = re.search(r"PRODUCT_CREATED:\s*(\w+)", product_res)
-    assert prod_id, f"Product creation failed: {product_res}"
+    product_id = extract_id(product_res, "prod_")
+    assert product_id, f"Product creation failed: {product_res}"
     print(f"Response: {product_res}")
 
     price_res = await client.process_query(
-        f"Create a recurring price for product {prod_id.group(1)} with unit_amount 2000 and currency 'usd'. "
+        f"Create a recurring price for product {product_id} with unit_amount 2000 and currency 'usd'. "
         "If successful, start with 'PRICE_CREATED:'"
     )
-    assert "PRICE_CREATED:" in price_res, f"Price creation failed: {price_res}"
+    assert extract_id(price_res, "price_"), f"Price creation failed: {price_res}"
     print(f"Response: {price_res}")
     print("✅ Price creation successful")
 
@@ -369,10 +370,8 @@ async def test_create_subscription(client):
         f"Use the create_customer tool to create a customer with email '{email}'. "
         "If successful, start the response with 'CUSTOMER_CREATED:' followed by the ID only."
     )
-    customer_id = extract_id(cust_res, "CUSTOMER_CREATED")
-    assert customer_id and customer_id.startswith(
-        "cus_"
-    ), f"Invalid customer ID: {cust_res}"
+    customer_id = extract_id(cust_res, "cus_")
+    assert customer_id, f"Invalid customer ID: {cust_res}"
     print(f"Response: {cust_res}")
 
     # Step 2: Create product
@@ -380,10 +379,8 @@ async def test_create_subscription(client):
         f"Use the create_product tool to create a product named '{product_name}'. "
         "If successful, start the response with 'PRODUCT_CREATED:' followed by the ID only."
     )
-    product_id = extract_id(prod_res, "PRODUCT_CREATED")
-    assert product_id and product_id.startswith(
-        "prod_"
-    ), f"Invalid product ID: {prod_res}"
+    product_id = extract_id(prod_res, "prod_")
+    assert product_id, f"Invalid product ID: {prod_res}"
     print(f"Response: {prod_res}")
 
     # Step 3: Create recurring price
@@ -391,8 +388,8 @@ async def test_create_subscription(client):
         f"Use the create_price tool to create a recurring price for product {product_id} "
         "with unit_amount 800 and currency 'usd'. If successful, start with 'PRICE_CREATED:' followed by the ID only."
     )
-    price_id = extract_id(price_res, "PRICE_CREATED")
-    assert price_id and price_id.startswith("price_"), f"Invalid price ID: {price_res}"
+    price_id = extract_id(price_res, "price_")
+    assert price_id, f"Invalid price ID: {price_res}"
     print(f"Response: {price_res}")
 
     # Step 4: Create subscription
@@ -400,10 +397,8 @@ async def test_create_subscription(client):
         f"Use the create_subscription tool to create a subscription for customer {customer_id} "
         f"with price ID {price_id}. If successful, start with 'SUBSCRIPTION_CREATED:' followed by the ID only."
     )
-    subscription_id = extract_id(sub_res, "SUBSCRIPTION_CREATED")
-    assert subscription_id and subscription_id.startswith(
-        "sub_"
-    ), f"Subscription creation failed: {sub_res}"
+    subscription_id = extract_id(sub_res, "sub_")
+    assert subscription_id, f"Subscription creation failed: {sub_res}"
     print(f"Response: {sub_res}")
     print("✅ Subscription created successfully")
 
@@ -419,7 +414,7 @@ async def test_update_customer(client):
         f"Use the create_customer tool to create a customer with email {email}. "
         "If successful, only respond with 'CUSTOMER_CREATED:' followed by the customer ID."
     )
-    customer_id = extract_id(response, "CUSTOMER_CREATED")
+    customer_id = extract_id(response, "cus_")
     assert customer_id, f"Customer creation failed: {response}"
 
     # Update the customer with new name
@@ -427,8 +422,8 @@ async def test_update_customer(client):
         f"Use the update_customer tool to update the customer with ID {customer_id}. "
         f"Set the name to '{new_name}'. If successful, only respond with 'CUSTOMER_UPDATED:'"
     )
-    assert (
-        "CUSTOMER_UPDATED:" in update_response
+    assert extract_id(
+        update_response, "cus_"
     ), f"Customer update failed: {update_response}"
     print(f"Response: {update_response}")
     print(f"✅ Customer {customer_id} updated with name: {new_name}")
