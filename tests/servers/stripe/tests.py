@@ -1,12 +1,6 @@
 import uuid
 import pytest
-import os
-import sys
 import re
-
-# Force-add the root directory (GuMCP) to Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-sys.path.insert(0, project_root)
 
 def extract_id(text: str, prefix: str) -> str | None:
     match = re.search(rf"{prefix}[:\s]*([a-zA-Z0-9_]+)", text)
