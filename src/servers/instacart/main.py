@@ -94,8 +94,8 @@ async def get_instacart_credentials(user_id, api_key=None):
 
 async def make_instacart_request(endpoint, data, api_key):
     """Make a request to the Instacart API"""
-    # base_url = "https://connect.instacart.com/idp/v1"
-    base_url = "https://connect.dev.instacart.tools/idp/v1"
+    base_url = "https://connect.instacart.com/idp/v1"
+    # base_url = "https://connect.dev.instacart.tools/idp/v1" -- If using dev endpoint
 
     url = f"{base_url}/{endpoint}"
 
