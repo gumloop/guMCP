@@ -335,7 +335,7 @@ async def test_retrieve_subscription(client):
         f"Use the retrieve_subscription tool to get details of subscription ID {sub_id}. "
         f"If successful, start your response with 'SUBSCRIPTION_RETRIEVED:'"
     )
-    assert extract_id(retrieve_res, "sub_"), f"Retrieve failed: {retrieve_res}"
+    assert "SUBSCRIPTION_RETRIEVED:" in retrieve_res, f"Retrieve failed: {retrieve_res}"
     print(f"Response: {retrieve_res}")
     print("✅ Subscription retrieve via listing successful")
 
