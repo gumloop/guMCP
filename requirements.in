@@ -16,3 +16,4 @@ uvicorn
 requests
 google
 stripe
+PyGithub
