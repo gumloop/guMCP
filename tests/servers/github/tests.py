@@ -1,16 +1,20 @@
 """
 This file contains the tests for the GitHub server.
 """
+
 import uuid
 import pytest
 
 TEST_UUID = str(uuid.uuid4())[:8]
 
+
 @pytest.mark.asyncio
 async def test_create_repository(client):
     """Test creating repository in GitHub"""
-    repo_name = "mcp_repo_"+ TEST_UUID
-    description = "This is a test repository created by test script of MCP Server for GitHub"
+    repo_name = "mcp_repo_" + TEST_UUID
+    description = (
+        "This is a test repository created by test script of MCP Server for GitHub"
+    )
     private = False
     auto_init = True
 
@@ -27,6 +31,7 @@ async def test_create_repository(client):
     print(f"\t{response}")
 
     print("✅ Successfully Created GitHub repository")
+
 
 @pytest.mark.asyncio
 async def test_search_repositories(client):
@@ -47,6 +52,7 @@ async def test_search_repositories(client):
 
     print("✅ Successfully searched GitHub repositories")
 
+
 @pytest.mark.asyncio
 async def test_list_public_user_repositories(client):
     """Test listing public repositories for a user"""
@@ -66,6 +72,7 @@ async def test_list_public_user_repositories(client):
 
     print("✅ Successfully listed user repositories")
 
+
 @pytest.mark.asyncio
 async def test_list_organization_repositories(client):
     """Test listing repositories for an organization"""
@@ -78,12 +85,15 @@ async def test_list_organization_repositories(client):
     assert (
         "here are the organization repositories" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No repositories found for organization {org_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No repositories found for organization {org_name}"
 
     print("Organization repositories found:")
     print(f"\t{response}")
 
     print("✅ Successfully listed organization repositories")
+
 
 @pytest.mark.asyncio
 async def test_get_contents(client):
@@ -100,12 +110,15 @@ async def test_get_contents(client):
     assert (
         "here are the file contents" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No contents found for {owner}/{repo_name}/{path}"
+    assert (
+        response and len(response) > 0
+    ), f"No contents found for {owner}/{repo_name}/{path}"
 
     print("File contents:")
     print(f"\t{response}")
 
     print("✅ Successfully retrieved file contents")
+
 
 @pytest.mark.asyncio
 async def test_list_repository_languages(client):
@@ -119,12 +132,15 @@ async def test_list_repository_languages(client):
     assert (
         "here are the repository languages" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No languages found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No languages found for repository {repo_name}"
 
     print("Repository languages:")
     print(f"\t{response}")
 
     print("✅ Successfully listed repository languages")
+
 
 @pytest.mark.asyncio
 async def test_list_commits(client):
@@ -140,12 +156,15 @@ async def test_list_commits(client):
     assert (
         "here are the commits" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No commits found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No commits found for repository {repo_name}"
 
     print("Commits found:")
     print(f"\t{response}")
 
     print("✅ Successfully listed repository commits")
+
 
 @pytest.mark.asyncio
 async def test_get_commit(client):
@@ -168,6 +187,7 @@ async def test_get_commit(client):
 
     print("✅ Successfully retrieved commit")
 
+
 @pytest.mark.asyncio
 async def test_star_repository(client):
     """Star the given repo in users account."""
@@ -180,12 +200,15 @@ async def test_star_repository(client):
     assert (
         "starred the given repository successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No commits found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No commits found for repository {repo_name}"
 
     print("Starred the given repository successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully starred the given repository")
+
 
 @pytest.mark.asyncio
 async def test_list_stargazers(client):
@@ -200,12 +223,15 @@ async def test_list_stargazers(client):
     assert (
         "here are the stargazers" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No stargazers found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No stargazers found for repository {repo_name}"
 
     print("Stargazers found:")
     print(f"\t{response}")
 
     print("✅ Successfully listed stargazers")
+
 
 @pytest.mark.asyncio
 async def test_get_stargazers_count(client):
@@ -219,12 +245,15 @@ async def test_get_stargazers_count(client):
     assert (
         "here is the number of stargazers" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No stargazers found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No stargazers found for repository {repo_name}"
 
     print("Number of stargazers:")
     print(f"\t{response}")
 
     print("✅ Successfully got the number of stargazers")
+
 
 @pytest.mark.asyncio
 async def test_list_starred_repos_by_user(client):
@@ -243,6 +272,7 @@ async def test_list_starred_repos_by_user(client):
     print(f"\t{response}")
 
     print("✅ Successfully listed starred repositories")
+
 
 @pytest.mark.asyncio
 async def test_list_issues(client):
@@ -263,6 +293,7 @@ async def test_list_issues(client):
     print(f"\t{response}")
 
     print("✅ Successfully listed repository issues")
+
 
 @pytest.mark.asyncio
 async def test_get_issue(client):
@@ -285,12 +316,13 @@ async def test_get_issue(client):
 
     print("✅ Successfully got the issue")
 
+
 @pytest.mark.asyncio
 async def test_create_issue(client):
     """Test creating an issue for a repository"""
-    owner = "sanskarmk" #Change as per the OAuth user
-    repo_name = "mcp_repo_"+TEST_UUID
-    title = "Test Issue "+TEST_UUID
+    owner = "sanskarmk"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
+    title = "Test Issue " + TEST_UUID
     body = "This is a test issue created by test script of MCP Server for GitHub"
 
     response = await client.process_query(
@@ -300,21 +332,28 @@ async def test_create_issue(client):
     assert (
         "issue created successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"Failed to create issue for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"Failed to create issue for repository {repo_name}"
 
     print("Issue created successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully created an issue")
 
+
 @pytest.mark.asyncio
 async def test_update_issue(client):
     """Test updating an issue for a repository"""
-    owner = "sanskarmk" #Change as per the OAuth user
+    owner = "sanskarmk"  # Change as per the OAuth user
     repo_name = "mcp_repo_a2700009"
     issue_number = 1
     title = "Updated Issue " + TEST_UUID
-    body = "This is an updated issue "+TEST_UUID+" by test script of MCP Server for GitHub"
+    body = (
+        "This is an updated issue "
+        + TEST_UUID
+        + " by test script of MCP Server for GitHub"
+    )
 
     response = await client.process_query(
         f"Use the update_issue tool with owner: {owner}, repo_name: {repo_name}, issue_number: {issue_number}, title: {title}, and body: {body}. If you update the issue successfully, start your response with 'Issue updated successfully' and then show it."
@@ -323,20 +362,25 @@ async def test_update_issue(client):
     assert (
         "issue updated successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"Failed to update issue for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"Failed to update issue for repository {repo_name}"
 
     print("Issue updated successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully updated an issue")
 
+
 @pytest.mark.asyncio
 async def test_add_comment_to_issue(client):
     """Test adding a comment to an issue"""
-    owner = "sanskarmk" #Change as per the OAuth user
+    owner = "sanskarmk"  # Change as per the OAuth user
     repo_name = "mcp_repo_a2700009"
     issue_number = 1
-    comment = "This is a comment "+TEST_UUID+" by test script of MCP Server for GitHub"
+    comment = (
+        "This is a comment " + TEST_UUID + " by test script of MCP Server for GitHub"
+    )
 
     response = await client.process_query(
         f"Use the add_comment_to_issue tool with owner: {owner}, repo_name: {repo_name}, issue_number: {issue_number}, and comment: {comment}. If you add the comment successfully, start your response with 'Comment added successfully' and then show it."
@@ -345,19 +389,22 @@ async def test_add_comment_to_issue(client):
     assert (
         "comment added successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"Failed to add comment to issue for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"Failed to add comment to issue for repository {repo_name}"
 
     print("Comment added successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully added a comment to an issue")
 
+
 @pytest.mark.asyncio
 async def test_create_branch(client):
     """Test creating a branch for a repository"""
-    owner = "sanskarmk" #Change as per the OAuth user
-    repo_name = "mcp_repo_"+TEST_UUID
-    branch_name = "test-branch-"+TEST_UUID
+    owner = "sanskarmk"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
+    branch_name = "test-branch-" + TEST_UUID
     base = "main"
 
     response = await client.process_query(
@@ -367,18 +414,21 @@ async def test_create_branch(client):
     assert (
         "branch created successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"Failed to create branch for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"Failed to create branch for repository {repo_name}"
 
     print("Branch created successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully created a branch")
 
+
 @pytest.mark.asyncio
 async def test_list_branches(client):
-    """Test listing branches for a repository"""    
-    owner = "sanskarmk" #Change as per the OAuth user
-    repo_name = "mcp_repo_"+TEST_UUID
+    """Test listing branches for a repository"""
+    owner = "sanskarmk"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
 
     response = await client.process_query(
         f"Use the list_branches tool with owner: {owner}, repo_name: {repo_name}. If you find any branches, start your response with 'Here are the branches' and then list them."
@@ -387,22 +437,31 @@ async def test_list_branches(client):
     assert (
         "here are the branches" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No branches found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No branches found for repository {repo_name}"
 
     print("Branches found:")
     print(f"\t{response}")
 
     print("✅ Successfully listed repository branches")
 
+
 @pytest.mark.asyncio
 async def test_add_file_to_repository(client):
     """Test adding a file to a repository"""
-    owner = "sanskarmk" #Change as per the OAuth user
-    repo_name = "mcp_repo_"+TEST_UUID
-    path = "add_file_test_"+TEST_UUID+".txt"
-    content = "This is a test file "+TEST_UUID+" by test script of MCP Server for GitHub"
-    branch = "test-branch-"+TEST_UUID
-    commit_message = "This is a test commit "+TEST_UUID+" by test script of MCP Server for GitHub"
+    owner = "sanskarmk"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
+    path = "add_file_test_" + TEST_UUID + ".txt"
+    content = (
+        "This is a test file " + TEST_UUID + " by test script of MCP Server for GitHub"
+    )
+    branch = "test-branch-" + TEST_UUID
+    commit_message = (
+        "This is a test commit "
+        + TEST_UUID
+        + " by test script of MCP Server for GitHub"
+    )
 
     response = await client.process_query(
         f"Use the add_file_to_repository tool with owner: {owner}, repo_name: {repo_name}, path: {path}, content: {content}, branch: {branch}, and commit_message: {commit_message}. If you add the file successfully, start your response with 'File added successfully' and then show it."
@@ -411,22 +470,25 @@ async def test_add_file_to_repository(client):
     assert (
         "file added successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"Failed to add file to repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"Failed to add file to repository {repo_name}"
 
     print("File added successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully added a file to a repository")
 
+
 @pytest.mark.asyncio
 async def test_create_pull_request(client):
     """Test creating a pull request"""
-    owner = "sanskarmk" #Change as per the OAuth user
-    repo_name = "mcp_repo_"+TEST_UUID
+    owner = "sanskarmk"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
     base = "main"
-    head = "test-branch-"+TEST_UUID
-    title = "Test Pull Request "+TEST_UUID
-    body = "This is a test pull request "+TEST_UUID
+    head = "test-branch-" + TEST_UUID
+    title = "Test Pull Request " + TEST_UUID
+    body = "This is a test pull request " + TEST_UUID
 
     response = await client.process_query(
         f"Use the create_pull_request tool with owner: {owner}, repo_name: {repo_name}, base: {base}, head: {head}, title: {title}, and body: {body}. If you create the pull request successfully, start your response with 'Pull request created successfully' and then show it."
@@ -435,18 +497,21 @@ async def test_create_pull_request(client):
     assert (
         "pull request created successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"Failed to create pull request for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"Failed to create pull request for repository {repo_name}"
 
     print("Pull request created successfully:")
     print(f"\t{response}")
 
     print("✅ Successfully created a pull request")
 
+
 @pytest.mark.asyncio
 async def test_list_pull_requests(client):
     """Test listing pull requests for a repository"""
-    owner = "sanskarmk" #Change as per the OAuth user
-    repo_name = "mcp_repo_"+TEST_UUID
+    owner = "sanskarmk"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
 
     response = await client.process_query(
         f"Use the list_pull_requests tool with owner: {owner}, repo_name: {repo_name}. If you find any pull requests, start your response with 'Here are the pull requests' and then list them."
@@ -455,7 +520,9 @@ async def test_list_pull_requests(client):
     assert (
         "here are the pull requests" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response and len(response) > 0, f"No pull requests found for repository {repo_name}"
+    assert (
+        response and len(response) > 0
+    ), f"No pull requests found for repository {repo_name}"
 
     print("Pull requests found:")
     print(f"\t{response}")
