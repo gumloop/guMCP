@@ -320,7 +320,7 @@ async def test_get_issue(client):
 @pytest.mark.asyncio
 async def test_create_issue(client):
     """Test creating an issue for a repository"""
-    owner = "sanskarmk"  # Change as per the OAuth user
+    owner = "rbehal"  # Change as per the OAuth user
     repo_name = "mcp_repo_" + TEST_UUID
     title = "Test Issue " + TEST_UUID
     body = "This is a test issue created by test script of MCP Server for GitHub"
@@ -345,8 +345,8 @@ async def test_create_issue(client):
 @pytest.mark.asyncio
 async def test_update_issue(client):
     """Test updating an issue for a repository"""
-    owner = "sanskarmk"  # Change as per the OAuth user
-    repo_name = "mcp_repo_a2700009"
+    owner = "rbehal"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
     issue_number = 1
     title = "Updated Issue " + TEST_UUID
     body = (
@@ -375,8 +375,8 @@ async def test_update_issue(client):
 @pytest.mark.asyncio
 async def test_add_comment_to_issue(client):
     """Test adding a comment to an issue"""
-    owner = "sanskarmk"  # Change as per the OAuth user
-    repo_name = "mcp_repo_a2700009"
+    owner = "rbehal"  # Change as per the OAuth user
+    repo_name = "mcp_repo_" + TEST_UUID
     issue_number = 1
     comment = (
         "This is a comment " + TEST_UUID + " by test script of MCP Server for GitHub"
@@ -402,7 +402,7 @@ async def test_add_comment_to_issue(client):
 @pytest.mark.asyncio
 async def test_create_branch(client):
     """Test creating a branch for a repository"""
-    owner = "sanskarmk"  # Change as per the OAuth user
+    owner = "rbehal"  # Change as per the OAuth user
     repo_name = "mcp_repo_" + TEST_UUID
     branch_name = "test-branch-" + TEST_UUID
     base = "main"
@@ -427,7 +427,7 @@ async def test_create_branch(client):
 @pytest.mark.asyncio
 async def test_list_branches(client):
     """Test listing branches for a repository"""
-    owner = "sanskarmk"  # Change as per the OAuth user
+    owner = "rbehal"  # Change as per the OAuth user
     repo_name = "mcp_repo_" + TEST_UUID
 
     response = await client.process_query(
@@ -450,7 +450,7 @@ async def test_list_branches(client):
 @pytest.mark.asyncio
 async def test_add_file_to_repository(client):
     """Test adding a file to a repository"""
-    owner = "sanskarmk"  # Change as per the OAuth user
+    owner = "rbehal"  # Change as per the OAuth user
     repo_name = "mcp_repo_" + TEST_UUID
     path = "add_file_test_" + TEST_UUID + ".txt"
     content = (
@@ -483,7 +483,7 @@ async def test_add_file_to_repository(client):
 @pytest.mark.asyncio
 async def test_create_pull_request(client):
     """Test creating a pull request"""
-    owner = "sanskarmk"  # Change as per the OAuth user
+    owner = "rbehal"  # Change as per the OAuth user
     repo_name = "mcp_repo_" + TEST_UUID
     base = "main"
     head = "test-branch-" + TEST_UUID
@@ -510,7 +510,7 @@ async def test_create_pull_request(client):
 @pytest.mark.asyncio
 async def test_list_pull_requests(client):
     """Test listing pull requests for a repository"""
-    owner = "sanskarmk"  # Change as per the OAuth user
+    owner = "rbehal"  # Change as per the OAuth user
     repo_name = "mcp_repo_" + TEST_UUID
 
     response = await client.process_query(

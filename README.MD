@@ -148,6 +148,7 @@ The following table provides an overview of the current servers implemented in g
 | **Search Tools**        |           |                                                                         |                                             |                                                                 |
 | Perplexity              | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/perplexity) | ✅ Easy - Simple API key setup              | [Perplexity Docs](/src/servers/perplexity/README.md)            |
 | **Development Tools**   |           |                                                                         |                                             |                                                                 |
+| GitHub                  | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires GitHub OAuth application        | [GitHub Docs](/src/servers/github/README.md)                    |
 | Simple Tools Server     | None      | ✅ No auth required                                                     | ✅ No auth required                         | [Simple Tools Docs](/src/servers/simple-tools-server/README.md) |
 
 ## Contributing
