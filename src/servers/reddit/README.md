@@ -7,8 +7,11 @@ guMCP server implementation for interacting with the **Reddit API**.
 ### 📦 Prerequisites
 
 - Python 3.11+
-- OAuth 2.0 credentials from a Reddit app created at https://www.reddit.com/prefs/apps
+- OAuth 2.0 credentials from a Reddit Developer App. You can create one here: https://www.reddit.com/prefs/apps
+  - You can select "web app" for type of application
+  - The `client_id` will be listed below "web app" when it is created
 - A local OAuth config file with your Reddit `client_id`, `client_secret`, and `redirect_uri`
+
 ---
 
 ### 🔐 Local Authentication
