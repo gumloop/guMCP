@@ -27,7 +27,7 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from src.utils.zendesk.util import authenticate_and_save_credentials, get_credentials
+from src.utils.zendesk.util import authenticate_and_save_credentials, get_credentials, get_service_config
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
@@ -82,12 +82,12 @@ def create_server(user_id, api_key=None):
 
     async def get_zendesk_client():
         """Get Zendesk access token and subdomain for the current user"""
-        from src.auth.factory import create_auth_client
-        auth_client = create_auth_client(api_key=api_key)
-        
+        # Get access token
         access_token = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
-        oauth_config = auth_client.get_oauth_config(SERVICE_NAME)
-        subdomain = oauth_config.get("zendesk_url", "")
+        
+        # Get service config (contains subdomain)
+        config = await get_service_config(user_id, SERVICE_NAME, api_key=api_key)
+        subdomain = config.get("custom_subdomain", "")
         
         return access_token, subdomain
 

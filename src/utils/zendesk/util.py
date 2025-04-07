@@ -1,6 +1,7 @@
 import logging
 import time
-from typing import Dict, List, Any, Optional
+import os
+from typing import Dict, List, Any, Optional, Tuple
 
 from src.utils.oauth.util import run_oauth_flow, refresh_token_if_needed
 
@@ -67,7 +68,7 @@ def authenticate_and_save_credentials(
     from src.auth.factory import create_auth_client
     auth_client = create_auth_client()
     oauth_config = auth_client.get_oauth_config(service_name)
-    subdomain = oauth_config.get("zendesk_url", "testingmcp")
+    subdomain = oauth_config.get("custom_subdomain", "testingmcp")
     
     # Construct the authorization and token URLs
     auth_url = ZENDESK_OAUTH_AUTHORIZE_URL.format(subdomain=subdomain)
@@ -86,29 +87,100 @@ def authenticate_and_save_credentials(
     )
 
 async def get_credentials(user_id: str, service_name: str, api_key: Optional[str] = None) -> str:
-    """Get Zendesk credentials"""
+    """
+    Get Zendesk access token
+    
+    Returns:
+        Access token as a string
+    """
     logger.info(f"Getting Zendesk credentials for user {user_id}")
     
-    # Get the Zendesk subdomain from the oauth config
+    # Get auth client
     from src.auth.factory import create_auth_client
     auth_client = create_auth_client(api_key=api_key)
-    oauth_config = auth_client.get_oauth_config(service_name)
-    subdomain = oauth_config.get("zendesk_url", "testingmcp")
-    token_url = ZENDESK_OAUTH_TOKEN_URL.format(subdomain=subdomain)
     
-    # Define token data builder for refresh (Zendesk doesn't use refresh tokens)
-    def token_data_builder(
-        oauth_config: Dict[str, Any], redirect_uri: str, credentials: Dict[str, Any]
-    ) -> Dict[str, str]:
+    # Get the credentials
+    credentials = auth_client.get_user_credentials(service_name, user_id)
+    
+    # Check environment
+    environment = os.environ.get("ENVIRONMENT", "local").lower()
+    
+    # For non-local environments where credentials contains all we need
+    if environment != "local" and isinstance(credentials, dict):
+        if "access_token" in credentials:
+            logger.info(f"Using credentials from {environment} environment")
+            return credentials["access_token"]
+    
+    # For local environment, refresh token if needed
+    try:
+        # Get the Zendesk subdomain from the oauth config
+        oauth_config = auth_client.get_oauth_config(service_name)
+        subdomain = oauth_config.get("custom_subdomain", "")
+        token_url = ZENDESK_OAUTH_TOKEN_URL.format(subdomain=subdomain)
+        
+        # Define token data builder for refresh (Zendesk doesn't use refresh tokens)
+        def token_data_builder(
+            oauth_config: Dict[str, Any], redirect_uri: str, credentials: Dict[str, Any]
+        ) -> Dict[str, str]:
+            return {}
+        
+        # Get the token
+        access_token = await refresh_token_if_needed(
+            user_id=user_id,
+            service_name=service_name,
+            token_url=token_url,
+            token_data_builder=token_data_builder,
+            process_token_response=process_zendesk_token_response,
+            token_header_builder=build_zendesk_token_header,
+            api_key=api_key,
+        )
+        
+        return access_token
+        
+    except Exception as e:
+        # If we already have credentials with access_token, use it as fallback
+        if isinstance(credentials, dict) and "access_token" in credentials:
+            logger.warning(f"Error using OAuth config: {str(e)}. Falling back to credentials.")
+            return credentials["access_token"]
+        raise
+
+async def get_service_config(user_id: str, service_name: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get service-specific configuration parameters (subdomain, etc.)
+    """
+    # Get auth client
+    from src.auth.factory import create_auth_client
+    auth_client = create_auth_client(api_key=api_key)
+    
+    # Check environment
+    environment = os.environ.get("ENVIRONMENT", "local").lower()
+    
+    # Get config from different sources based on environment
+    if environment != "local":
+        # For non-local environments, try to get config from credentials
+        credentials = auth_client.get_user_credentials(service_name, user_id)
+        if isinstance(credentials, dict):
+            # Extract all custom_* parameters
+            config = {}
+            for key, value in credentials.items():
+                if key.startswith("custom_"):
+                    config[key] = value
+            
+            if config:
+                logger.info(f"Using service config from {environment} credentials")
+                return config
+    
+    # For local environment or as fallback, get from OAuth config
+    try:
+        oauth_config = auth_client.get_oauth_config(service_name)
+        # Extract all custom_* parameters
+        config = {}
+        for key, value in oauth_config.items():
+            if key.startswith("custom_"):
+                config[key] = value
+        
+        logger.info("Using service config from OAuth config")
+        return config
+    except Exception as e:
+        logger.warning(f"Error getting OAuth config: {str(e)}")
         return {}
-    
-    # Get the token
-    return await refresh_token_if_needed(
-        user_id=user_id,
-        service_name=service_name,
-        token_url=token_url,
-        token_data_builder=token_data_builder,
-        process_token_response=process_zendesk_token_response,
-        token_header_builder=build_zendesk_token_header,
-        api_key=api_key,
-    )
