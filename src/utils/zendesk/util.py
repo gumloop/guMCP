@@ -144,43 +144,29 @@ async def get_credentials(user_id: str, service_name: str, api_key: Optional[str
             return credentials["access_token"]
         raise
 
-async def get_service_config(user_id: str, service_name: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def get_service_config(user_id: str, service_name: str, api_key: Optional[str] = None) -> Dict[str, str]:
     """
-    Get service-specific configuration parameters (subdomain, etc.)
+    Get service-specific configuration parameters
     """
     # Get auth client
     from src.auth.factory import create_auth_client
     auth_client = create_auth_client(api_key=api_key)
     
-    # Check environment
     environment = os.environ.get("ENVIRONMENT", "local").lower()
     
-    # Get config from different sources based on environment
+    # For non-local environments, try to get subdomain from credentials
     if environment != "local":
-        # For non-local environments, try to get config from credentials
         credentials = auth_client.get_user_credentials(service_name, user_id)
-        if isinstance(credentials, dict):
-            # Extract all custom_* parameters
-            config = {}
-            for key, value in credentials.items():
-                if key.startswith("custom_"):
-                    config[key] = value
-            
-            if config:
-                logger.info(f"Using service config from {environment} credentials")
-                return config
+        if isinstance(credentials, dict) and "custom_subdomain" in credentials:
+            return {"custom_subdomain": credentials["custom_subdomain"]}
     
     # For local environment or as fallback, get from OAuth config
     try:
         oauth_config = auth_client.get_oauth_config(service_name)
-        # Extract all custom_* parameters
-        config = {}
-        for key, value in oauth_config.items():
-            if key.startswith("custom_"):
-                config[key] = value
-        
-        logger.info("Using service config from OAuth config")
-        return config
+        if "custom_subdomain" in oauth_config:
+            return {"custom_subdomain": oauth_config["custom_subdomain"]}
+        else:
+            raise ValueError("No Zendesk subdomain configured. Please add custom_subdomain in your configuration.")
     except Exception as e:
-        logger.warning(f"Error getting OAuth config: {str(e)}")
-        return {}
+        logger.error(f"Error getting OAuth config: {str(e)}")
+        raise ValueError(f"Could not retrieve Zendesk configuration: {str(e)}")

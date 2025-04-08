@@ -25,12 +25,12 @@ Create the following file with the relevant attributes for your app:
   "client_id": "xxxxxxxxxxxxxxxxxxxxx",
   "client_secret": "xxxxxxxxxxxxxxxxxxxxx",
   "redirect_uri": "https://xxxxxxxxxxxxx",
-  "zendesk_url": "your-subdomain"
+  "custom_subdomain": "your-subdomain"
 }
 ```
 
 Notes:
-- The `zendesk_url` is your Zendesk subdomain (e.g., if your Zendesk URL is `example.zendesk.com`, use `example`)
+- The `custom_subdomain` is your Zendesk subdomain (e.g., if your Zendesk URL is `example.zendesk.com`, use `example`)
 
 
 To set up and verify authentication, run:
