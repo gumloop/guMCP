@@ -17,7 +17,10 @@ data = {"a": 1, "b": 2, "c": 3}
 very_long_string = "This is an extremely long string that definitely exceeds Black's default line length limit. It should be broken up into multiple lines."
 
 # Bad list formatting
-my_list = [1, 2,3,
+my_list = [
+    1,
+    2,
+    3,
 ]
 
 # Inconsistent function calls
