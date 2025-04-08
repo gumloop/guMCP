@@ -27,7 +27,11 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from src.utils.zendesk.util import authenticate_and_save_credentials, get_credentials, get_service_config
+from src.utils.zendesk.util import (
+    authenticate_and_save_credentials,
+    get_credentials,
+    get_service_config,
+)
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
@@ -42,7 +46,9 @@ logging.basicConfig(
 logger = logging.getLogger(SERVICE_NAME)
 
 
-async def make_zendesk_request(method, path, access_token=None, subdomain=None, data=None, params=None):
+async def make_zendesk_request(
+    method, path, access_token=None, subdomain=None, data=None, params=None
+):
     """Make a request to the Zendesk API"""
     if not access_token:
         raise ValueError("Zendesk access token is required")
@@ -69,7 +75,9 @@ async def make_zendesk_request(method, path, access_token=None, subdomain=None, 
             raise ValueError(f"Unsupported HTTP method: {method}")
 
         if response.status_code >= 400:
-            raise ValueError(f"Zendesk API error: {response.status_code} - {response.text}")
+            raise ValueError(
+                f"Zendesk API error: {response.status_code} - {response.text}"
+            )
 
         return response.json()
 
@@ -84,11 +92,11 @@ def create_server(user_id, api_key=None):
         """Get Zendesk access token and subdomain for the current user"""
         # Get access token
         access_token = await get_credentials(user_id, SERVICE_NAME, api_key=api_key)
-        
+
         # Get service config (contains subdomain)
         config = await get_service_config(user_id, SERVICE_NAME, api_key=api_key)
         subdomain = config.get("custom_subdomain", "")
-        
+
         return access_token, subdomain
 
     @server.list_resources()
@@ -185,10 +193,10 @@ def create_server(user_id, api_key=None):
 
             # Get ticket with side loading of users, groups and comments
             ticket_data = await make_zendesk_request(
-                "get", 
-                f"tickets/{ticket_id}.json?include=users,groups,comment_count", 
-                access_token, 
-                subdomain
+                "get",
+                f"tickets/{ticket_id}.json?include=users,groups,comment_count",
+                access_token,
+                subdomain,
             )
 
             # Get comments for this ticket
@@ -354,7 +362,7 @@ def create_server(user_id, api_key=None):
                 raise ValueError("Missing query parameter")
 
             search_query = arguments["query"]
-            
+
             params = {
                 "query": search_query,
                 "sort_by": arguments.get("sort_by", "created_at"),
@@ -382,7 +390,7 @@ def create_server(user_id, api_key=None):
                 for ticket in tickets:
                     status = ticket.get("status", "unknown")
                     priority = ticket.get("priority", "normal")
-                    
+
                     ticket_list.append(
                         f"Ticket #{ticket['id']}: {ticket['subject']}\n"
                         f"  Status: {status}\n"
@@ -462,10 +470,10 @@ def create_server(user_id, api_key=None):
                 raise ValueError("Missing required parameter: ticket_id")
 
             ticket_id = arguments["ticket_id"]
-            
+
             # Start with an empty ticket structure
             ticket_data = {"ticket": {}}
-            
+
             # Add fields that are present
             if "subject" in arguments:
                 ticket_data["ticket"]["subject"] = arguments["subject"]
@@ -485,10 +493,13 @@ def create_server(user_id, api_key=None):
 
             try:
                 result = await make_zendesk_request(
-                    "put", f"tickets/{ticket_id}.json", 
-                    access_token, subdomain, data=ticket_data
+                    "put",
+                    f"tickets/{ticket_id}.json",
+                    access_token,
+                    subdomain,
+                    data=ticket_data,
                 )
-                
+
                 ticket = result.get("ticket", {})
 
                 if ticket:
@@ -527,20 +538,18 @@ def create_server(user_id, api_key=None):
             is_public = arguments.get("public", True)
 
             ticket_data = {
-                "ticket": {
-                    "comment": {
-                        "body": comment_text,
-                        "public": is_public
-                    }
-                }
+                "ticket": {"comment": {"body": comment_text, "public": is_public}}
             }
 
             try:
                 result = await make_zendesk_request(
-                    "put", f"tickets/{ticket_id}.json", 
-                    access_token, subdomain, data=ticket_data
+                    "put",
+                    f"tickets/{ticket_id}.json",
+                    access_token,
+                    subdomain,
+                    data=ticket_data,
                 )
-                
+
                 ticket = result.get("ticket", {})
 
                 if ticket:
