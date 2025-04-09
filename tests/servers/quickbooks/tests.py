@@ -27,10 +27,14 @@ async def test_read_customer(client):
 
     # Find first customer resource
     customer_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("quickbooks:///customer/")),
+        (
+            r
+            for r in response.resources
+            if str(r.uri).startswith("quickbooks:///customer/")
+        ),
         None,
     )
-    
+
     # Skip test if no customer resources found
     if not customer_resource:
         pytest.skip("No customer resources found")
@@ -56,10 +60,14 @@ async def test_read_invoice(client):
 
     # Find first invoice resource
     invoice_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("quickbooks:///invoice/")),
+        (
+            r
+            for r in response.resources
+            if str(r.uri).startswith("quickbooks:///invoice/")
+        ),
         None,
     )
-    
+
     # Skip test if no invoice resources found
     if not invoice_resource:
         pytest.skip("No invoice resources found")
@@ -85,10 +93,14 @@ async def test_read_account(client):
 
     # Find first account resource
     account_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("quickbooks:///account/")),
+        (
+            r
+            for r in response.resources
+            if str(r.uri).startswith("quickbooks:///account/")
+        ),
         None,
     )
-    
+
     # Skip test if no account resources found
     if not account_resource:
         pytest.skip("No account resources found")
@@ -107,16 +119,17 @@ async def test_read_account(client):
 async def test_search_customers(client):
     """Test searching for customers"""
     search_query = "test"  # A generic query that's likely to find something
-    
+
     response = await client.process_query(
         f"Use the search_customers tool to search for customers with the query '{search_query}'."
         f"For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
     assert (
-        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
-    ) , "No response received from search_customers tool"
-    
+        "test_worked".lower() in response.lower()
+        or "tool_failed".lower() in response.lower()
+    ), "No response received from search_customers tool"
+
     print("Search results:")
     print(f"\t{response}")
     print("✅ Search customers tool working")
@@ -126,20 +139,23 @@ async def test_search_customers(client):
 async def test_analyze_sred(client):
     """Test analyzing SR&ED eligible expenses"""
     import datetime
-    
+
     # Use a date range of the past year
     end_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.datetime.now() - datetime.timedelta(days=365)).strftime("%Y-%m-%d")
-    
+    start_date = (datetime.datetime.now() - datetime.timedelta(days=365)).strftime(
+        "%Y-%m-%d"
+    )
+
     response = await client.process_query(
         f"Use the analyze_sred tool to analyze expenses for potential SR&ED eligibility from {start_date} to {end_date}."
         f"For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
     assert (
-        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+        "test_worked".lower() in response.lower()
+        or "tool_failed".lower() in response.lower()
     ), "No response received from analyze_sred tool"
-    
+
     print("SR&ED analysis results:")
     print(f"\t{response}")
     print("✅ Analyze SR&ED tool working")
@@ -154,9 +170,10 @@ async def test_analyze_cash_flow(client):
     )
 
     assert (
-        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+        "test_worked".lower() in response.lower()
+        or "tool_failed".lower() in response.lower()
     ), "No response received from analyze_cash_flow tool"
-    
+
     print("Cash flow analysis results:")
     print(f"\t{response}")
     print("✅ Analyze cash flow tool working")
@@ -166,20 +183,23 @@ async def test_analyze_cash_flow(client):
 async def test_find_duplicate_transactions(client):
     """Test finding duplicate transactions"""
     import datetime
-    
+
     # Use a date range of the past 3 months
     end_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
-    
+    start_date = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime(
+        "%Y-%m-%d"
+    )
+
     response = await client.process_query(
         f"Use the find_duplicate_transactions tool to identify potential duplicate transactions from {start_date} to {end_date}."
         f"For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
     assert (
-        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+        "test_worked".lower() in response.lower()
+        or "tool_failed".lower() in response.lower()
     ), "No response received from find_duplicate_transactions tool"
-    
+
     print("Duplicate transactions results:")
     print(f"\t{response}")
     print("✅ Find duplicate transactions tool working")
@@ -194,9 +214,10 @@ async def test_analyze_customer_payment_patterns(client):
     )
 
     assert (
-        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+        "test_worked".lower() in response.lower()
+        or "tool_failed".lower() in response.lower()
     ), "No response received from analyze_customer_payment_patterns tool"
-    
+
     print("Customer payment patterns analysis:")
     print(f"\t{response}")
     print("✅ Analyze customer payment patterns tool working")
@@ -211,9 +232,10 @@ async def test_generate_financial_metrics(client):
     )
 
     assert (
-        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+        "test_worked".lower() in response.lower()
+        or "tool_failed".lower() in response.lower()
     ), "No response received from generate_financial_metrics tool"
-    
+
     print("Financial metrics generated:")
     print(f"\t{response}")
     print("✅ Generate financial metrics tool working")
