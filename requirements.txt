@@ -22,6 +22,8 @@ anyio==4.9.0
     #   mcp
     #   sse-starlette
     #   starlette
+asn1crypto==1.5.1
+    # via snowflake-connector-python
 async-timeout==5.0.1
     # via aiohttp
 attrs==25.3.0
@@ -39,16 +41,23 @@ certifi==2025.1.31
     #   httpcore
     #   httpx
     #   requests
+    #   snowflake-connector-python
 cffi==1.17.1
     # via
     #   cryptography
     #   pynacl
+    #   snowflake-connector-python
 charset-normalizer==3.4.1
-    # via requests
+    # via
+    #   requests
+    #   snowflake-connector-python
 click==8.1.8
     # via uvicorn
 cryptography==44.0.2
-    # via pyjwt
+    # via
+    #   pyjwt
+    #   pyopenssl
+    #   snowflake-connector-python
 deprecated==1.2.18
     # via pygithub
 distro==1.9.0
@@ -61,6 +70,8 @@ enum-compat==0.0.3
     # via intuit-oauth
 exceptiongroup==1.2.2
     # via anyio
+filelock==3.18.0
+    # via snowflake-connector-python
 frozenlist==1.5.0
     # via
     #   aiohttp
@@ -113,6 +124,7 @@ idna==3.10
     #   anyio
     #   httpx
     #   requests
+    #   snowflake-connector-python
     #   yarl
 intuit-oauth==1.2.6
     # via python-quickbooks
@@ -132,6 +144,10 @@ playwright==1.51.0
     # via -r requirements.in
 ply==3.11
     # via stone
+packaging==24.2
+    # via snowflake-connector-python
+platformdirs==4.3.7
+    # via snowflake-connector-python
 prometheus-client==0.21.1
     # via -r requirements.in
 propcache==0.3.1
@@ -171,8 +187,11 @@ pyjwt[crypto]==2.10.1
     # via
     #   intuit-oauth
     #   pygithub
+    #   snowflake-connector-python
 pynacl==1.5.0
     # via pygithub
+pyopenssl==25.0.0
+    # via snowflake-connector-python
 pyparsing==3.2.3
     # via httplib2
 python-dateutil==2.9.0.post0
@@ -183,6 +202,8 @@ python-dotenv==1.1.0
     #   pydantic-settings
 python-quickbooks==0.9.11
     # via -r requirements.in
+pytz==2025.2
+    # via snowflake-connector-python
 requests==2.32.3
     # via
     #   -r requirements.in
@@ -193,6 +214,7 @@ requests==2.32.3
     #   pygithub
     #   python-quickbooks
     #   requests-oauthlib
+    #   snowflake-connector-python
     #   stripe
 requests-oauthlib==2.0.0
     # via
@@ -214,6 +236,10 @@ sniffio==1.3.1
     #   anthropic
     #   anyio
     #   browserbase
+snowflake-connector-python==3.14.0
+    # via -r requirements.in
+sortedcontainers==2.4.0
+    # via snowflake-connector-python
 soupsieve==2.6
     # via beautifulsoup4
 sse-starlette==2.2.1
@@ -227,6 +253,8 @@ stone==3.3.1
     # via dropbox
 stripe==12.0.0
     # via -r requirements.in
+tomlkit==0.13.2
+    # via snowflake-connector-python
 typing-extensions==4.13.0
     # via
     #   anthropic
@@ -238,6 +266,8 @@ typing-extensions==4.13.0
     #   pydantic-core
     #   pyee
     #   pygithub
+    #   pyopenssl
+    #   snowflake-connector-python
     #   stripe
     #   typing-inspection
     #   uvicorn
