@@ -87,9 +87,13 @@ async def test_list_event_types_tool(client):
     ), "Response must start with either 'Found event types:' or 'No event types found:'"
 
     if "Found event types:" in response:
-        assert "min" in response.lower() or "duration" in response.lower(), "Response should contain event type details"
+        assert (
+            "min" in response.lower() or "duration" in response.lower()
+        ), "Response should contain event type details"
     else:
-        assert "no event types" in response.lower(), "Response should indicate no event types found"
+        assert (
+            "no event types" in response.lower()
+        ), "Response should indicate no event types found"
 
     print("Event types listed:")
     print(f"\t{response}")
@@ -109,13 +113,20 @@ async def test_list_event_types_active_only(client):
 
     assert response, "No response received from list_event_types tool"
     assert any(
-        ["Found active event types:" in response, "No active event types found:" in response]
+        [
+            "Found active event types:" in response,
+            "No active event types found:" in response,
+        ]
     ), "Response must start with either 'Found active event types:' or 'No active event types found:'"
 
     if "Found active event types:" in response:
-        assert "active" in response.lower(), "Response should mention active event types"
+        assert (
+            "active" in response.lower()
+        ), "Response should mention active event types"
     else:
-        assert "no active" in response.lower(), "Response should indicate no active event types found"
+        assert (
+            "no active" in response.lower()
+        ), "Response should indicate no active event types found"
 
     print("Active event types listed:")
     print(f"\t{response}")
@@ -157,9 +168,13 @@ async def test_get_availability_tool(client):
     ), "Response must start with either 'Found available slots:' or 'No available slots found:'"
 
     if "Found available slots:" in response:
-        assert "available" in response.lower(), "Response should mention available slots"
+        assert (
+            "available" in response.lower()
+        ), "Response should mention available slots"
     else:
-        assert "no available" in response.lower(), "Response should indicate no available slots"
+        assert (
+            "no available" in response.lower()
+        ), "Response should indicate no available slots"
 
     print("Availability results:")
     print(f"\t{response}")
@@ -183,13 +198,18 @@ async def test_list_scheduled_events_tool(client):
 
     assert response, "No response received from list_scheduled_events tool"
     assert any(
-        ["Found scheduled events:" in response, "No scheduled events found:" in response]
+        [
+            "Found scheduled events:" in response,
+            "No scheduled events found:" in response,
+        ]
     ), "Response must start with either 'Found scheduled events:' or 'No scheduled events found:'"
 
     if "Found scheduled events:" in response:
         assert "event" in response.lower(), "Response should mention events"
     else:
-        assert "no events" in response.lower(), "Response should indicate no events found"
+        assert (
+            "no events" in response.lower()
+        ), "Response should indicate no events found"
 
     print("Scheduled events:")
     print(f"\t{response}")
@@ -214,7 +234,9 @@ async def test_list_scheduled_events_with_filters(client):
     if "Found canceled events:" in response:
         assert "canceled" in response.lower(), "Response should mention canceled events"
     else:
-        assert "no canceled" in response.lower(), "Response should indicate no canceled events found"
+        assert (
+            "no canceled" in response.lower()
+        ), "Response should indicate no canceled events found"
 
     print("Canceled events:")
     print(f"\t{response}")
@@ -248,7 +270,10 @@ async def test_create_scheduling_link_tool(client):
 
     assert response, "No response received from create_scheduling_link tool"
     assert any(
-        ["Created scheduling link:" in response, "Failed to create scheduling link:" in response]
+        [
+            "Created scheduling link:" in response,
+            "Failed to create scheduling link:" in response,
+        ]
     ), "Response must start with either 'Created scheduling link:' or 'Failed to create scheduling link:'"
 
     if "Created scheduling link:" in response:
@@ -293,7 +318,10 @@ async def test_cancel_event_flow(client):
 
     assert response, "No response received from cancel_event tool"
     assert any(
-        ["Successfully canceled event:" in response, "Failed to cancel event:" in response]
+        [
+            "Successfully canceled event:" in response,
+            "Failed to cancel event:" in response,
+        ]
     ), "Response must start with either 'Successfully canceled event:' or 'Failed to cancel event:'"
 
     if "Successfully canceled event:" in response:
@@ -304,4 +332,3 @@ async def test_cancel_event_flow(client):
     print(f"\t{response}")
 
     print("✅ Completed cancel event test")
-
