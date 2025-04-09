@@ -151,6 +151,7 @@ The following table provides an overview of the current servers implemented in g
 | Hacker News             | None      | ✅ No auth required                                                     | ✅ No auth required                         | [Hacker News Docs](/src/servers/hackernews/README.md)           |
 | **Development Tools**   |           |                                                                         |                                             |                                                                 |
 | GitHub                  | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires GitHub OAuth application        | [GitHub Docs](/src/servers/github/README.md)                    |
+| Snowflake               | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Snowflake Security Integration for OAuth  | [Snowflake Docs](/src/servers/snowflake/README.md)              |
 | Simple Tools Server     | None      | ✅ No auth required                                                     | ✅ No auth required                         | [Simple Tools Docs](/src/servers/simple-tools-server/README.md) |
 
 ## Contributing

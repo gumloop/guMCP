@@ -47,6 +47,8 @@ DESC SECURITY INTEGRATION MY_SNOWSQL_CLIENT;
 
 -- Get client secret
 SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS('MY_SNOWSQL_CLIENT');
+
+You will get 2 secrets, note down either one.
 ```
 
 ---
@@ -61,7 +63,6 @@ Create a file named `oauth_configs/snowflake/oauth.json` with the following stru
   "client_secret": "your-oauth-client-secret",
   "redirect_uri": "your-redirect-uri",
   "account": "your-account-identifier",
-  "warehouse": "your-warehouse-name"
 }
 ```
 
