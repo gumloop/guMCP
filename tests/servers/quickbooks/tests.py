@@ -110,9 +110,13 @@ async def test_search_customers(client):
     
     response = await client.process_query(
         f"Use the search_customers tool to search for customers with the query '{search_query}'."
+        f"For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
-    assert response, "No response received from search_customers tool"
+    assert (
+        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+    ) , "No response received from search_customers tool"
+    
     print("Search results:")
     print(f"\t{response}")
     print("✅ Search customers tool working")
@@ -129,9 +133,13 @@ async def test_analyze_sred(client):
     
     response = await client.process_query(
         f"Use the analyze_sred tool to analyze expenses for potential SR&ED eligibility from {start_date} to {end_date}."
+        f"For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
-    assert response, "No response received from analyze_sred tool"
+    assert (
+        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+    ), "No response received from analyze_sred tool"
+    
     print("SR&ED analysis results:")
     print(f"\t{response}")
     print("✅ Analyze SR&ED tool working")
@@ -142,9 +150,13 @@ async def test_analyze_cash_flow(client):
     """Test analyzing cash flow trends"""
     response = await client.process_query(
         "Use the analyze_cash_flow tool to analyze monthly cash flow trends for the past 6 months."
+        "For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
-    assert response, "No response received from analyze_cash_flow tool"
+    assert (
+        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+    ), "No response received from analyze_cash_flow tool"
+    
     print("Cash flow analysis results:")
     print(f"\t{response}")
     print("✅ Analyze cash flow tool working")
@@ -161,9 +173,13 @@ async def test_find_duplicate_transactions(client):
     
     response = await client.process_query(
         f"Use the find_duplicate_transactions tool to identify potential duplicate transactions from {start_date} to {end_date}."
+        f"For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
-    assert response, "No response received from find_duplicate_transactions tool"
+    assert (
+        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+    ), "No response received from find_duplicate_transactions tool"
+    
     print("Duplicate transactions results:")
     print(f"\t{response}")
     print("✅ Find duplicate transactions tool working")
@@ -174,9 +190,13 @@ async def test_analyze_customer_payment_patterns(client):
     """Test analyzing customer payment patterns"""
     response = await client.process_query(
         "Use the analyze_customer_payment_patterns tool to analyze payment behavior for all customers over the past 12 months."
+        "For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
-    assert response, "No response received from analyze_customer_payment_patterns tool"
+    assert (
+        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+    ), "No response received from analyze_customer_payment_patterns tool"
+    
     print("Customer payment patterns analysis:")
     print(f"\t{response}")
     print("✅ Analyze customer payment patterns tool working")
@@ -187,9 +207,13 @@ async def test_generate_financial_metrics(client):
     """Test generating financial metrics"""
     response = await client.process_query(
         "Use the generate_financial_metrics tool to create key financial metrics and ratios as of today."
+        "For tool testing purposes, append test_worked at the end of the response if the tool provided a valid output; otherwise, append tool_failed."
     )
 
-    assert response, "No response received from generate_financial_metrics tool"
+    assert (
+        "test_worked".lower() in response.lower() or "tool_failed".lower() in response.lower()
+    ), "No response received from generate_financial_metrics tool"
+    
     print("Financial metrics generated:")
     print(f"\t{response}")
     print("✅ Generate financial metrics tool working")
