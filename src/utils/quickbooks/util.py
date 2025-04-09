@@ -38,7 +38,9 @@ def build_quickbooks_token_data(
 
 
 def build_quickbooks_refresh_token_data(
-    oauth_config: Dict[str, Any], refresh_token: str, credentials_data: Dict[str, Any] = None
+    oauth_config: Dict[str, Any],
+    refresh_token: str,
+    credentials_data: Dict[str, Any] = None,
 ) -> Dict[str, str]:
     """Build the refresh token request data for QuickBooks OAuth."""
     return {
@@ -83,7 +85,9 @@ def authenticate_and_save_credentials(
     )
 
 
-async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> Dict[str, Any]:
+async def get_credentials(
+    user_id: str, service_name: str, api_key: str = None
+) -> Dict[str, Any]:
     """Get QuickBooks credentials with refresh token handling"""
     return await refresh_token_if_needed(
         user_id=user_id,
@@ -91,5 +95,5 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         token_url=QUICKBOOKS_OAUTH_TOKEN_URL,
         token_data_builder=build_quickbooks_refresh_token_data,
         api_key=api_key,
-        return_full_credentials=True  # Return the complete credentials dict, not just the token
+        return_full_credentials=True,  # Return the complete credentials dict, not just the token
     )
