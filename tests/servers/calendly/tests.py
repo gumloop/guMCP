@@ -20,13 +20,11 @@ async def test_list_resources(client):
 @pytest.mark.asyncio
 async def test_read_event_type(client):
     """Test reading an event type resource"""
-    # First list resources to get a valid event type ID
     response = await client.list_resources()
     assert (
         response and hasattr(response, "resources") and len(response.resources)
     ), f"Invalid list resources response: {response}"
 
-    # Find first event type resource
     event_type_resource = next(
         (
             r
@@ -36,11 +34,9 @@ async def test_read_event_type(client):
         None,
     )
 
-    # Skip test if no event types found
     if not event_type_resource:
         pytest.skip("No event type resources found - skipping test")
 
-    # Read event type details
     response = await client.read_resource(event_type_resource.uri)
     assert response.contents, "Response should contain event type data"
     assert response.contents[0].mimeType == "application/json", "Expected JSON response"
@@ -53,23 +49,19 @@ async def test_read_event_type(client):
 @pytest.mark.asyncio
 async def test_read_event(client):
     """Test reading a scheduled event resource"""
-    # First list resources to get a valid scheduled event ID
     response = await client.list_resources()
     assert (
         response and hasattr(response, "resources") and len(response.resources)
     ), f"Invalid list resources response: {response}"
 
-    # Find first scheduled event resource
     event_resource = next(
         (r for r in response.resources if str(r.uri).startswith("calendly:///event/")),
         None,
     )
 
-    # Skip test if no scheduled events found
     if not event_resource:
         pytest.skip("No scheduled event resources found - skipping test")
 
-    # Read scheduled event details
     response = await client.read_resource(event_resource.uri)
     assert response.contents, "Response should contain scheduled event data"
     assert response.contents[0].mimeType == "application/json", "Expected JSON response"
@@ -84,23 +76,20 @@ async def test_list_event_types_tool(client):
     """Test listing event types using the list_event_types tool"""
     response = await client.process_query(
         "Use the list_event_types tool to list all available event types. "
-        "Include both active and inactive event types."
+        "Include both active and inactive event types. "
+        "If successful, start your response with 'Found event types:' and list them. "
+        "If no event types are found, start with 'No event types found:'."
     )
 
-    # Validate response contains expected content
     assert response, "No response received from list_event_types tool"
     assert any(
-        ["found" in response.lower(), "event type" in response.lower()]
-    ), "Response doesn't contain event type listing information"
+        ["Found event types:" in response, "No event types found:" in response]
+    ), "Response must start with either 'Found event types:' or 'No event types found:'"
 
-    # If the response indicates no event types were found, that's still a valid response
-    if "no event types found" in response.lower():
-        print("No event types found (this is a valid response)")
+    if "Found event types:" in response:
+        assert "min" in response.lower() or "duration" in response.lower(), "Response should contain event type details"
     else:
-        # Verify that we have event type details
-        assert any(
-            ["min" in response.lower(), "duration" in response.lower()]
-        ), "Response doesn't contain expected event type details"
+        assert "no event types" in response.lower(), "Response should indicate no event types found"
 
     print("Event types listed:")
     print(f"\t{response}")
@@ -113,21 +102,20 @@ async def test_list_event_types_active_only(client):
     """Test listing only active event types using the list_event_types tool"""
     response = await client.process_query(
         "Use the list_event_types tool to list only active event types. "
-        "Set active_only to true."
+        "Set active_only to true. "
+        "If successful, start your response with 'Found active event types:' and list them. "
+        "If no active event types are found, start with 'No active event types found:'."
     )
 
-    # Validate response contains expected content
     assert response, "No response received from list_event_types tool"
     assert any(
-        [
-            "found" in response.lower(),
-            "event type" in response.lower(),
-            "no event types found" in response.lower(),
-        ]
-    ), "Response doesn't contain event type listing information"
+        ["Found active event types:" in response, "No active event types found:" in response]
+    ), "Response must start with either 'Found active event types:' or 'No active event types found:'"
 
-    # Verify that the response mentions active event types
-    assert "active" in response.lower(), "Response doesn't mention active event types"
+    if "Found active event types:" in response:
+        assert "active" in response.lower(), "Response should mention active event types"
+    else:
+        assert "no active" in response.lower(), "Response should indicate no active event types found"
 
     print("Active event types listed:")
     print(f"\t{response}")
@@ -138,7 +126,6 @@ async def test_list_event_types_active_only(client):
 @pytest.mark.asyncio
 async def test_get_availability_tool(client):
     """Test getting availability for an event type"""
-    # First get an event type ID
     response = await client.list_resources()
     event_type_resource = next(
         (
@@ -149,26 +136,30 @@ async def test_get_availability_tool(client):
         None,
     )
 
-    # Skip test if no event types found
     if not event_type_resource:
         pytest.skip("No event type resources found - skipping test")
 
     event_type_id = str(event_type_resource.uri).replace("calendly:///event_type/", "")
 
-    # Get today's date and 7 days from now
     today = datetime.now().date().isoformat()
     week_from_now = (datetime.now() + timedelta(days=7)).date().isoformat()
 
-    # Test get_availability tool
     response = await client.process_query(
         f"Use the get_availability tool to check available times for event type with ID '{event_type_id}' "
-        f"between {today} and {week_from_now}."
-        f"At the end of the response, mention found_slots or not_found_slots for testing purposes."
+        f"between {today} and {week_from_now}. "
+        f"If successful, start your response with 'Found available slots:' and list them. "
+        f"If no slots are found, start with 'No available slots found:'."
     )
 
-    assert (
-        "found_slots".lower() in response.lower()
-    ), "Response doesn't contain availability information"
+    assert response, "No response received from get_availability tool"
+    assert any(
+        ["Found available slots:" in response, "No available slots found:" in response]
+    ), "Response must start with either 'Found available slots:' or 'No available slots found:'"
+
+    if "Found available slots:" in response:
+        assert "available" in response.lower(), "Response should mention available slots"
+    else:
+        assert "no available" in response.lower(), "Response should indicate no available slots"
 
     print("Availability results:")
     print(f"\t{response}")
@@ -179,19 +170,26 @@ async def test_get_availability_tool(client):
 @pytest.mark.asyncio
 async def test_list_scheduled_events_tool(client):
     """Test listing scheduled events"""
-    # Get today's date and +/- 30 days
     today = datetime.now().date().isoformat()
     thirty_days_ago = (datetime.now() - timedelta(days=30)).date().isoformat()
     thirty_days_from_now = (datetime.now() + timedelta(days=30)).date().isoformat()
 
-    # Test list_scheduled_events tool
     response = await client.process_query(
         f"Use the list_scheduled_events tool to list all active events "
-        f"between {thirty_days_ago} and {thirty_days_from_now}."
+        f"between {thirty_days_ago} and {thirty_days_from_now}. "
+        f"If successful, start your response with 'Found scheduled events:' and list them. "
+        f"If no events are found, start with 'No scheduled events found:'."
     )
 
-    # Validate response contains expected content
     assert response, "No response received from list_scheduled_events tool"
+    assert any(
+        ["Found scheduled events:" in response, "No scheduled events found:" in response]
+    ), "Response must start with either 'Found scheduled events:' or 'No scheduled events found:'"
+
+    if "Found scheduled events:" in response:
+        assert "event" in response.lower(), "Response should mention events"
+    else:
+        assert "no events" in response.lower(), "Response should indicate no events found"
 
     print("Scheduled events:")
     print(f"\t{response}")
@@ -202,21 +200,21 @@ async def test_list_scheduled_events_tool(client):
 @pytest.mark.asyncio
 async def test_list_scheduled_events_with_filters(client):
     """Test listing scheduled events with status filter"""
-    # Test list_scheduled_events tool with status filter
     response = await client.process_query(
-        "Use the list_scheduled_events tool to list all canceled events from the last 60 days."
+        "Use the list_scheduled_events tool to list all canceled events from the last 60 days. "
+        "If successful, start your response with 'Found canceled events:' and list them. "
+        "If no canceled events are found, start with 'No canceled events found:'."
     )
 
-    # Validate response contains expected content
     assert response, "No response received from list_scheduled_events tool"
-
-    # Check for either canceled events or a valid "no events" message
     assert any(
-        [
-            "found" in response.lower() and "canceled" in response.lower(),
-            "no canceled events" in response.lower(),
-        ]
-    ), "Response doesn't contain canceled events information"
+        ["Found canceled events:" in response, "No canceled events found:" in response]
+    ), "Response must start with either 'Found canceled events:' or 'No canceled events found:'"
+
+    if "Found canceled events:" in response:
+        assert "canceled" in response.lower(), "Response should mention canceled events"
+    else:
+        assert "no canceled" in response.lower(), "Response should indicate no canceled events found"
 
     print("Canceled events:")
     print(f"\t{response}")
@@ -227,7 +225,6 @@ async def test_list_scheduled_events_with_filters(client):
 @pytest.mark.asyncio
 async def test_create_scheduling_link_tool(client):
     """Test creating a single-use scheduling link for an event type"""
-    # First get an event type ID
     response = await client.list_resources()
     event_type_resource = next(
         (
@@ -238,23 +235,26 @@ async def test_create_scheduling_link_tool(client):
         None,
     )
 
-    # Skip test if no event types found
     if not event_type_resource:
         pytest.skip("No event type resources found - skipping test")
 
     event_type_id = str(event_type_resource.uri).replace("calendly:///event_type/", "")
 
-    # Test create_scheduling_link tool
     response = await client.process_query(
-        f"Use the create_scheduling_link tool to create a single-use link for event type ID '{event_type_id}'."
+        f"Use the create_scheduling_link tool to create a single-use link for event type ID '{event_type_id}'. "
+        f"If successful, start your response with 'Created scheduling link:' and include the link. "
+        f"If unsuccessful, start with 'Failed to create scheduling link:'."
     )
 
-    # Validate response contains expected content
     assert response, "No response received from create_scheduling_link tool"
-    # Check for common texts in response that indicate success
-    assert (
-        "scheduling link" in response.lower()
-    ), "Response doesn't contain scheduling link information"
+    assert any(
+        ["Created scheduling link:" in response, "Failed to create scheduling link:" in response]
+    ), "Response must start with either 'Created scheduling link:' or 'Failed to create scheduling link:'"
+
+    if "Created scheduling link:" in response:
+        assert "link" in response.lower(), "Response should contain the scheduling link"
+    else:
+        assert "failed" in response.lower(), "Response should indicate failure"
 
     print("Single-use scheduling link created:")
     print(f"\t{response}")
@@ -265,17 +265,15 @@ async def test_create_scheduling_link_tool(client):
 @pytest.mark.asyncio
 async def test_cancel_event_flow(client):
     """Test the flow of finding and canceling an event (may be skipped if no active events)"""
-    # First find if there are any active events
     response = await client.process_query(
-        "Use the list_scheduled_events tool to list active events for the next 7 days."
+        "Use the list_scheduled_events tool to list active events for the next 7 days. "
+        "If successful, start your response with 'Found active events:' and list them. "
+        "If no events are found, start with 'No active events found:'."
     )
 
-    # Check if there are any events to cancel
-    if "no active events" in response.lower():
+    if "No active events found:" in response:
         pytest.skip("No active events found - skipping cancel test")
 
-    # If we have events, try to extract an event ID from the response
-    # This is a simple approach - in a real world scenario, you might need more robust parsing
     lines = response.split("\n")
     event_id = None
     for line in lines:
@@ -284,26 +282,26 @@ async def test_cancel_event_flow(client):
             break
 
     if not event_id:
-        pytest.skip("Could not extract event ID - skipping cancel test")
+        pytest.fail("Could not extract event ID - test failed")
 
-    # Now attempt to cancel the event
-    # NOTE: This is potentially destructive! In a real test suite, you would likely
-    # create test events specifically for this purpose rather than canceling real ones.
     response = await client.process_query(
         f"Use the cancel_event tool to cancel the event with ID '{event_id}' "
-        f"with reason 'Automated test cancellation - please ignore'."
+        f"with reason 'Automated test cancellation - please ignore'. "
+        f"If successful, start your response with 'Successfully canceled event:' and include the event ID. "
+        f"If unsuccessful, start with 'Failed to cancel event:'."
     )
 
-    # Validate response contains expected content
     assert response, "No response received from cancel_event tool"
     assert any(
-        [
-            "successfully canceled" in response.lower(),
-            "cancellation status" in response.lower(),
-        ]
-    ), "Response doesn't contain cancellation information"
+        ["Successfully canceled event:" in response, "Failed to cancel event:" in response]
+    ), "Response must start with either 'Successfully canceled event:' or 'Failed to cancel event:'"
 
+    if "Successfully canceled event:" in response:
+        assert "canceled" in response.lower(), "Response should confirm cancellation"
+    else:
+        assert "failed" in response.lower(), "Response should indicate failure"
     print("Event cancellation response:")
     print(f"\t{response}")
 
     print("✅ Completed cancel event test")
+
