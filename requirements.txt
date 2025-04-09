@@ -79,6 +79,8 @@ google-auth-oauthlib==1.2.1
     # via -r requirements.in
 googleapis-common-protos==1.69.2
     # via google-api-core
+googlemaps==4.10.0
+    # via -r requirements.in
 h11==0.14.0
     # via
     #   httpcore
@@ -168,6 +170,7 @@ requests==2.32.3
     # via
     #   -r requirements.in
     #   google-api-core
+    #   googlemaps
     #   intuit-oauth
     #   pygithub
     #   python-quickbooks
