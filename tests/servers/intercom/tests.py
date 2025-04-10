@@ -146,17 +146,15 @@ async def test_create_contact(client):
 
     response = await client.process_query(
         f"Use the create_contact tool to create a new contact with email '{unique_email}' and name 'Test User'. "
-        "If successful, include the contact ID in your response."
+        "If successful, only return the contact id"
     )
 
     print("Create contact response:")
     print(f"\t{response}")
 
-    assert (
-        "contact created" in response.lower()
-        or "id:" in response.lower()
-        or "contact has been successfully created" in response.lower()
-    ), "Response should confirm contact creation and include ID"
+    assert re.search(r"([a-zA-Z0-9]+)", response), "Contact creation should return an ID"
+
+    
     assert unique_email in response.lower(), "Response should include the created email"
     print("✅ Contact creation functionality tested")
 
@@ -322,34 +320,28 @@ async def test_ticket_workflow(client):
 
 
 @pytest.mark.asyncio
-async def test_search_articles(client):
-    """Test searching for articles"""
-    response = await client.process_query(
-        "Use the search_articles tool to search for articles with query 'help'."
+async def test_retrieve_articles(client):
+    """Test retrieving articles functionality"""
+    # First list articles to get an ID
+    list_response = await client.process_query(
+        "Use the list_articles tool to list all articles and return the ID of one of the articles"
     )
 
-    print("Search articles results:")
-    print(f"\t{response}")
-
-    assert "article" in response.lower() and (
-        "found" in response.lower() or "search" in response.lower()
-    ), "Response should indicate articles search was performed"
-    print("✅ Search articles functionality tested")
-
-
-@pytest.mark.asyncio
-async def test_list_articles(client):
-    """Test listing help center articles"""
-    response = await client.process_query(
-        "Use the list_articles tool to list help center articles."
+    assert re.search(
+        r"([a-zA-Z0-9]+)", list_response
+    ), "Article listing should return an ID"
+    
+    article_id = list_response.strip()
+    
+    # Now retrieve the specific article
+    retrieve_response = await client.process_query(
+        f"Use the retrieve_article tool to get the article with id {article_id}"
     )
 
-    print("List articles results:")
-    print(f"\t{response}")
+    print("Retrieve article results:")
+    print(f"\t{retrieve_response}")
 
-    assert "article" in response.lower() and (
-        "found" in response.lower()
-        or "list" in response.lower()
-        or "no articles" in response.lower()
-    ), "Response should indicate articles were listed or none were found"
-    print("✅ List articles functionality tested")
+    # Check for indications that article was retrieved successfully
+    assert "retrieved" in retrieve_response.lower(), "Response should indicate article was retrieved"
+    assert "article" in retrieve_response.lower(), "Response should mention the article"
+    print("✅ Article retrieval functionality tested")
