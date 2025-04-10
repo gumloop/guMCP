@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Optional, Iterable
 import json
+import uuid  # Add import for uuid
 
 project_root = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -427,7 +428,7 @@ def create_server(user_id, api_key=None):
             ),
             Tool(
                 name="list_articles",
-                description="List help center articles",
+                description="List articles",
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -439,31 +440,17 @@ def create_server(user_id, api_key=None):
                 },
             ),
             Tool(
-                name="search_articles",
-                description="Search help center articles",
+                name="retrieve_article",
+                description="Retrieve articles by ID",
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "query": {
+                        "id": {
                             "type": "string",
-                            "description": "Search query for articles",
+                            "description": "ID of the help center",
                         }
                     },
-                    "required": ["query"],
-                },
-            ),
-            Tool(
-                name="get_article",
-                description="Get a specific help center article by ID",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "article_id": {
-                            "type": "string",
-                            "description": "ID of the article to retrieve",
-                        }
-                    },
-                    "required": ["article_id"],
+                    "required": ["id"],
                 },
             ),
             Tool(
@@ -687,7 +674,8 @@ def create_server(user_id, api_key=None):
                 if not contacts:
                     return [
                         TextContent(
-                            type="text", text="No contacts found matching your query."
+                            type="text",
+                            text="No contacts found matching your query."
                         )
                     ]
 
@@ -1041,11 +1029,6 @@ def create_server(user_id, api_key=None):
                 ]
 
         elif name == "create_company":
-            required_fields = ["name"]
-            for field in required_fields:
-                if not arguments or field not in arguments:
-                    raise ValueError(f"Missing required parameter: {field}")
-
             data = {"name": arguments["name"]}
 
             # Add optional fields if provided
@@ -1053,15 +1036,21 @@ def create_server(user_id, api_key=None):
             for field in optional_fields:
                 if field in arguments:
                     data[field] = arguments[field]
+            
+            # Generate a random company_id if not provided
+            if "company_id" not in data:
+                data["company_id"] = str(uuid.uuid4())
 
             if "custom_attributes" in arguments:
                 data["custom_attributes"] = arguments["custom_attributes"]
 
+            logger.info(f"Creating company with data: {data}")
             try:
                 company_result = await execute_intercom_request(
                     "post", "companies", data=data, access_token=access_token
                 )
 
+                logger.info(f"Company result: {company_result}")
                 if not company_result or "id" not in company_result:
                     error_message = (
                         company_result.get("errors", [{"message": "Unknown error"}])[
@@ -1168,106 +1157,50 @@ def create_server(user_id, api_key=None):
                     TextContent(type="text", text=f"Error listing articles: {str(e)}")
                 ]
 
-        elif name == "search_articles":
-            if not arguments or "query" not in arguments:
-                raise ValueError("Missing query parameter")
-
-            query = arguments["query"]
-
+        elif name == "retrieve_article":
             try:
-                search_result = await execute_intercom_request(
+                if not arguments or 'id' not in arguments:
+                    return [TextContent(type="text", text="Missing required article ID parameter")]
+                
+                article_result = await execute_intercom_request(
                     "get",
-                    "articles/search",
-                    params={"q": query},
+                    f"articles/{arguments['id']}",
                     access_token=access_token,
                 )
 
-                articles = search_result.get("data", [])
-                total_count = search_result.get("total_count", 0)
-
-                if not articles:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"No articles found matching query: '{query}'",
-                        )
-                    ]
-
-                article_list = []
-                for article in articles:
-                    article_list.append(
-                        f"Article: {article.get('title')}\n"
-                        f"  ID: {article.get('id')}\n"
-                        f"  State: {article.get('state')}\n"
-                        f"  URL: {article.get('url', 'No URL')}\n"
-                        f"  Relevance: {article.get('score', 'N/A')}"
-                    )
-
-                formatted_result = "\n\n".join(article_list)
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(articles)} articles matching '{query}':\n\n{formatted_result}",
-                    )
-                ]
-
-            except Exception as e:
-                logger.error(f"Error searching articles: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error searching articles: {str(e)}")
-                ]
-
-        elif name == "get_article":
-            required_fields = ["article_id"]
-            for field in required_fields:
-                if not arguments or field not in arguments:
-                    raise ValueError(f"Missing required parameter: {field}")
-
-            article_id = arguments["article_id"]
-
-            try:
-                article_result = await execute_intercom_request(
-                    "get", f"articles/{article_id}", access_token=access_token
-                )
+                logger.info(f"Article result: {article_result}")
 
                 if not article_result or "id" not in article_result:
-                    return [
-                        TextContent(
-                            type="text", text=f"Article with ID {article_id} not found."
-                        )
-                    ]
-
-                author_id = article_result.get("author_id", "Unknown")
-                created_at = article_result.get("created_at", "Unknown")
-                updated_at = article_result.get("updated_at", "Unknown")
-
+                    return [TextContent(type="text", text=f"No article found with ID: {arguments['id']}")]
+                
                 article_details = (
-                    f"Article: {article_result.get('title')}\n"
+                    f"Title: {article_result.get('title')}\n"
                     f"ID: {article_result.get('id')}\n"
                     f"State: {article_result.get('state', 'Unknown')}\n"
                     f"URL: {article_result.get('url', 'No URL')}\n"
-                    f"Author ID: {author_id}\n"
-                    f"Created: {created_at}\n"
-                    f"Updated: {updated_at}\n\n"
+                    f"Author: {article_result.get('author_id', 'Unknown')}\n"
+                    f"Updated: {article_result.get('updated_at', 'Unknown')}"
                 )
-
-                if article_result.get("description"):
-                    article_details += (
-                        f"Description:\n{article_result.get('description')}\n\n"
-                    )
-
+                
+                # Add more detailed content preview
                 if article_result.get("body"):
-                    article_details += (
-                        f"Content Preview:\n{article_result.get('body')[:500]}...\n\n"
-                    )
+                    preview_length = 500  # Increased preview length
+                    preview = article_result.get("body")[:preview_length]
+                    if len(article_result.get("body", "")) > preview_length:
+                        preview += "..."
+                    article_details += f"\n\nPreview: {preview}"
+                
+                # Add created date if available
+                if article_result.get("created_at"):
+                    article_details += f"\n\nCreated: {article_result.get('created_at')}"
+
+                logger.info(f"Article details: {article_details}")
 
                 return [TextContent(type="text", text=article_details)]
 
             except Exception as e:
                 logger.error(f"Error retrieving article: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error retrieving article: {str(e)}")
-                ]
+                return [TextContent(type="text", text=f"Error retrieving article: {str(e)}")]
 
         elif name == "create_article":
             required_fields = ["title", "body", "author_id"]
