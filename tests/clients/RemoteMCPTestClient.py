@@ -136,7 +136,16 @@ class RemoteMCPTestClient:
                     tools=available_tools,
                 )
 
-                final_text.append(response.content[0].text)
+                if (
+                    response.content
+                    and len(response.content) > 0
+                    and hasattr(response.content[0], "text")
+                ):
+                    final_text.append(response.content[0].text)
+                else:
+                    for content_item in result.content:
+                        if hasattr(content_item, "text"):
+                            final_text.append(content_item.text)
 
         return "\n".join(final_text)
 
