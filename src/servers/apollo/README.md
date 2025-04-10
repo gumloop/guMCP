@@ -2,32 +2,35 @@
 
 guMCP server implementation for interacting with Apollo.io for sales prospecting, contact management, and CRM functionality.
 
-### Prerequisites
+### 📦 Prerequisites
 
 - Python 3.11+
 - An Apollo.io account ([Sign up here](https://www.apollo.io/))
-- API key with appropriate permissions:
-  - Regular API key for basic operations
-  - Master API key for advanced operations (required for user management, deal management, etc.)
 
-### Local Authentication
+### 🔑 API Key Generation
 
-There are two ways to provide your Apollo API key:
+To generate an Apollo.io API key, follow these steps:
 
-1. **Using the authentication flow**:
-   ```bash
-   python src/servers/apollo/main.py auth
-   ```
-   This will prompt you to enter your API key, which will then be saved to:
-   ```
-   local_auth/credentials/apollo/local_credentials.json
-   ```
+1. Log in to your [Apollo.io account](https://www.apollo.io/)
+2. Navigate to Settings > API Keys
+3. Choose between two types of API keys:
+   - **Regular API Key**: For basic operations like search and enrichment
+   - **Master API Key**: For advanced operations requiring elevated permissions
+4. Click "Generate New API Key"
+5. Copy the generated API key
 
-2. **Provide it on the command line**:
-   You can pass your API key directly when running the server (recommended for development):
-   ```bash
-   python src/servers/local.py --server apollo --user-id local --api-key your_master_api_key_here
-   ```
+### 🔐 Local Authentication
+
+To authenticate and save your API key for local testing, run:
+
+```bash
+python src/servers/apollo/main.py auth
+```
+
+This will prompt you to enter your API key, which will then be saved to:
+```
+local_auth/credentials/apollo/local_credentials.json
+```
 
 ### Features
 
@@ -65,9 +68,10 @@ The Apollo server supports a comprehensive set of operations grouped into catego
 
 #### 1. Start the Server
 
+You can launch the server for local development using:
+
 ```bash
-# Run the server with saved API key (after running the auth command)
-python src/servers/main.py
+./start_sse_dev_server.sh
 ```
 
 #### 2. Connect with the Client
@@ -78,16 +82,23 @@ Once the server is running, connect to it using the test client:
 python tests/clients/RemoteMCPTestClient.py --endpoint=http://localhost:8000/apollo/local
 ```
 
-### Note on API Usage and Master API Key
+### 📎 Notes
 
-Some operations in Apollo.io consume credits:
-- People Search and Organization Search consume credits
-- Enrichment operations may consume credits depending on your plan
+- **API Key Types**:
+  - Regular API key: Suitable for basic operations like search and enrichment
+  - Master API key: Required for user management, deal management, and account management operations
 
-Several operations require a master API key:
-- User management operations
-- Deal management operations
-- Account management operations
-- Contact management operations requiring write access
+- **API Usage and Credits**:
+  - People Search and Organization Search consume credits
+  - Enrichment operations may consume credits depending on your plan
+  - Monitor your API usage and credits through the Apollo.io dashboard
 
-A master API key has elevated permissions and should be handled securely.
+- **Security**:
+  - Master API keys have elevated permissions and should be handled securely
+  - Never share your API keys in public repositories or unsecured channels
+  - Rotate your API keys periodically for enhanced security
+
+### 📚 Resources
+
+- [Apollo.io API Documentation](https://www.apollo.io/api/)
+- [Apollo.io API Reference](https://www.apollo.io/api/)
