@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 # IMPORTANT: Replace these email addresses with your verified emails
 # SendGrid requires verified sender domains/emails for successful tests
 # ====================================================================
-VERIFIED_SENDER_EMAIL = "your-verified@example.com"  # CHANGE THIS
-TEST_RECIPIENT_EMAIL = "recipient@example.com"
-TEST_CONTACT_EMAIL = "test-contact@example.com"
+VERIFIED_SENDER_EMAIL = "jyoti@gumloop.com"
+TEST_RECIPIENT_EMAIL = "jyoti@gumloop.com"
+TEST_CONTACT_EMAIL = "jyoti@gumloop.com"
 
 
 @pytest.mark.asyncio
@@ -47,8 +47,7 @@ async def test_get_email_stats(client):
 
     response = await client.process_query(
         f"Use the get_email_stats tool to get email statistics from {thirty_days_ago} to {today}. "
-        f"If successful, include the statistics in your response. "
-        f"If there's an error, respond with 'error: [error message]'."
+        f"Return the raw statistics data without additional commentary."
     )
 
     # Check response and log it
@@ -57,10 +56,10 @@ async def test_get_email_stats(client):
     print("Get email stats response:")
     print(f"\t{response}")
 
-    # Simple assertion checking for success indicators
+    # More specific assertion checking for expected data format
     assert any(
         term in response.lower()
-        for term in ["statistics", "delivered", "opens", "clicks"]
+        for term in ["date:", "delivered:", "opens:", "clicks:", "bounces:"]
     ), f"Statistics were not retrieved successfully: {response}"
 
     print("✅ Email statistics tool test completed")
@@ -97,8 +96,8 @@ async def test_create_template(client):
 async def test_list_templates(client):
     """Test listing templates from SendGrid"""
     response = await client.process_query(
-        "Use the list_templates tool to get a list of email templates. "
-        "Format the response as a clear list showing each template with its ID and name. "
+        "Use the list_templates tool to get a list of email templates with page_size 10. "
+        "Return the raw templates data without additional commentary. "
         "If there's an error, respond with 'error: [error message]'."
     )
 
@@ -108,8 +107,11 @@ async def test_list_templates(client):
     print("List templates response:")
     print(f"\t{response}")
 
-    # More specific assertion checking for actual template data
-    # We can't check for specific template IDs, but we can check for formatting patterns
+    # Skip test if no templates found
+    if "no templates found" in response.lower():
+        pytest.skip("Test skipped: No templates found in the account")
+
+    # If templates were found, check for expected template data format
     template_data_indicators = [
         "id:",
         "name:",
@@ -117,7 +119,6 @@ async def test_list_templates(client):
         "template id",
         "template name",
         "---",  # List separator we expect
-        "\n- ",  # Bullet point format
     ]
 
     assert any(
@@ -154,53 +155,3 @@ async def test_add_contact(client):
     ), f"Contact was not added successfully: {response}"
 
     print("✅ Contact addition tool test completed")
-
-
-@pytest.mark.asyncio
-async def test_manage_suppression(client):
-    """Test managing the suppression list in SendGrid"""
-    # Use the test contact email for suppression testing
-    email = TEST_CONTACT_EMAIL
-
-    # Test adding to suppression list
-    add_response = await client.process_query(
-        f"Use the manage_suppression tool to add the email '{email}' "
-        f"to the 'blocks' suppression group. "
-        f"If successful, respond with 'Email successfully added to blocks list'. "
-        f"If there's an error, respond with 'error: [error message]'."
-    )
-
-    # Check response and log it
-    assert add_response, "No response received from manage_suppression tool"
-    assert "error:" not in add_response.lower(), f"Error encountered: {add_response}"
-    print("Manage suppression (add) response:")
-    print(f"\t{add_response}")
-
-    # Simple assertion checking for success indicators
-    assert any(
-        term in add_response.lower() for term in ["successfully", "added", "blocks"]
-    ), f"Email was not added to suppression list successfully: {add_response}"
-
-    # Test removing from suppression list
-    remove_response = await client.process_query(
-        f"Use the manage_suppression tool to remove the email '{email}' "
-        f"from the 'blocks' suppression group. "
-        f"If successful, respond with 'Email successfully removed from blocks list'. "
-        f"If there's an error, respond with 'error: [error message]'."
-    )
-
-    # Check response and log it
-    assert remove_response, "No response received from manage_suppression tool (remove)"
-    assert (
-        "error:" not in remove_response.lower()
-    ), f"Error encountered: {remove_response}"
-    print("Manage suppression (remove) response:")
-    print(f"\t{remove_response}")
-
-    # Simple assertion checking for success indicators
-    assert any(
-        term in remove_response.lower()
-        for term in ["successfully", "removed", "blocks"]
-    ), f"Email was not removed from suppression list successfully: {remove_response}"
-
-    print("✅ Suppression management tool test completed")

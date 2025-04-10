@@ -197,6 +197,7 @@ def create_server(user_id, api_key=None):
                             "description": "Token for pagination",
                         },
                     },
+                    "required": ["page_size"],
                 },
             ),
             Tool(
@@ -223,35 +224,6 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email"],
-                },
-            ),
-            Tool(
-                name="manage_suppression",
-                description="Add or remove email from suppression list",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "description": "Email address",
-                        },
-                        "action": {
-                            "type": "string",
-                            "description": "Action to take (add/remove)",
-                            "enum": ["add", "remove"],
-                        },
-                        "group": {
-                            "type": "string",
-                            "description": "Suppression group (bounces/blocks/spam_reports/unsubscribes)",
-                            "enum": [
-                                "bounces",
-                                "blocks",
-                                "spam_reports",
-                                "unsubscribes",
-                            ],
-                        },
-                    },
-                    "required": ["email", "action", "group"],
                 },
             ),
         ]
@@ -376,18 +348,26 @@ def create_server(user_id, api_key=None):
 
                     if response.status_code == 200:
                         stats = response.json()
-                        formatted_stats = "\n".join(
-                            [
-                                f"Date: {stat['date']}",
-                                f"  Delivered: {stat['stats'][0]['metrics']['delivered']}",
-                                f"  Bounces: {stat['stats'][0]['metrics']['bounces']}",
-                                f"  Opens: {stat['stats'][0]['metrics']['opens']}",
-                                f"  Clicks: {stat['stats'][0]['metrics']['clicks']}",
-                                f"  Spam Reports: {stat['stats'][0]['metrics']['spam_reports']}",
-                                "---",
-                            ]
-                            for stat in stats
-                        )
+                        formatted_stats = ""
+                        for stat in stats:
+                            formatted_stats += f"Date: {stat['date']}\n"
+                            if stat["stats"]:
+                                metrics = stat["stats"][0]["metrics"]
+                                formatted_stats += (
+                                    f"  Delivered: {metrics.get('delivered', 0)}\n"
+                                )
+                                formatted_stats += (
+                                    f"  Bounces: {metrics.get('bounces', 0)}\n"
+                                )
+                                formatted_stats += (
+                                    f"  Opens: {metrics.get('opens', 0)}\n"
+                                )
+                                formatted_stats += (
+                                    f"  Clicks: {metrics.get('clicks', 0)}\n"
+                                )
+                                formatted_stats += f"  Spam Reports: {metrics.get('spam_reports', 0)}\n"
+                            formatted_stats += "---\n"
+
                         return [
                             TextContent(
                                 type="text",
@@ -464,12 +444,12 @@ def create_server(user_id, api_key=None):
         elif name == "list_templates":
             try:
                 async with httpx.AsyncClient() as client:
-                    params = {}
-                    if arguments:
-                        if "page_size" in arguments:
-                            params["page_size"] = arguments["page_size"]
-                        if "page_token" in arguments:
-                            params["page_token"] = arguments["page_token"]
+                    params = {
+                        "page_size": arguments["page_size"],
+                        "generations": "legacy,dynamic",
+                    }
+                    if "page_token" in arguments:
+                        params["page_token"] = arguments["page_token"]
 
                     response = await client.get(
                         f"{SENDGRID_API_URL}/templates",
@@ -479,34 +459,41 @@ def create_server(user_id, api_key=None):
 
                     if response.status_code == 200:
                         templates = response.json()
-                        formatted_templates = "\n".join(
-                            [
-                                f"ID: {template['id']}",
-                                f"Name: {template['name']}",
-                                f"Generation: {template['generation']}",
-                                "---",
-                            ]
-                            for template in templates.get("templates", [])
-                        )
+                        formatted_templates = ""
+                        for template in templates.get("result", []):
+                            formatted_templates += f"Template ID: {template['id']}\n"
+                            formatted_templates += (
+                                f"Template Name: {template['name']}\n"
+                            )
+                            formatted_templates += (
+                                f"Generation: {template['generation']}\n"
+                            )
+                            formatted_templates += "---\n"
+
+                        # If no templates found, add a note
+                        if not templates.get("result"):
+                            formatted_templates = "No templates found."
+
                         return [
                             TextContent(
                                 type="text",
-                                text=f"Templates:\n\n{formatted_templates}",
+                                text=f"Email Templates:\n\n{formatted_templates}",
                             )
                         ]
                     else:
+                        error_msg = f"Error listing templates: {response.text}"
+                        logger.error(error_msg)
                         return [
                             TextContent(
                                 type="text",
-                                text=f"Error listing templates: {response.text}",
+                                text=error_msg,
                             )
                         ]
 
             except Exception as e:
-                logger.error(f"Error listing templates: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error listing templates: {str(e)}")
-                ]
+                error_msg = f"Error listing templates: {str(e)}"
+                logger.error(error_msg)
+                return [TextContent(type="text", text=error_msg)]
 
         elif name == "add_contact":
             if "email" not in arguments:
@@ -555,54 +542,6 @@ def create_server(user_id, api_key=None):
                 logger.error(f"Error adding contact: {str(e)}")
                 return [
                     TextContent(type="text", text=f"Error adding contact: {str(e)}")
-                ]
-
-        elif name == "manage_suppression":
-            required_fields = ["email", "action", "group"]
-            for field in required_fields:
-                if field not in arguments:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Error: Missing required parameter: {field}",
-                        )
-                    ]
-
-            try:
-                async with httpx.AsyncClient() as client:
-                    if arguments["action"] == "add":
-                        response = await client.post(
-                            f"{SENDGRID_API_URL}/suppression/{arguments['group']}",
-                            headers=headers,
-                            json={"emails": [arguments["email"]]},
-                        )
-                    else:  # remove
-                        response = await client.delete(
-                            f"{SENDGRID_API_URL}/suppression/{arguments['group']}/{arguments['email']}",
-                            headers=headers,
-                        )
-
-                    if response.status_code in [200, 201, 204]:
-                        return [
-                            TextContent(
-                                type="text",
-                                text=f"Successfully {arguments['action']}ed email from {arguments['group']} list",
-                            )
-                        ]
-                    else:
-                        return [
-                            TextContent(
-                                type="text",
-                                text=f"Error managing suppression: {response.text}",
-                            )
-                        ]
-
-            except Exception as e:
-                logger.error(f"Error managing suppression: {str(e)}")
-                return [
-                    TextContent(
-                        type="text", text=f"Error managing suppression: {str(e)}"
-                    )
                 ]
 
         raise ValueError(f"Unknown tool: {name}")
