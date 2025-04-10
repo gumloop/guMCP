@@ -152,9 +152,10 @@ async def test_create_contact(client):
     print("Create contact response:")
     print(f"\t{response}")
 
-    assert re.search(r"([a-zA-Z0-9]+)", response), "Contact creation should return an ID"
+    assert re.search(
+        r"([a-zA-Z0-9]+)", response
+    ), "Contact creation should return an ID"
 
-    
     assert unique_email in response.lower(), "Response should include the created email"
     print("✅ Contact creation functionality tested")
 
@@ -330,9 +331,9 @@ async def test_retrieve_articles(client):
     assert re.search(
         r"([a-zA-Z0-9]+)", list_response
     ), "Article listing should return an ID"
-    
+
     article_id = list_response.strip()
-    
+
     # Now retrieve the specific article
     retrieve_response = await client.process_query(
         f"Use the retrieve_article tool to get the article with id {article_id}"
@@ -342,6 +343,8 @@ async def test_retrieve_articles(client):
     print(f"\t{retrieve_response}")
 
     # Check for indications that article was retrieved successfully
-    assert "retrieved" in retrieve_response.lower(), "Response should indicate article was retrieved"
+    assert (
+        "retrieved" in retrieve_response.lower()
+    ), "Response should indicate article was retrieved"
     assert "article" in retrieve_response.lower(), "Response should mention the article"
     print("✅ Article retrieval functionality tested")
