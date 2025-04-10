@@ -674,8 +674,7 @@ def create_server(user_id, api_key=None):
                 if not contacts:
                     return [
                         TextContent(
-                            type="text",
-                            text="No contacts found matching your query."
+                            type="text", text="No contacts found matching your query."
                         )
                     ]
 
@@ -1036,7 +1035,7 @@ def create_server(user_id, api_key=None):
             for field in optional_fields:
                 if field in arguments:
                     data[field] = arguments[field]
-            
+
             # Generate a random company_id if not provided
             if "company_id" not in data:
                 data["company_id"] = str(uuid.uuid4())
@@ -1159,9 +1158,13 @@ def create_server(user_id, api_key=None):
 
         elif name == "retrieve_article":
             try:
-                if not arguments or 'id' not in arguments:
-                    return [TextContent(type="text", text="Missing required article ID parameter")]
-                
+                if not arguments or "id" not in arguments:
+                    return [
+                        TextContent(
+                            type="text", text="Missing required article ID parameter"
+                        )
+                    ]
+
                 article_result = await execute_intercom_request(
                     "get",
                     f"articles/{arguments['id']}",
@@ -1171,8 +1174,13 @@ def create_server(user_id, api_key=None):
                 logger.info(f"Article result: {article_result}")
 
                 if not article_result or "id" not in article_result:
-                    return [TextContent(type="text", text=f"No article found with ID: {arguments['id']}")]
-                
+                    return [
+                        TextContent(
+                            type="text",
+                            text=f"No article found with ID: {arguments['id']}",
+                        )
+                    ]
+
                 article_details = (
                     f"Title: {article_result.get('title')}\n"
                     f"ID: {article_result.get('id')}\n"
@@ -1181,7 +1189,7 @@ def create_server(user_id, api_key=None):
                     f"Author: {article_result.get('author_id', 'Unknown')}\n"
                     f"Updated: {article_result.get('updated_at', 'Unknown')}"
                 )
-                
+
                 # Add more detailed content preview
                 if article_result.get("body"):
                     preview_length = 500  # Increased preview length
@@ -1189,10 +1197,12 @@ def create_server(user_id, api_key=None):
                     if len(article_result.get("body", "")) > preview_length:
                         preview += "..."
                     article_details += f"\n\nPreview: {preview}"
-                
+
                 # Add created date if available
                 if article_result.get("created_at"):
-                    article_details += f"\n\nCreated: {article_result.get('created_at')}"
+                    article_details += (
+                        f"\n\nCreated: {article_result.get('created_at')}"
+                    )
 
                 logger.info(f"Article details: {article_details}")
 
@@ -1200,7 +1210,9 @@ def create_server(user_id, api_key=None):
 
             except Exception as e:
                 logger.error(f"Error retrieving article: {str(e)}")
-                return [TextContent(type="text", text=f"Error retrieving article: {str(e)}")]
+                return [
+                    TextContent(type="text", text=f"Error retrieving article: {str(e)}")
+                ]
 
         elif name == "create_article":
             required_fields = ["title", "body", "author_id"]
