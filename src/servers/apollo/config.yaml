@@ -1,0 +1,48 @@
+name: "Apollo guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Apollo.io for sales prospecting, contact management, and CRM functionality"
+documentation_path: "README.md"
+tools:
+  # SEARCH TOOLS
+  - name: "search_contacts"
+    description: "Search for contacts in your Apollo account"
+  - name: "search_accounts"
+    description: "Search for accounts that have been added to your team's Apollo account"
+
+  # ENRICHMENT TOOLS
+  - name: "enrich_person"
+    description: "Enrich data for a person using Apollo's People Enrichment API"
+  - name: "enrich_organization"
+    description: "Enrich data for a company using Apollo's Organization Enrichment API"
+
+  # CONTACT MANAGEMENT TOOLS
+  - name: "create_contact"
+    description: "Create a new contact in Apollo"
+  - name: "update_contact"
+    description: "Update an existing contact in your Apollo account"
+  - name: "list_contact_stages"
+    description: "Retrieve the IDs for available contact stages in your Apollo account"
+
+  # ACCOUNT MANAGEMENT TOOLS
+  - name: "create_account"
+    description: "Add a new account to your Apollo account"
+  - name: "update_account"
+    description: "Update an existing account in your Apollo account" 
+  - name: "list_account_stages"
+    description: "Retrieve the IDs for available account stages in your Apollo account"
+
+  # DEAL MANAGEMENT TOOLS
+  - name: "create_deal"
+    description: "Create a new deal for an Apollo account"
+  - name: "update_deal"
+    description: "Update an existing deal in your Apollo account"
+  - name: "list_deals"
+    description: "List all deals in your Apollo account"
+  - name: "list_deal_stages"
+    description: "Retrieve information about every deal stage in your Apollo account"
+
+  # TASK AND USER MANAGEMENT TOOLS
+  - name: "create_task"
+    description: "Create tasks in Apollo for you and your team"
+  - name: "list_users"
+    description: "Get a list of all users (teammates) in your Apollo account"
