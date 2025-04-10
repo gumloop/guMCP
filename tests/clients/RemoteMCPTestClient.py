@@ -1,5 +1,6 @@
 import argparse
 import traceback
+import json
 from typing import Optional, List, Dict, Any
 from contextlib import AsyncExitStack
 
@@ -193,6 +194,90 @@ class RemoteMCPTestClient:
                         print(f"\nError during cleanup: {e}")
         except Exception as e:
             print(f"Cleanup error: {e}")
+
+    async def llm_as_a_judge(self, requirments: str, response: str) -> dict:
+        """Uses Claude to evaluate if a response meets requirements
+
+        Args:
+            requirments: Criteria for evaluating the response
+            response: Text to be evaluated
+
+        Returns:
+            Dict with "passed" (bool) and "reasoning" (str) fields
+        """
+        evaluation_prompt = f"""
+        You are a judge evaluating if a response meets the given requirements.
+    
+        REQUIREMENTS:
+        {requirments}
+    
+        RESPONSE TO EVALUATE:
+        {response}
+    
+        Does the response meet all the requirements listed above?
+        Analyze carefully and be objective in your assessment.
+    
+        Only return a JSON
+        {{
+            "passed": true/false,
+            "reasoning": "reasoning for your answer (Keep it short and concise)"
+        }}
+        """
+
+        messages = [{"role": "user", "content": evaluation_prompt}]
+
+        claude_response = self.anthropic.messages.create(
+            model="claude-3-5-sonnet-20241022", max_tokens=100, messages=messages
+        )
+
+        evaluation_text = claude_response.content[0].text
+
+        try:
+            return json.loads(evaluation_text)
+        except:
+            return {"passed": False, "reasoning": "Error parsing evaluation response"}
+
+    async def fetch_value_from_response(self, response: str, schema: dict) -> dict:
+        """Extracts structured data from text based on schema
+
+        Args:
+            response: Text to extract data from
+            schema: Dict mapping keys to extraction instructions
+
+        Returns:
+            Dict with extracted values matching schema keys
+        """
+        schema_str = "\n".join([f"- {key}: {value}" for key, value in schema.items()])
+
+        extraction_prompt = f"""
+        Extract the following information from the text below according to the given instructions.
+        
+        TEXT TO ANALYZE:
+        {response}
+        
+        EXTRACTION INSTRUCTIONS:
+        {schema_str}
+        
+        Return ONLY a valid JSON object with the keys from the instructions and the extracted values and put value as None if you cannot find the value
+        For example:
+        {{
+            "key1": "extracted_value1",
+            "key2": "extracted_value2"
+        }}
+        """
+
+        messages = [{"role": "user", "content": extraction_prompt}]
+
+        claude_response = self.anthropic.messages.create(
+            model="claude-3-5-sonnet-20241022", max_tokens=300, messages=messages
+        )
+
+        extraction_text = claude_response.content[0].text
+
+        try:
+            return json.loads(extraction_text)
+        except:
+            return {key: None for key in schema.keys()}
 
 
 async def main():
