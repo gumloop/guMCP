@@ -1,0 +1,30 @@
+name: "DocuSign guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with DocuSign for electronic signatures, document management, and user administration"
+documentation_path: "README.md"
+tools:
+  # TEMPLATE MANAGEMENT TOOLS
+  - name: "list_templates"
+    description: "List all templates in your DocuSign account with optional filtering"
+  - name: "get_template"
+    description: "Get detailed information about a specific template"
+  - name: "create_template"
+    description: "Create a new template in your DocuSign account"
+
+  # ENVELOPE MANAGEMENT TOOLS
+  - name: "create_envelope"
+    description: "Create a new envelope in DocuSign from a template or with documents"
+  - name: "get_envelope"
+    description: "Get detailed information about a specific envelope"
+  - name: "send_envelope"
+    description: "Send a draft envelope to recipients for signing"
+  - name: "get_envelope_status_bulk"
+    description: "Get status information for multiple envelopes at once"
+
+  # USER MANAGEMENT TOOLS
+  - name: "create_user"
+    description: "Create new users in your DocuSign account"
+  - name: "list_users"
+    description: "List all users in your DocuSign account with optional filtering"
+  - name: "get_user"
+    description: "Get detailed information about a specific user"
