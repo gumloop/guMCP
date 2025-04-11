@@ -11,6 +11,7 @@ current_date = datetime.now().strftime("%Y-%m-%d")
 
 # TEMPLATE MANAGEMENT TESTS
 
+
 @pytest.mark.asyncio
 async def test_create_template(client):
     """Create a new template.
@@ -102,6 +103,7 @@ async def test_get_template(client):
 
 
 # ENVELOPE MANAGEMENT TESTS
+
 
 @pytest.mark.asyncio
 async def test_create_envelope(client):
@@ -234,6 +236,7 @@ async def test_get_envelope_status_bulk(client):
 
 
 # USER MANAGEMENT TESTS
+
 
 @pytest.mark.asyncio
 async def test_create_user(client):
