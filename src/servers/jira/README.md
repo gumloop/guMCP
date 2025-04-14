@@ -26,7 +26,7 @@ Create the following file with the relevant attributes for your app:
 {
   "client_id": "xxxxxxxxxxxxxxxxxxxxx",
   "client_secret": "xxxxxxxxxxxxxxxxxxxxx",
-  "redirect_uri": "http://localhost:8000"
+  "redirect_uri": "http://localhost:8080"
 }
 ```
 
@@ -40,7 +40,7 @@ To set this up properly, follow these steps:
    - `offline_access`
    - `manage:jira-project`
    - `manage:jira-configuration`
-3. Set the callback URL to `http://localhost:8000`
+3. Set the callback URL to `http://localhost:8080`
 
 For detailed instructions, refer to Atlassian's official documentation:
 [OAuth 2.0 (3LO) apps](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/)
@@ -60,6 +60,7 @@ This will open a browser window for you to authorize the application. After succ
 This server exposes the following tools for interacting with JIRA:
 
 #### Project Management Tools
+
 - `create_project` – Set up a new JIRA project for a team, client, or initiative
 - `get_project` – Retrieve metadata about a specific project
 - `update_project` – Modify project details like name, lead, or description
@@ -68,6 +69,7 @@ This server exposes the following tools for interacting with JIRA:
 - `get_issue_types_for_project` – Get all valid issue types for a project
 
 #### Issue Management Tools
+
 - `create_issue` – Create a new issue, bug, task, or story in a project
 - `get_issue` – Get full details of an issue (title, description, status, comments)
 - `update_issue` – Modify issue fields such as assignee, priority, or status
@@ -77,6 +79,7 @@ This server exposes the following tools for interacting with JIRA:
 - `comment_on_issue` – Add a comment to an issue
 
 #### User-specific Tools
+
 - `get_myself` – Get information about the authenticated user
 - `get_my_issues` – Fetch all open issues assigned to the current user
 - `get_my_recent_activity` – View recently updated issues the user interacted with
