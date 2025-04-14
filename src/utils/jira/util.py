@@ -56,27 +56,6 @@ def authenticate_and_save_credentials(
     user_id: str, service_name: str, scopes: List[str], port: int = None
 ) -> Dict[str, Any]:
     """Authenticate with JIRA and save credentials"""
-    # Get auth client
-    auth_client = create_auth_client()
-
-    # Get OAuth config
-    oauth_config = auth_client.get_oauth_config(service_name)
-
-    # Extract port from redirect URI if not provided
-    if port is None and oauth_config.get("redirect_uri"):
-        try:
-            from urllib.parse import urlparse
-
-            parsed_uri = urlparse(oauth_config["redirect_uri"])
-            if parsed_uri.port:
-                port = parsed_uri.port
-        except Exception as e:
-            logger.warning(f"Failed to extract port from redirect URI: {e}")
-
-    # Default to 8000 if no port found
-    if port is None:
-        port = 8000
-
     return run_oauth_flow(
         service_name=service_name,
         user_id=user_id,
@@ -86,7 +65,6 @@ def authenticate_and_save_credentials(
         auth_params_builder=build_jira_auth_params,
         token_data_builder=build_jira_token_data,
         process_token_response=process_jira_token_response,
-        port=port,
     )
 
 
