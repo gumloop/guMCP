@@ -23,7 +23,7 @@ guMCP server implementation for interacting with the Figma API.
 
 ### Local Authentication
 
-1. [Create a Figma OAuth app](https://www.figma.com/developers/api#oauth)
+1. [Create a Figma OAuth app](https://www.figma.com/developers/api#oauth2)
 2. Configure your OAuth app with the required scopes
 3. Set up a redirect URI for your application (e.g., http://localhost:8080)
 4. Get your application's client ID and client secret
@@ -60,46 +60,56 @@ python src/servers/local.py --server figma --user-id local
 ### Available Tools
 
 1. `get_me`
+
    - Gets the authenticated user's information
    - Returns user details including ID, handle, and email
 
 2. `get_file`
+
    - Retrieves a Figma file by its key
    - Returns file information and content
    - Required parameter: `file_key`
 
 3. `get_file_comments`
+
    - Lists comments for a specific Figma file
    - Optional parameter: `as_md` to return comments as markdown
    - Required parameter: `file_key`
 
 4. `post_comment`
+
    - Adds a comment to a Figma file
    - Required parameters: `file_key`, `message`
    - Optional parameters: `client_meta`, `parent_id`
 
 5. `delete_comment`
+
    - Removes a comment from a Figma file
    - Required parameters: `file_key`, `comment_id`
 
 6. `get_comment_reactions`
+
    - Lists reactions for a specific comment
    - Required parameters: `file_key`, `comment_id`
    - Optional parameter: `cursor` for pagination
 
 7. `post_comment_reaction`
+
    - Adds a reaction to a comment
    - Required parameters: `file_key`, `comment_id`, `emoji`
 
 8. `delete_comment_reaction`
+
    - Removes a reaction from a comment
    - Required parameters: `file_key`, `comment_id`, `emoji`
 
 9. `get_team_projects`
+
    - Lists all projects within a team
    - Required parameter: `team_id`
 
 10. `get_project_files`
+
     - Lists files in a specific project
     - Required parameter: `project_id`
     - Optional parameter: `branch_data`
@@ -111,6 +121,7 @@ python src/servers/local.py --server figma --user-id local
 ### Error Handling
 
 The server provides detailed error messages for:
+
 - Authentication failures
 - Invalid tool names
 - Missing required parameters
