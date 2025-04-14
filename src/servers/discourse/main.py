@@ -109,6 +109,10 @@ async def get_discourse_credentials(user_id, api_key=None):
     if not credentials_data:
         handle_missing_credentials()
 
+    if isinstance(credentials_data, str):
+        # If the credentials data are a string, assume it's a JSON string with the correct keys (value, Discourse URL, username)
+        credentials_data = json.loads(credentials_data)
+
     # Handle the new metadata format for remote usage
     if (
         isinstance(credentials_data, dict)
@@ -122,14 +126,6 @@ async def get_discourse_credentials(user_id, api_key=None):
             "api_key": credentials_data.get("value"),
             "base_url": metadata.get("Discourse URL"),
             "username": metadata.get("Username"),
-        }
-
-    # Handle direct API key case (string)
-    if isinstance(credentials_data, str):
-        return {
-            "api_key": credentials_data,
-            "base_url": None,  # This is a problem - we need the base URL
-            "username": None,  # This is a problem - we need the username
         }
 
     # Handle original format (dictionary with direct fields)
