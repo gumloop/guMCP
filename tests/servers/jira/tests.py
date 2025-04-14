@@ -2,7 +2,7 @@ import pytest
 import uuid
 
 # Global variables to store created project and issue IDs
-site_name = "cognida-ai"
+SITE_NAME = "gumloop"
 project_key = "TEST" + str(uuid.uuid4())[:4].upper()
 
 created_issue_key = None
@@ -24,7 +24,7 @@ async def test_create_project(client):
 
     response = await client.process_query(
         f"Use the create_project tool to create a new project with key {project_key}, "
-        f"name {project_name}, and type {project_type} for site_name {site_name}. If successful, start your response "
+        f"name {project_name}, and type {project_type} for SITE_NAME {SITE_NAME}. If successful, start your response "
         "with 'Created project successfully' and then list the project details."
     )
 
@@ -49,7 +49,7 @@ async def test_list_projects(client):
         client: The test client fixture for the MCP server.
     """
     response = await client.process_query(
-        f"Use the list_projects tool to fetch all accessible projects for site_name {site_name}. "
+        f"Use the list_projects tool to fetch all accessible projects for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here are the projects' and then list them."
     )
 
@@ -75,7 +75,7 @@ async def test_get_project(client):
         pytest.skip("No project key available - run create_project test first")
 
     response = await client.process_query(
-        f"Use the get_project tool to fetch details for project key {project_key} for site_name {site_name}. "
+        f"Use the get_project tool to fetch details for project key {project_key} for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here are the project details' and then list them."
     )
 
@@ -109,7 +109,7 @@ async def test_create_issue(client):
 
     response = await client.process_query(
         f"Use the create_issue tool to create a new issue in project {project_key} "
-        f"with summary '{summary}', description '{description}', and type '{issue_type}' for site_name {site_name}. "
+        f"with summary '{summary}', description '{description}', and type '{issue_type}' for SITE_NAME {SITE_NAME}. "
         "If successful, your response should be 'Created issue with key: <key>' and nothing else."
     )
 
@@ -142,7 +142,7 @@ async def test_get_issue(client):
         pytest.skip("No issue key available - run create_issue test first")
 
     response = await client.process_query(
-        f"Use the get_issue tool to fetch details for issue key {created_issue_key.upper()} for site_name {site_name}. "
+        f"Use the get_issue tool to fetch details for issue key {created_issue_key.upper()} for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here are the issue details' and then list them."
     )
 
@@ -173,7 +173,7 @@ async def test_comment_on_issue(client):
 
     response = await client.process_query(
         f"Use the comment_on_issue tool to add a comment to issue {created_issue_key.upper()} "
-        f"with content '{comment}' for site_name {site_name}. If successful, start your response with 'Added comment successfully' "
+        f"with content '{comment}' for SITE_NAME {SITE_NAME}. If successful, start your response with 'Added comment successfully' "
         "and then list the comment details."
     )
 
@@ -203,7 +203,7 @@ async def test_transition_my_issue(client):
 
     response = await client.process_query(
         f"Use the transition_my_issue tool to transition issue {created_issue_key.upper()} "
-        f"to status '{transition_to}' for site_name {site_name}. If successful, start your response with 'Transitioned issue successfully' "
+        f"to status '{transition_to}' for SITE_NAME {SITE_NAME}. If successful, start your response with 'Transitioned issue successfully' "
         "and then list the issue details."
     )
 
@@ -228,7 +228,7 @@ async def test_get_myself(client):
         client: The test client fixture for the MCP server.
     """
     response = await client.process_query(
-        f"Use the get_myself tool to fetch information about the authenticated user for site_name {site_name}. "
+        f"Use the get_myself tool to fetch information about the authenticated user for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here is your user information' and then list it."
     )
 
@@ -251,7 +251,7 @@ async def test_get_my_issues(client):
         client: The test client fixture for the MCP server.
     """
     response = await client.process_query(
-        f"Use the get_my_issues tool to fetch issues assigned to you for site_name {site_name}. "
+        f"Use the get_my_issues tool to fetch issues assigned to you for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here are your issues' and then list them."
     )
 
@@ -277,7 +277,7 @@ async def test_get_my_permissions(client):
         pytest.skip("No project key available - run create_project test first")
 
     response = await client.process_query(
-        f"Use the get_my_permissions tool to fetch your permissions for project {project_key} for site_name {site_name}. "
+        f"Use the get_my_permissions tool to fetch your permissions for project {project_key} for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here are your permissions' and then list them."
     )
 
@@ -288,58 +288,6 @@ async def test_get_my_permissions(client):
 
     print(f"Response: {response}")
     print("✅ get_my_permissions passed.")
-
-
-@pytest.mark.asyncio
-async def test_delete_issue(client):
-    """Delete a JIRA issue.
-
-    Verifies that the issue is deleted successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    if not created_issue_key:
-        pytest.skip("No issue key available - run create_issue test first")
-
-    response = await client.process_query(
-        f"Use the delete_issue tool to delete issue {created_issue_key.upper()} for site_name {site_name}. "
-        "If successful, start your response with 'Deleted issue successfully' and then list the issue key."
-    )
-
-    assert (
-        "deleted issue successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from delete_issue"
-
-    print(f"Response: {response}")
-    print("✅ delete_issue passed.")
-
-
-@pytest.mark.asyncio
-async def test_delete_project(client):
-    """Delete a JIRA project.
-
-    Verifies that the project is deleted successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    if not project_key:
-        pytest.skip("No project key available - run create_project test first")
-
-    response = await client.process_query(
-        f"Use the delete_project tool to delete project {project_key} for site_name {site_name}. "
-        "If successful, start your response with 'Deleted project successfully' and then list the project key."
-    )
-
-    assert (
-        "deleted project successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from delete_project"
-
-    print(f"Response: {response}")
-    print("✅ delete_project passed.")
 
 
 @pytest.mark.asyncio
@@ -359,7 +307,7 @@ async def test_update_project(client):
 
     response = await client.process_query(
         f"Use the update_project tool to update project {project_key} with name '{new_name}' "
-        f"and description '{new_description}' for site_name {site_name}. If successful, start your response "
+        f"and description '{new_description}' for SITE_NAME {SITE_NAME}. If successful, start your response "
         "with 'Updated project successfully' and then list the project details."
     )
 
@@ -388,7 +336,7 @@ async def test_get_issue_types_for_project(client):
 
     response = await client.process_query(
         f"Use the get_issue_types_for_project tool to fetch issue types for project {project_key.upper()} "
-        f"for site_name {site_name}. If successful, start your response with 'Here are the issue types' and then list them."
+        f"for SITE_NAME {SITE_NAME}. If successful, start your response with 'Here are the issue types' and then list them."
     )
 
     response_text = str(response)
@@ -419,7 +367,7 @@ async def test_update_issue(client):
 
     response = await client.process_query(
         f"Use the update_issue tool to update issue {created_issue_key.upper()} with summary '{new_summary}' "
-        f"and description '{new_description}' for site_name {site_name}. If successful, start your response "
+        f"and description '{new_description}' for SITE_NAME {SITE_NAME}. If successful, start your response "
         "with 'Updated issue successfully' and then list the issue details."
     )
 
@@ -449,7 +397,7 @@ async def test_list_issues(client):
     jql = f"project = {project_key.upper()} ORDER BY created DESC"
 
     response = await client.process_query(
-        f"Use the list_issues tool to fetch issues with JQL '{jql}' for site_name {site_name}. "
+        f"Use the list_issues tool to fetch issues with JQL '{jql}' for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here are the issues' and then list them."
     )
 
@@ -474,7 +422,7 @@ async def test_get_my_recent_activity(client):
         client: The test client fixture for the MCP server.
     """
     response = await client.process_query(
-        f"Use the get_my_recent_activity tool to fetch your recent activity for site_name {site_name}. "
+        f"Use the get_my_recent_activity tool to fetch your recent activity for SITE_NAME {SITE_NAME}. "
         "If successful, start your response with 'Here is your recent activity' and then list it."
     )
 
@@ -487,3 +435,55 @@ async def test_get_my_recent_activity(client):
 
     print(f"Response: {response_text}")
     print("✅ get_my_recent_activity passed.")
+
+
+@pytest.mark.asyncio
+async def test_delete_issue(client):
+    """Delete a JIRA issue.
+
+    Verifies that the issue is deleted successfully.
+
+    Args:
+        client: The test client fixture for the MCP server.
+    """
+    if not created_issue_key:
+        pytest.skip("No issue key available - run create_issue test first")
+
+    response = await client.process_query(
+        f"Use the delete_issue tool to delete issue {created_issue_key.upper()} for SITE_NAME {SITE_NAME}. "
+        "If successful, start your response with 'Deleted issue successfully' and then list the issue key."
+    )
+
+    assert (
+        "deleted issue successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from delete_issue"
+
+    print(f"Response: {response}")
+    print("✅ delete_issue passed.")
+
+
+@pytest.mark.asyncio
+async def test_delete_project(client):
+    """Delete a JIRA project.
+
+    Verifies that the project is deleted successfully.
+
+    Args:
+        client: The test client fixture for the MCP server.
+    """
+    if not project_key:
+        pytest.skip("No project key available - run create_project test first")
+
+    response = await client.process_query(
+        f"Use the delete_project tool to delete project {project_key} for SITE_NAME {SITE_NAME}. "
+        "If successful, start your response with 'Deleted project successfully' and then list the project key."
+    )
+
+    assert (
+        "deleted project successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from delete_project"
+
+    print(f"Response: {response}")
+    print("✅ delete_project passed.")
