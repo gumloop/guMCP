@@ -8,6 +8,18 @@ guMCP server implementation for interacting with Calendly scheduling and event m
 - A Calendly account with API access
 - Calendly OAuth credentials
 
+### Setting Up Calendly Developer Account
+
+To use this server, you'll need to create a Calendly developer account and set up OAuth credentials:
+
+1. Visit [Calendly Developer Portal](https://developer.calendly.com/create-a-developer-account)
+2. Sign up or log in to your Calendly account
+3. Create a new application in the developer dashboard
+4. Configure the OAuth settings with your redirect URI
+5. Copy the client ID and client secret for use in the OAuth configuration
+
+For detailed instructions, refer to the [Calendly API documentation](https://developer.calendly.com/create-a-developer-account).
+
 ### Local Authentication
 
 Local authentication uses a OAuth Configuration JSON file:
@@ -44,16 +56,21 @@ This will launch a browser-based authentication flow to obtain and save credenti
 The Calendly server provides the following functionality:
 
 #### List Event Types
+
 Get all available event types (meeting templates) in your Calendly account.
 
 #### Get Availability
+
 Check available time slots for a specific event type within a date range.
 
 #### List Scheduled Events
+
 View all scheduled meetings in a given time range with optional status filtering.
 
 #### Cancel Event
+
 Cancel a scheduled event with an optional cancellation reason.
 
 #### Create Scheduling Link
+
 Generate a single-use scheduling link for a specific event type.
