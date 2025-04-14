@@ -99,6 +99,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
     server = Server("apollo-server")
 
     server.user_id = user_id
+    server.api_key = api_key
 
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
@@ -720,7 +721,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             arguments = {}
 
         # Get credentials
-        api_key = await get_apollo_credentials(server.user_id)
+        api_key = await get_apollo_credentials(server.user_id, api_key=server.api_key)
 
         if not api_key:
             logger.error("Apollo API key not found. Please set your API key.")
