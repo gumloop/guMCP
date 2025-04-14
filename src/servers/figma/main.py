@@ -33,7 +33,7 @@ SCOPES = [
     "file_content:read",
     "files:read",
     "file_comments:read",
-    "file_comments:write"
+    "file_comments:write",
 ]
 
 # Configure logging
