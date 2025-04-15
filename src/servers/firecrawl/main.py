@@ -90,7 +90,9 @@ async def get_firecrawl_credentials(user_id, api_key=None):
     return api_key
 
 
-async def make_firecrawl_request(method, endpoint, data=None, api_key=None, params=None):
+async def make_firecrawl_request(
+    method, endpoint, data=None, api_key=None, params=None
+):
     """Make a request to the Firecrawl API"""
     if not api_key:
         raise ValueError("Firecrawl API key is required")
@@ -100,23 +102,27 @@ async def make_firecrawl_request(method, endpoint, data=None, api_key=None, para
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    
+
     try:
         async with httpx.AsyncClient() as client:
             if method.lower() == "get":
-                response = await client.get(url, headers=headers, params=params, timeout=60.0)
+                response = await client.get(
+                    url, headers=headers, params=params, timeout=60.0
+                )
             elif method.lower() == "post":
-                response = await client.post(url, json=data, headers=headers, timeout=60.0)
+                response = await client.post(
+                    url, json=data, headers=headers, timeout=60.0
+                )
             elif method.lower() == "delete":
                 response = await client.delete(url, headers=headers, timeout=60.0)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
-            
+
             response.raise_for_status()
             response_json = response.json()
             response_json["_status_code"] = response.status_code
             return response_json
-            
+
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error calling {endpoint}: {e.response.status_code}")
         error_message = f"Firecrawl API error: {e.response.status_code}"
@@ -127,7 +133,7 @@ async def make_firecrawl_request(method, endpoint, data=None, api_key=None, para
         except:
             pass
         raise ValueError(error_message)
-        
+
     except Exception as e:
         logger.error(f"Error making request to Firecrawl API: {str(e)}")
         raise ValueError(f"Error communicating with Firecrawl API: {str(e)}")
@@ -506,7 +512,7 @@ def create_server(user_id, api_key=None):
                             "default": 5,
                         },
                         "lang": {
-                            "type": "string", 
+                            "type": "string",
                             "description": "Language code for search results",
                             "default": "en",
                         },
@@ -560,7 +566,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully scraped URL and here are the details: {json.dumps(response, indent=2)}"
+                            text=f"Successfully scraped URL and here are the details: {json.dumps(response, indent=2)}",
                         )
                     ]
                 else:
@@ -571,11 +577,7 @@ def create_server(user_id, api_key=None):
                         )
                     ]
             except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error scraping URL: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=f"Error scraping URL: {str(e)}")]
 
         elif name == "batch_scrape":
             try:
@@ -591,12 +593,12 @@ def create_server(user_id, api_key=None):
                             text=f"Error starting batch scrape (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-                
+
                 if response.get("success"):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Batch scrape job started successfully and here is the batch id and other details: {json.dumps(response, indent=2)}"
+                            text=f"Batch scrape job started successfully and here is the batch id and other details: {json.dumps(response, indent=2)}",
                         )
                     ]
                 else:
@@ -629,11 +631,11 @@ def create_server(user_id, api_key=None):
                             text=f"Error checking batch status (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-                
+
                 return [
                     TextContent(
                         type="text",
-                        text=f"Here is the status of the batch scrape: {json.dumps(response, indent=2)}"
+                        text=f"Here is the status of the batch scrape: {json.dumps(response, indent=2)}",
                     )
                 ]
             except Exception as e:
@@ -657,11 +659,11 @@ def create_server(user_id, api_key=None):
                             text=f"Error retrieving batch errors (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-                
+
                 return [
                     TextContent(
                         type="text",
-                        text=f"Here are the errors from the batch scrape: {json.dumps(response, indent=2)}"
+                        text=f"Here are the errors from the batch scrape: {json.dumps(response, indent=2)}",
                     )
                 ]
             except Exception as e:
@@ -690,7 +692,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Crawl job started successfully and here is the crawl id and other details: {json.dumps(response, indent=2)}"
+                            text=f"Crawl job started successfully and here is the crawl id and other details: {json.dumps(response, indent=2)}",
                         )
                     ]
                 else:
@@ -702,9 +704,7 @@ def create_server(user_id, api_key=None):
                     ]
             except Exception as e:
                 return [
-                    TextContent(
-                        type="text", text=f"Error starting crawl: {str(e)}"
-                    )
+                    TextContent(type="text", text=f"Error starting crawl: {str(e)}")
                 ]
 
         elif name == "get_crawl_status":
@@ -727,7 +727,7 @@ def create_server(user_id, api_key=None):
                 return [
                     TextContent(
                         type="text",
-                        text=f"Here is the status of the crawl: {json.dumps(response, indent=2)}"
+                        text=f"Here is the status of the crawl: {json.dumps(response, indent=2)}",
                     )
                 ]
             except Exception as e:
@@ -757,14 +757,12 @@ def create_server(user_id, api_key=None):
                 return [
                     TextContent(
                         type="text",
-                        text=f"Here is the response for cancelling the crawl: {json.dumps(response, indent=2)}"
+                        text=f"Here is the response for cancelling the crawl: {json.dumps(response, indent=2)}",
                     )
                 ]
             except Exception as e:
                 return [
-                    TextContent(
-                        type="text", text=f"Error cancelling crawl: {str(e)}"
-                    )
+                    TextContent(type="text", text=f"Error cancelling crawl: {str(e)}")
                 ]
 
         elif name == "map_website":
@@ -786,7 +784,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully mapped website and here are the details: {json.dumps(response, indent=2)}"
+                            text=f"Successfully mapped website and here are the details: {json.dumps(response, indent=2)}",
                         )
                     ]
                 else:
@@ -798,9 +796,7 @@ def create_server(user_id, api_key=None):
                     ]
             except Exception as e:
                 return [
-                    TextContent(
-                        type="text", text=f"Error mapping website: {str(e)}"
-                    )
+                    TextContent(type="text", text=f"Error mapping website: {str(e)}")
                 ]
 
         elif name == "extract_data":
@@ -822,7 +818,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Data extraction job started successfully and here are the details: {json.dumps(response, indent=2)}"
+                            text=f"Data extraction job started successfully and here are the details: {json.dumps(response, indent=2)}",
                         )
                     ]
                 else:
@@ -859,7 +855,7 @@ def create_server(user_id, api_key=None):
                 return [
                     TextContent(
                         type="text",
-                        text=f"Here is the status of the extraction job: {json.dumps(response, indent=2)}"
+                        text=f"Here is the status of the extraction job: {json.dumps(response, indent=2)}",
                     )
                 ]
             except Exception as e:
@@ -888,7 +884,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Search completed successfully and here are the results: {json.dumps(response, indent=2)}"
+                            text=f"Search completed successfully and here are the results: {json.dumps(response, indent=2)}",
                         )
                     ]
                 else:
@@ -900,9 +896,7 @@ def create_server(user_id, api_key=None):
                     ]
             except Exception as e:
                 return [
-                    TextContent(
-                        type="text", text=f"Error performing search: {str(e)}"
-                    )
+                    TextContent(type="text", text=f"Error performing search: {str(e)}")
                 ]
 
         elif name == "check_credit_usage":
@@ -910,7 +904,7 @@ def create_server(user_id, api_key=None):
                 response = await make_firecrawl_request(
                     "get", "team/credit-usage", api_key=api_key
                 )
-                
+
                 status_code = response.get("_status_code", 0)
                 if status_code < 200 or status_code >= 300:
                     return [
@@ -919,7 +913,7 @@ def create_server(user_id, api_key=None):
                             text=f"Error checking credit usage (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-                
+
                 return [
                     TextContent(
                         type="text",

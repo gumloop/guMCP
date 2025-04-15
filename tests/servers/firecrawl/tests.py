@@ -4,6 +4,7 @@ import os
 import re
 import ast
 
+
 @pytest.mark.asyncio
 async def test_scrape_url(client):
     """Test scraping a single URL with Firecrawl"""
@@ -15,46 +16,46 @@ async def test_scrape_url(client):
     if "error_message" in response:
         pytest.fail(f"Failed to scrape URL: {response}")
 
-    assert "markdown_data" in response, f"Expected markdown_data in response: {response}"
+    assert (
+        "markdown_data" in response
+    ), f"Expected markdown_data in response: {response}"
     assert "gumloop" in response, f"Expected gumloop in response: {response}"
-    
-    print("✅ Scrape URL flow completed")
 
+    print("✅ Scrape URL flow completed")
 
 
 @pytest.mark.asyncio
 async def test_batch_flow(client):
     """Test batch flow with Firecrawl"""
-    urls = [
-        "https://gumloop.com",
-        "https://gumloop.com/about"
-    ]
+    urls = ["https://gumloop.com", "https://gumloop.com/about"]
 
     # Start batch scrape
     response = await client.process_query(
         f"Call the batch_scrape tool with the following urls: {json.dumps(urls)}"
         f"and only return the batch id with keyword 'batch_id' if successful or error with keyword 'error_message'"
     )
-    
+
     # Check for errors in batch creation
     if "error_message" in response:
         pytest.fail(f"Failed to create batch: {response}")
-    
+
     assert "batch_id" in response, f"Expected batch_id in response: {response}"
     batch_id = response.split("batch_id: ")[1].split("\n")[0].strip()
-    
+
     # Get batch status
     get_batch_status_response = await client.process_query(
         f"Call the get_batch_status tool with the following batch id: {batch_id}"
         f"and only return the status with keyword 'batch_status' if successful or error with keyword 'error_message'"
     )
     print("Batch Status: ", get_batch_status_response)
-    
+
     # Check for errors in status retrieval
     if "error_message" in get_batch_status_response:
         pytest.fail(f"Failed to get batch status: {get_batch_status_response}")
-    
-    assert "batch_status" in get_batch_status_response, f"Expected batch_status in response: {get_batch_status_response}"
+
+    assert (
+        "batch_status" in get_batch_status_response
+    ), f"Expected batch_status in response: {get_batch_status_response}"
     status = get_batch_status_response.split("batch_status: ")[1].split("\n")[0].strip()
 
     # Handle failed batch
@@ -65,9 +66,8 @@ async def test_batch_flow(client):
         )
         print("Failed to scrape: ", get_error_response)
         pytest.skip("Failed to scrape the batch")
-    
-    print("✅ Batch flow completed")
 
+    print("✅ Batch flow completed")
 
 
 @pytest.mark.asyncio
@@ -93,10 +93,14 @@ async def test_crawl_flow(client):
 
     if "error_message" in get_crawl_status_response:
         pytest.fail(f"Failed to get crawl status: {get_crawl_status_response}")
-    
-    assert "crawl_status" in get_crawl_status_response, f"Expected crawl_status in response: {get_crawl_status_response}"
-    
-    crawl_status = get_crawl_status_response.split("crawl_status: ")[1].split("\n")[0].strip()
+
+    assert (
+        "crawl_status" in get_crawl_status_response
+    ), f"Expected crawl_status in response: {get_crawl_status_response}"
+
+    crawl_status = (
+        get_crawl_status_response.split("crawl_status: ")[1].split("\n")[0].strip()
+    )
 
     if crawl_status == "failed":
         get_crawl_error_response = await client.process_query(
@@ -104,7 +108,7 @@ async def test_crawl_flow(client):
         )
         print("Failed to crawl: ", get_crawl_error_response)
         pytest.skip("Failed to crawl the website")
-    
+
     print("✅ Crawl flow completed")
 
 
@@ -131,10 +135,14 @@ async def test_crawl_cancel_flow(client):
 
     if "error_message" in cancel_crawl_response:
         pytest.fail(f"Failed to cancel crawl: {cancel_crawl_response}")
-    
-    assert "crawl_status" in cancel_crawl_response, f"Expected crawl_status in response: {cancel_crawl_response}"
 
-    crawl_status = cancel_crawl_response.split("crawl_status: ")[1].split("\n")[0].strip()
+    assert (
+        "crawl_status" in cancel_crawl_response
+    ), f"Expected crawl_status in response: {cancel_crawl_response}"
+
+    crawl_status = (
+        cancel_crawl_response.split("crawl_status: ")[1].split("\n")[0].strip()
+    )
 
     if crawl_status == "cancelled":
         print("✅ Crawl cancelled successfully")
@@ -155,10 +163,9 @@ async def test_map_website(client):
 
     assert "mapped_links" in response, f"Expected mapped_links in response: {response}"
 
-    assert 'mapped_links' in response, f"Expected mapped_links in response: {response}"
+    assert "mapped_links" in response, f"Expected mapped_links in response: {response}"
 
     print("✅ Map website completed")
-
 
 
 @pytest.mark.asyncio
@@ -169,7 +176,7 @@ async def test_extract_flow(client):
         "and only return the id with keyword 'extract_id' if successful or error with keyword 'error_message'"
         "sample extract_id: id"
     )
-    
+
     print("Extract Response: ", response)
 
     if "error_message" in response:
@@ -184,17 +191,22 @@ async def test_extract_flow(client):
         f"Call the get_extract_status tool with the following extract id: {extract_id}"
         "and only return the status with keyword 'extract_status' if successful or error with keyword 'error_message'"
     )
-    
+
     if "error_message" in get_extract_status_response:
         pytest.fail(f"Failed to get extract status: {get_extract_status_response}")
 
-    assert "extract_status" in get_extract_status_response, f"Expected extract_status in response: {get_extract_status_response}"
-    if get_extract_status_response.split("extract_status: ")[1].split("\n")[0].strip().lower() in ["completed", "processing", "failed", "cancelled"]:
+    assert (
+        "extract_status" in get_extract_status_response
+    ), f"Expected extract_status in response: {get_extract_status_response}"
+    if get_extract_status_response.split("extract_status: ")[1].split("\n")[
+        0
+    ].strip().lower() in ["completed", "processing", "failed", "cancelled"]:
         print("✅ Extract flow completed")
     else:
-        pytest.fail(f"Expected extract to be completed, processing, failed, or cancelled, but got {get_extract_status_response}")
+        pytest.fail(
+            f"Expected extract to be completed, processing, failed, or cancelled, but got {get_extract_status_response}"
+        )
 
-    
 
 @pytest.mark.asyncio
 async def test_search(client):
@@ -209,7 +221,9 @@ async def test_search(client):
     if "error_message" in response:
         pytest.fail(f"Failed to search: {response}")
 
-    assert "search_results" in response, f"Expected search_results in response: {response}"
+    assert (
+        "search_results" in response
+    ), f"Expected search_results in response: {response}"
     assert "gumloop" in response, f"Expected gumloop in search_results: {response}"
 
     print("✅ Search flow completed")
@@ -226,7 +240,8 @@ async def test_get_credit_usage(client):
     if "error_message" in response:
         pytest.fail(f"Failed to get credit usage: {response}")
 
-    assert "remaining_credits" in response, f"Expected remaining_credits in response: {response}"
+    assert (
+        "remaining_credits" in response
+    ), f"Expected remaining_credits in response: {response}"
 
     print("✅ Get credit usage flow completed")
-
