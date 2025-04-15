@@ -48,16 +48,16 @@ SITE_EXPLORER_DEFAULT_SELECT = {
     "outgoing_external_anchors": "anchor,linked_domains,linked_pages,links_from_target,dofollow_links",
     "outgoing_internal_anchors": "anchor,linked_pages,links_from_target,dofollow_links",
     "metrics_history": "date,org_cost,org_traffic,paid_cost,paid_traffic",
-    "keywords_history": "date,top3,top4_10,top11_plus"
+    "keywords_history": "date,top3,top4_10,top11_plus",
 }
 
 KEYWORD_DIFFICULTY_DEFAULT_SELECT = "keyword,difficulty"
 
 KEYWORDS_EXPLORER_DEFAULT_SELECT = {
     "keywords_overview": "keyword,difficulty,volume",
-    "matching_terms": "keyword,difficulty,volume", 
+    "matching_terms": "keyword,difficulty,volume",
     "related_terms": "keyword,difficulty,volume",
-    "search_suggestions": "keyword,difficulty,volume"
+    "search_suggestions": "keyword,difficulty,volume",
 }
 
 
@@ -104,7 +104,7 @@ async def get_ahrefs_credentials(user_id, api_key=None):
 async def make_ahrefs_request(endpoint, params, api_key):
     if not api_key:
         raise ValueError("Ahrefs API key is required")
-        
+
     url = f"{AHREFS_API_URL}/{endpoint}"
 
     headers = {
@@ -175,18 +175,18 @@ def create_server(user_id, api_key=None):
                         },
                         "date": {
                             "type": "string",
-                            "description": "Date for analysis in YYYY-MM-DD format", 
+                            "description": "Date for analysis in YYYY-MM-DD format",
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date"],
                 },
@@ -219,7 +219,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date"],
                 },
@@ -248,7 +248,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target"],
                 },
@@ -290,7 +290,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date"],
                 },
@@ -332,7 +332,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date"],
                 },
@@ -374,7 +374,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date"],
                 },
@@ -406,7 +406,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -438,7 +438,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -480,7 +480,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -526,7 +526,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -581,7 +581,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -631,7 +631,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -687,7 +687,7 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
                             "description": "Output format",
-                        }
+                        },
                     },
                     "required": ["target", "date_from"],
                 },
@@ -861,54 +861,54 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Country code for the search"
+                            "description": "Country code for the search",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "date": {
                             "type": "string",
-                            "description": "Date for analysis in YYYY-MM-DD format"
+                            "description": "Date for analysis in YYYY-MM-DD format",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "date_compared": {
                             "type": "string",
-                            "description": "Date to compare metrics with in YYYY-MM-DD format"
+                            "description": "Date to compare metrics with in YYYY-MM-DD format",
                         },
                         "volume_mode": {
                             "type": "string",
                             "enum": ["monthly", "average"],
-                            "description": "Search volume calculation mode"
+                            "description": "Search volume calculation mode",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "country", "date", "select"]
-                }
+                    "required": ["target", "country", "date", "select"],
+                },
             ),
             Tool(
                 name="organic_competitors",
@@ -918,54 +918,54 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Country code for the search"
+                            "description": "Country code for the search",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "date": {
                             "type": "string",
-                            "description": "Date for analysis in YYYY-MM-DD format"
+                            "description": "Date for analysis in YYYY-MM-DD format",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "date_compared": {
                             "type": "string",
-                            "description": "Date to compare metrics with in YYYY-MM-DD format"
+                            "description": "Date to compare metrics with in YYYY-MM-DD format",
                         },
                         "volume_mode": {
                             "type": "string",
                             "enum": ["monthly", "average"],
-                            "description": "Search volume calculation mode"
+                            "description": "Search volume calculation mode",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "country", "date", "select"]
-                }
+                    "required": ["target", "country", "date", "select"],
+                },
             ),
             Tool(
                 name="top_pages",
@@ -975,54 +975,54 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain to analyze"
+                            "description": "Target domain to analyze",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Country code for the search"
+                            "description": "Country code for the search",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "date": {
                             "type": "string",
-                            "description": "Date for analysis in YYYY-MM-DD format"
+                            "description": "Date for analysis in YYYY-MM-DD format",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "date_compared": {
                             "type": "string",
-                            "description": "Date to compare metrics with in YYYY-MM-DD format"
+                            "description": "Date to compare metrics with in YYYY-MM-DD format",
                         },
                         "volume_mode": {
                             "type": "string",
                             "enum": ["monthly", "average"],
-                            "description": "Search volume calculation mode"
+                            "description": "Search volume calculation mode",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "date", "select"]
-                }
+                    "required": ["target", "date", "select"],
+                },
             ),
         ]
 
@@ -1036,54 +1036,54 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "date": {
                             "type": "string",
-                            "description": "Date for analysis in YYYY-MM-DD format"
+                            "description": "Date for analysis in YYYY-MM-DD format",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Country code for the search"
+                            "description": "Country code for the search",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "date_compared": {
                             "type": "string",
-                            "description": "Date to compare metrics with in YYYY-MM-DD format"
+                            "description": "Date to compare metrics with in YYYY-MM-DD format",
                         },
                         "volume_mode": {
                             "type": "string",
                             "enum": ["monthly", "average"],
-                            "description": "Search volume calculation mode"
+                            "description": "Search volume calculation mode",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "date", "select"]
-                }
+                    "required": ["target", "date", "select"],
+                },
             ),
         ]
 
@@ -1097,42 +1097,42 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "history": {
                             "type": "string",
                             "enum": ["live", "all_time", "since:<date>"],
-                            "description": "Time frame to add lost backlinks to the report (default: all_time)"
+                            "description": "Time frame to add lost backlinks to the report (default: all_time)",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "select"]
-                }
+                    "required": ["target", "select"],
+                },
             ),
             Tool(
                 name="best_by_internal_links",
@@ -1142,37 +1142,37 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "select"]
-                }
+                    "required": ["target", "select"],
+                },
             ),
         ]
 
@@ -1186,37 +1186,37 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "select"]
-                }
+                    "required": ["target", "select"],
+                },
             ),
             Tool(
                 name="outgoing_external_anchors",
@@ -1226,37 +1226,37 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "select"]
-                }
+                    "required": ["target", "select"],
+                },
             ),
             Tool(
                 name="outgoing_internal_anchors",
@@ -1266,37 +1266,37 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "mode": {
                             "type": "string",
                             "description": "Mode of analysis",
-                            "enum": ["exact", "prefix", "domain", "subdomains"]
+                            "enum": ["exact", "prefix", "domain", "subdomains"],
                         },
                         "protocol": {
                             "type": "string",
                             "enum": ["both", "http", "https"],
-                            "description": "Protocol to analyze (default: both)"
+                            "description": "Protocol to analyze (default: both)",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of results (default: 1000)"
+                            "description": "Maximum number of results (default: 1000)",
                         },
                         "where": {
                             "type": "string",
-                            "description": "Filter expression to apply"
+                            "description": "Filter expression to apply",
                         },
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
-                        }
+                            "description": "Column to order results by",
+                        },
                     },
-                    "required": ["target", "select"]
-                }
+                    "required": ["target", "select"],
+                },
             ),
         ]
 
@@ -1310,54 +1310,51 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Comma-separated list of keywords to show metrics for"
+                            "description": "Comma-separated list of keywords to show metrics for",
                         },
                         "keyword_list_id": {
                             "type": "integer",
-                            "description": "The ID of an existing keyword list to show metrics for"
+                            "description": "The ID of an existing keyword list to show metrics for",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Two-letter country code (ISO 3166-1 alpha-2)"
+                            "description": "Two-letter country code (ISO 3166-1 alpha-2)",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "target": {
                             "type": "string",
-                            "description": "Target domain or URL to analyze"
+                            "description": "Target domain or URL to analyze",
                         },
                         "target_mode": {
                             "type": "string",
                             "enum": ["exact", "prefix", "domain", "subdomains"],
-                            "description": "The scope of the target URL you specified"
+                            "description": "The scope of the target URL you specified",
                         },
                         "target_position": {
                             "type": "string",
                             "enum": ["in_top10", "in_top100"],
-                            "description": "Filters keywords based on the ranking position of the specified target"
+                            "description": "Filters keywords based on the ranking position of the specified target",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Number of results to return (default: 1000)"
+                            "description": "Number of results to return (default: 1000)",
                         },
-                        "where": {
-                            "type": "string",
-                            "description": "Filter expression"
-                        },
+                        "where": {"type": "string", "description": "Filter expression"},
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
+                            "description": "Column to order results by",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
-                            "description": "Output format"
-                        }
+                            "description": "Output format",
+                        },
                     },
-                    "required": ["country", "select"]
-                }
+                    "required": ["country", "select"],
+                },
             ),
             Tool(
                 name="volume_history",
@@ -1367,28 +1364,28 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "keyword": {
                             "type": "string",
-                            "description": "The keyword to show metrics for"
+                            "description": "The keyword to show metrics for",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Two-letter country code (ISO 3166-1 alpha-2)"
+                            "description": "Two-letter country code (ISO 3166-1 alpha-2)",
                         },
                         "date_from": {
                             "type": "string",
-                            "description": "Start date in YYYY-MM-DD format"
+                            "description": "Start date in YYYY-MM-DD format",
                         },
                         "date_to": {
                             "type": "string",
-                            "description": "End date in YYYY-MM-DD format"
+                            "description": "End date in YYYY-MM-DD format",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
-                            "description": "Output format"
-                        }
+                            "description": "Output format",
+                        },
                     },
-                    "required": ["keyword", "country"]
-                }
+                    "required": ["keyword", "country"],
+                },
             ),
             Tool(
                 name="volume_by_country",
@@ -1398,20 +1395,20 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "keyword": {
                             "type": "string",
-                            "description": "The keyword to show metrics for"
+                            "description": "The keyword to show metrics for",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Number of results to return"
+                            "description": "Number of results to return",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
-                            "description": "Output format"
-                        }
+                            "description": "Output format",
+                        },
                     },
-                    "required": ["keyword"]
-                }
+                    "required": ["keyword"],
+                },
             ),
             Tool(
                 name="matching_terms",
@@ -1421,50 +1418,47 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Comma-separated list of keywords to show metrics for"
+                            "description": "Comma-separated list of keywords to show metrics for",
                         },
                         "keyword_list_id": {
                             "type": "integer",
-                            "description": "The ID of an existing keyword list to show metrics for"
+                            "description": "The ID of an existing keyword list to show metrics for",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Two-letter country code (ISO 3166-1 alpha-2)"
+                            "description": "Two-letter country code (ISO 3166-1 alpha-2)",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "match_mode": {
                             "type": "string",
                             "enum": ["terms", "phrase"],
-                            "description": "Keyword ideas contain words in any order (terms) or exact order (phrase)"
+                            "description": "Keyword ideas contain words in any order (terms) or exact order (phrase)",
                         },
                         "terms": {
                             "type": "string",
                             "enum": ["all", "questions"],
-                            "description": "All keywords ideas or keywords ideas phrased as questions"
+                            "description": "All keywords ideas or keywords ideas phrased as questions",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Number of results to return (default: 1000)"
+                            "description": "Number of results to return (default: 1000)",
                         },
-                        "where": {
-                            "type": "string",
-                            "description": "Filter expression"
-                        },
+                        "where": {"type": "string", "description": "Filter expression"},
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
+                            "description": "Column to order results by",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
-                            "description": "Output format"
-                        }
+                            "description": "Output format",
+                        },
                     },
-                    "required": ["country", "select"]
-                }
+                    "required": ["country", "select"],
+                },
             ),
             Tool(
                 name="related_terms",
@@ -1474,50 +1468,47 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Comma-separated list of keywords to show metrics for"
+                            "description": "Comma-separated list of keywords to show metrics for",
                         },
                         "keyword_list_id": {
                             "type": "integer",
-                            "description": "The ID of an existing keyword list to show metrics for"
+                            "description": "The ID of an existing keyword list to show metrics for",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Two-letter country code (ISO 3166-1 alpha-2)"
+                            "description": "Two-letter country code (ISO 3166-1 alpha-2)",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "view_for": {
                             "type": "string",
                             "enum": ["top_10", "top_100"],
-                            "description": "View keywords for top 10 or top 100 ranking pages"
+                            "description": "View keywords for top 10 or top 100 ranking pages",
                         },
                         "terms": {
                             "type": "string",
                             "enum": ["also_rank_for", "also_talk_about", "all"],
-                            "description": "Related keywords type"
+                            "description": "Related keywords type",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Number of results to return (default: 1000)"
+                            "description": "Number of results to return (default: 1000)",
                         },
-                        "where": {
-                            "type": "string",
-                            "description": "Filter expression"
-                        },
+                        "where": {"type": "string", "description": "Filter expression"},
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
+                            "description": "Column to order results by",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
-                            "description": "Output format"
-                        }
+                            "description": "Output format",
+                        },
                     },
-                    "required": ["country", "select"]
-                }
+                    "required": ["country", "select"],
+                },
             ),
             Tool(
                 name="search_suggestions",
@@ -1527,41 +1518,38 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Comma-separated list of keywords to show metrics for"
+                            "description": "Comma-separated list of keywords to show metrics for",
                         },
                         "keyword_list_id": {
                             "type": "integer",
-                            "description": "The ID of an existing keyword list to show metrics for"
+                            "description": "The ID of an existing keyword list to show metrics for",
                         },
                         "country": {
                             "type": "string",
-                            "description": "Two-letter country code (ISO 3166-1 alpha-2)"
+                            "description": "Two-letter country code (ISO 3166-1 alpha-2)",
                         },
                         "select": {
                             "type": "string",
-                            "description": "Comma-separated list of columns to return"
+                            "description": "Comma-separated list of columns to return",
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Number of results to return (default: 1000)"
+                            "description": "Number of results to return (default: 1000)",
                         },
-                        "where": {
-                            "type": "string",
-                            "description": "Filter expression"
-                        },
+                        "where": {"type": "string", "description": "Filter expression"},
                         "order_by": {
                             "type": "string",
-                            "description": "Column to order results by"
+                            "description": "Column to order results by",
                         },
                         "output": {
                             "type": "string",
                             "enum": ["json", "csv", "xml", "php"],
-                            "description": "Output format"
-                        }
+                            "description": "Output format",
+                        },
                     },
-                    "required": ["country", "select"]
-                }
-            )
+                    "required": ["country", "select"],
+                },
+            ),
         ]
 
         # Combine all tools
@@ -1653,19 +1641,21 @@ def create_server(user_id, api_key=None):
         # Make the API request
         try:
             encoded_params = {k: str(v) for k, v in params.items()}
-            response = await make_ahrefs_request(endpoints[name], encoded_params, api_key)
-            
+            response = await make_ahrefs_request(
+                endpoints[name], encoded_params, api_key
+            )
+
             if response.get("_status_code", 0) != 200:
                 return [
                     TextContent(
                         type="text",
-                        text=f"Error: {response.get('error', 'Unknown error')}"
+                        text=f"Error: {response.get('error', 'Unknown error')}",
                     )
                 ]
-              
+
             # Default response for all other endpoints
             return [TextContent(type="text", text=json.dumps(response, indent=2))]
-            
+
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Error processing {name}: {error_msg}")
