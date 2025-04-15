@@ -1,6 +1,4 @@
 import pytest
-import json
-import os
 import re
 
 # Define test configurations for each tool
