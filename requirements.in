@@ -19,3 +19,5 @@ stripe
 PyGithub
 googlemaps
 dropbox
+browserbase
+playwright

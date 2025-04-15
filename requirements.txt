@@ -17,6 +17,7 @@ anthropic==0.49.0
 anyio==4.9.0
     # via
     #   anthropic
+    #   browserbase
     #   httpx
     #   mcp
     #   sse-starlette
@@ -29,6 +30,8 @@ beautifulsoup4==4.13.3
     # via
     #   -r requirements.in
     #   google
+browserbase==1.2.0
+    # via -r requirements.in
 cachetools==5.5.2
     # via google-auth
 certifi==2025.1.31
@@ -49,7 +52,9 @@ cryptography==44.0.2
 deprecated==1.2.18
     # via pygithub
 distro==1.9.0
-    # via anthropic
+    # via
+    #   anthropic
+    #   browserbase
 dropbox==12.0.2
     # via -r requirements.in
 enum-compat==0.0.3
@@ -83,6 +88,8 @@ googleapis-common-protos==1.69.2
     # via google-api-core
 googlemaps==4.10.0
     # via -r requirements.in
+greenlet==3.1.1
+    # via playwright
 h11==0.14.0
     # via
     #   httpcore
@@ -96,6 +103,7 @@ httplib2==0.22.0
 httpx==0.28.1
     # via
     #   anthropic
+    #   browserbase
     #   mcp
     #   notion-client
 httpx-sse==0.4.0
@@ -120,6 +128,8 @@ notion-client==2.3.0
     # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
+playwright==1.51.0
+    # via -r requirements.in
 ply==3.11
     # via stone
 prometheus-client==0.21.1
@@ -146,12 +156,15 @@ pycparser==2.22
 pydantic==2.11.1
     # via
     #   anthropic
+    #   browserbase
     #   mcp
     #   pydantic-settings
 pydantic-core==2.33.0
     # via pydantic
 pydantic-settings==2.8.1
     # via mcp
+pyee==12.1.1
+    # via playwright
 pygithub==2.6.1
     # via -r requirements.in
 pyjwt[crypto]==2.10.1
@@ -200,6 +213,7 @@ sniffio==1.3.1
     # via
     #   anthropic
     #   anyio
+    #   browserbase
 soupsieve==2.6
     # via beautifulsoup4
 sse-starlette==2.2.1
@@ -218,9 +232,11 @@ typing-extensions==4.13.0
     #   anthropic
     #   anyio
     #   beautifulsoup4
+    #   browserbase
     #   multidict
     #   pydantic
     #   pydantic-core
+    #   pyee
     #   pygithub
     #   stripe
     #   typing-inspection
