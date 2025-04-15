@@ -89,7 +89,7 @@ def create_server(user_id, api_key=None):
         """Register all supported tools for Zoom."""
         return [
             types.Tool(
-                name="zoom_create_a_meeting",
+                name="create_meeting",
                 description="Create a new Zoom meeting",
                 inputSchema={
                     "type": "object",
@@ -115,7 +115,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_update_a_meeting",
+                name="update_meeting",
                 description="Update an existing Zoom meeting",
                 inputSchema={
                     "type": "object",
@@ -142,7 +142,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_get_a_meeting",
+                name="get_meeting",
                 description="Get details of a Zoom meeting",
                 inputSchema={
                     "type": "object",
@@ -151,7 +151,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_list_meetings",
+                name="list_meetings",
                 description="List all Zoom meetings",
                 inputSchema={
                     "type": "object",
@@ -166,7 +166,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_list_upcoming_meetings",
+                name="list_upcoming_meetings",
                 description="List all upcoming Zoom meetings",
                 inputSchema={
                     "type": "object",
@@ -174,7 +174,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_list_all_recordings",
+                name="list_all_recordings",
                 description="List all recordings",
                 inputSchema={
                     "type": "object",
@@ -192,7 +192,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_get_meeting_recordings",
+                name="get_meeting_recordings",
                 description="Get recordings for a specific meeting",
                 inputSchema={
                     "type": "object",
@@ -201,7 +201,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_get_meeting_participant_reports",
+                name="get_meeting_participant_reports",
                 description="Get participant reports for a meeting",
                 inputSchema={
                     "type": "object",
@@ -210,7 +210,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_add_attendees",
+                name="add_attendees",
                 description="Add attendees to a Zoom meeting",
                 inputSchema={
                     "type": "object",
@@ -226,7 +226,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_fetch_meetings_by_date",
+                name="fetch_meetings_by_date",
                 description="Fetch all Zoom meetings for a given date",
                 inputSchema={
                     "type": "object",
@@ -240,7 +240,7 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="zoom_delete_meeting",
+                name="delete_meeting",
                 description="Delete a Zoom meeting",
                 inputSchema={
                     "type": "object",
@@ -261,7 +261,7 @@ def create_server(user_id, api_key=None):
             arguments = {}
 
         try:
-            if name == "zoom_create_a_meeting":
+            if name == "create_meeting":
                 # Ensure time has timezone if not provided
                 start_time = arguments["start_time"]
                 if (
@@ -294,7 +294,7 @@ def create_server(user_id, api_key=None):
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_update_a_meeting":
+            elif name == "update_meeting":
                 data = {}
 
                 for key in ["topic", "agenda", "start_time", "duration"]:
@@ -305,25 +305,21 @@ def create_server(user_id, api_key=None):
                     f"{BASE_URL}/meetings/{arguments['meeting_id']}", json=data
                 )
                 response.raise_for_status()
+                result = response.json()
 
-                if response.status_code == 204:
-                    result = "Updated Zoom meeting successfully"
-                else:
-                    result = "Failed to Update"
-
-            elif name == "zoom_get_a_meeting":
+            elif name == "get_meeting":
                 response = client.get(f"{BASE_URL}/meetings/{arguments['meeting_id']}")
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_list_meetings":
+            elif name == "list_meetings":
                 response = client.get(
                     f"{BASE_URL}/users/me/meetings", params={"type": arguments["type"]}
                 )
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_list_upcoming_meetings":
+            elif name == "list_upcoming_meetings":
                 # Get scheduled meetings and filter for upcoming ones
                 response = client.get(
                     f"{BASE_URL}/users/me/meetings",
@@ -342,7 +338,7 @@ def create_server(user_id, api_key=None):
                 ]
                 result["meetings"] = upcoming_meetings
 
-            elif name == "zoom_list_all_recordings":
+            elif name == "list_all_recordings":
                 response = client.get(
                     f"{BASE_URL}/users/me/recordings",
                     params={"from": arguments["from_date"], "to": arguments["to_date"]},
@@ -350,21 +346,21 @@ def create_server(user_id, api_key=None):
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_get_meeting_recordings":
+            elif name == "get_meeting_recordings":
                 response = client.get(
                     f"{BASE_URL}/meetings/{arguments['meeting_id']}/recordings"
                 )
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_get_meeting_participant_reports":
+            elif name == "get_meeting_participant_reports":
                 response = client.get(
                     f"{BASE_URL}/report/meetings/{arguments['meeting_id']}/participants"
                 )
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_add_attendees":
+            elif name == "add_attendees":
                 # Format attendees for Zoom API
                 attendees = [{"email": email} for email in arguments["attendees"]]
 
@@ -374,12 +370,9 @@ def create_server(user_id, api_key=None):
                     json={"settings": {"meeting_invitees": attendees}},
                 )
                 response.raise_for_status()
-                if response.status_code == 204:
-                    result = {"message": "Added attendeed Successfully"}
-                else:
-                    result = {"error": "Failed to add attendeed"}
+                result = response.json()
 
-            elif name == "zoom_fetch_meetings_by_date":
+            elif name == "fetch_meetings_by_date":
                 # Format the date with proper time boundaries for the full day
                 date = arguments["date"]
                 from_time = f"{date}T00:00:00Z"
@@ -392,7 +385,7 @@ def create_server(user_id, api_key=None):
                 response.raise_for_status()
                 result = response.json()
 
-            elif name == "zoom_delete_meeting":
+            elif name == "delete_meeting":
                 response = client.delete(
                     f"{BASE_URL}/meetings/{arguments['meeting_id']}",
                     params={"schedule_for_reminder": "false"},
@@ -414,9 +407,7 @@ def create_server(user_id, api_key=None):
             return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
-            logger.error(
-                f"Error calling Zoom API: {e} on line {e.__traceback__.tb_lineno}"
-            )
+            logger.error(f"Error calling Zoom API: {e}")
             error_details = str(e)
 
             # Extract more detailed error information if available
@@ -449,7 +440,7 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
         user_id = "local"
-        authenticate_and_save_credentials(user_id, SERVICE_NAME)
+        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")

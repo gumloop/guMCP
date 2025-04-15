@@ -14,13 +14,9 @@ Create a file at the path `local_auth/oauth_configs/zoom/oauth.json`:
 
 ```json
 {
-  "web": {
-    "client_id": "your-client-id",
-    "client_secret": "your-client-secret",
-    "auth_uri": "https://zoom.us/oauth/authorize",
-    "token_uri": "https://zoom.us/oauth/token",
-    "redirect_uris": ["http://localhost:8080/callback"]
-  }
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "redirect_uris": ["http://localhost:8080/callback"]
 }
 ```
 
@@ -53,17 +49,17 @@ You only need to do this once, unless your token expires.
 
 This server exposes the following tools for interacting with Zoom:
 
-- `zoom_create_a_meeting` – Create a new Zoom meeting
-- `zoom_update_a_meeting` – Update an existing Zoom meeting
-- `zoom_get_a_meeting` – Get details of a Zoom meeting
-- `zoom_list_meetings` – List all Zoom meetings
-- `zoom_list_upcoming_meetings` – List all upcoming Zoom meetings
-- `zoom_list_all_recordings` – List all recordings
-- `zoom_get_meeting_recordings` – Get recordings for a specific meeting
-- `zoom_get_meeting_participant_reports` – Get participant reports for a meeting
-- `zoom_add_attendees` – Add attendees to a Zoom meeting
-- `zoom_fetch_meetings_by_date` – Fetch all Zoom meetings for a given date
-- `zoom_delete_meeting` – Delete a Zoom meeting
+- `create_meeting` – Create a new Zoom meeting
+- `update_meeting` – Update an existing Zoom meeting
+- `get_meeting` – Get details of a Zoom meeting
+- `list_meetings` – List all Zoom meetings
+- `list_upcoming_meetings` – List all upcoming Zoom meetings
+- `list_all_recordings` – List all recordings
+- `get_meeting_recordings` – Get recordings for a specific meeting
+- `get_meeting_participant_reports` – Get participant reports for a meeting
+- `add_attendees` – Add attendees to a Zoom meeting
+- `fetch_meetings_by_date` – Fetch all Zoom meetings for a given date
+- `delete_meeting` – Delete a Zoom meeting
 
 ---
 
@@ -74,27 +70,15 @@ This server exposes the following tools for interacting with Zoom:
 You can launch the server for local development using:
 
 ```bash
-python -m mcp.main --server zoom-server
+./start_sse_dev_server.sh
 ```
 
-This will start the GuMCP server and make it available for integration and testing.
+This will start the Zoom MCP server and make it available for integration and testing.
 
-If you have a local client for testing, you can run it like:
+You can also start the local client using the following:
 
 ```bash
-python tests/clients/RemoteMCPTestClient.py --endpoint=http://localhost:8000/zoom-server/local
-```
-
-#### Example: Creating a Meeting
-
-```
-call ZOOM_CREATE_A_MEETING --topic "Team Meeting" --start_time "2025-05-25T15:00:00Z" --duration 60 --agenda "Weekly team sync"
-```
-
-#### Running Tests
-
-```bash
-python -m pytest tests/servers/zoom/tests.py -v
+python RemoteMCPTestClient.py --endpoint http://localhost:8000/zoom/local
 ```
 
 ---

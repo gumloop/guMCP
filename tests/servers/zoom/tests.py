@@ -7,7 +7,7 @@ created_meeting_id = None
 
 
 @pytest.mark.asyncio
-async def test_create_zoom_meeting(client):
+async def test_create_meeting(client):
     """Create a new Zoom meeting.
 
     Verifies that the meeting is created successfully and stores the meeting ID
@@ -23,10 +23,10 @@ async def test_create_zoom_meeting(client):
     # Schedule meeting for tomorrow
     start_time = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     duration = 30
-    agenda = "This is a test meeting created by the test_create_zoom_meeting tool."
+    agenda = "This is a test meeting created by the test_create_meeting tool."
 
     response = await client.process_query(
-        f"""Use the zoom_create_a_meeting tool to create a new meeting
+        f"""Use the create_meeting tool to create a new meeting
         with topic "{topic}", start time "{start_time}", duration {duration} minutes, 
         and agenda "{agenda}". If successful, start your response with 
         'Created Zoom meeting successfully' and then include the meeting ID in format 'ID: <meeting_id>'."""
@@ -35,7 +35,7 @@ async def test_create_zoom_meeting(client):
     assert (
         "created zoom meeting successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_create_a_meeting"
+    assert response, "No response returned from create_meeting"
 
     # Extract meeting ID from response
     try:
@@ -45,11 +45,11 @@ async def test_create_zoom_meeting(client):
         pytest.fail("Could not extract meeting ID from response")
 
     print(f"Response: {response}")
-    print("✅ zoom_create_a_meeting passed.")
+    print("✅ create_meeting passed.")
 
 
 @pytest.mark.asyncio
-async def test_get_zoom_meeting(client):
+async def test_get_meeting(client):
     """Get details of a specific Zoom meeting.
 
     Verifies that the meeting details include the expected topic.
@@ -58,24 +58,24 @@ async def test_get_zoom_meeting(client):
         client: The test client fixture for the MCP server.
     """
     if not created_meeting_id:
-        pytest.skip("No meeting ID available - run create_zoom_meeting test first")
+        pytest.skip("No meeting ID available - run create_meeting test first")
 
     response = await client.process_query(
-        f"""Use the zoom_get_a_meeting tool to fetch details for meeting ID {created_meeting_id}.
+        f"""Use the get_meeting tool to fetch details for meeting ID {created_meeting_id}.
         If successful, start your response with 'Here are the Zoom meeting details' and then list them."""
     )
 
     assert (
         "here are the zoom meeting details" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_get_a_meeting"
+    assert response, "No response returned from get_meeting"
 
     print(f"Response: {response}")
-    print("✅ zoom_get_a_meeting passed.")
+    print("✅ get_meeting passed.")
 
 
 @pytest.mark.asyncio
-async def test_update_zoom_meeting(client):
+async def test_update_meeting(client):
     """Update a specific Zoom meeting.
 
     Verifies that the meeting is updated successfully.
@@ -84,13 +84,13 @@ async def test_update_zoom_meeting(client):
         client: The test client fixture for the MCP server.
     """
     if not created_meeting_id:
-        pytest.skip("No meeting ID available - run create_zoom_meeting test first")
+        pytest.skip("No meeting ID available - run create_meeting test first")
 
     # Set updated meeting details
     updated_topic = f"Updated Test Meeting {uuid.uuid4()}"
 
     response = await client.process_query(
-        f"""Use the zoom_update_a_meeting tool to update meeting ID {created_meeting_id}
+        f"""Use the update_meeting tool to update meeting ID {created_meeting_id}
         with topic "{updated_topic}".
         If successful, start your response with 'Updated Zoom meeting successfully' and then list the details."""
     )
@@ -98,10 +98,10 @@ async def test_update_zoom_meeting(client):
     assert (
         "updated zoom meeting successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_update_a_meeting"
+    assert response, "No response returned from update_meeting"
 
     print(f"Response: {response}")
-    print("✅ zoom_update_a_meeting passed.")
+    print("✅ update_meeting passed.")
 
 
 @pytest.mark.asyncio
@@ -116,17 +116,17 @@ async def test_list_meetings(client):
     meeting_type = "scheduled"
 
     response = await client.process_query(
-        f"""Use the zoom_list_meetings tool to list {meeting_type} meetings.
+        f"""Use the list_meetings tool to list {meeting_type} meetings.
         If successful, start your response with 'Here are the Zoom meetings' and then list them."""
     )
 
     assert (
         "here are the zoom meetings" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_list_meetings"
+    assert response, "No response returned from list_meetings"
 
     print(f"Response: {response}")
-    print("✅ zoom_list_meetings passed.")
+    print("✅ list_meetings passed.")
 
 
 @pytest.mark.asyncio
@@ -139,17 +139,17 @@ async def test_list_upcoming_meetings(client):
         client: The test client fixture for the MCP server.
     """
     response = await client.process_query(
-        """Use the zoom_list_upcoming_meetings tool to list all upcoming meetings.
+        """Use the list_upcoming_meetings tool to list all upcoming meetings.
         If successful, start your response with 'Here are the upcoming Zoom meetings' and then list them."""
     )
 
     assert (
         "here are the upcoming zoom meetings" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_list_upcoming_meetings"
+    assert response, "No response returned from list_upcoming_meetings"
 
     print(f"Response: {response}")
-    print("✅ zoom_list_upcoming_meetings passed.")
+    print("✅ list_upcoming_meetings passed.")
 
 
 @pytest.mark.asyncio
@@ -165,17 +165,17 @@ async def test_fetch_meetings_by_date(client):
     test_date = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
 
     response = await client.process_query(
-        f"""Use the zoom_fetch_meetings_by_date tool to fetch all meetings for date {test_date}.
+        f"""Use the fetch_meetings_by_date tool to fetch all meetings for date {test_date}.
         If successful, start your response with 'Here are the Zoom meetings for {test_date}' and then list them."""
     )
 
     assert (
         f"here are the zoom meetings for {test_date}" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_fetch_meetings_by_date"
+    assert response, "No response returned from fetch_meetings_by_date"
 
     print(f"Response: {response}")
-    print("✅ zoom_fetch_meetings_by_date passed.")
+    print("✅ fetch_meetings_by_date passed.")
 
 
 @pytest.mark.asyncio
@@ -188,13 +188,13 @@ async def test_add_attendees(client):
         client: The test client fixture for the MCP server.
     """
     if not created_meeting_id:
-        pytest.skip("No meeting ID available - run create_zoom_meeting test first")
+        pytest.skip("No meeting ID available - run create_meeting test first")
 
     # Test email addresses
     attendees = ["test1@example.com", "test2@example.com"]
 
     response = await client.process_query(
-        f"""Use the zoom_add_attendees tool to add the following attendees to meeting ID {created_meeting_id}:
+        f"""Use the add_attendees tool to add the following attendees to meeting ID {created_meeting_id}:
         {', '.join(attendees)}. If successful, start your response with 'Added attendees successfully' and
         then list the updated meeting details."""
     )
@@ -202,10 +202,10 @@ async def test_add_attendees(client):
     assert (
         "added attendees successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_add_attendees"
+    assert response, "No response returned from add_attendees"
 
     print(f"Response: {response}")
-    print("✅ zoom_add_attendees passed.")
+    print("✅ add_attendees passed.")
 
 
 @pytest.mark.asyncio
@@ -222,17 +222,17 @@ async def test_list_all_recordings(client):
     to_date = datetime.utcnow().strftime("%Y-%m-%d")
 
     response = await client.process_query(
-        f"""Use the zoom_list_all_recordings tool to list all recordings from {from_date} to {to_date}.
+        f"""Use the list_all_recordings tool to list all recordings from {from_date} to {to_date}.
         If successful, start your response with 'Here are the Zoom recordings' and then list them."""
     )
 
     assert (
         "here are the zoom recordings" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_list_all_recordings"
+    assert response, "No response returned from list_all_recordings"
 
     print(f"Response: {response}")
-    print("✅ zoom_list_all_recordings passed.")
+    print("✅ list_all_recordings passed.")
 
 
 @pytest.mark.asyncio
@@ -245,19 +245,19 @@ async def test_get_meeting_recordings(client):
         client: The test client fixture for the MCP server.
     """
     if not created_meeting_id:
-        pytest.skip("No meeting ID available - run create_zoom_meeting test first")
+        pytest.skip("No meeting ID available - run create_meeting test first")
 
     response = await client.process_query(
-        f"""Use the zoom_get_meeting_recordings tool to fetch recordings for meeting ID {created_meeting_id}.
+        f"""Use the get_meeting_recordings tool to fetch recordings for meeting ID {created_meeting_id}.
         If successful, start your response with 'Here are the meeting recordings' and then list them.
         If there are no recordings available, indicate so."""
     )
 
     # This meeting likely won't have recordings, so just check for valid response
-    assert response, "No response returned from zoom_get_meeting_recordings"
+    assert response, "No response returned from get_meeting_recordings"
 
     print(f"Response: {response}")
-    print("✅ zoom_get_meeting_recordings passed.")
+    print("✅ get_meeting_recordings passed.")
 
 
 @pytest.mark.asyncio
@@ -270,20 +270,20 @@ async def test_get_meeting_participant_reports(client):
         client: The test client fixture for the MCP server.
     """
     if not created_meeting_id:
-        pytest.skip("No meeting ID available - run create_zoom_meeting test first")
+        pytest.skip("No meeting ID available - run create_meeting test first")
 
     response = await client.process_query(
-        f"""Use the zoom_get_meeting_participant_reports tool to fetch participant reports for 
+        f"""Use the get_meeting_participant_reports tool to fetch participant reports for 
         meeting ID {created_meeting_id}. If successful, start your response with 
         'Here are the meeting participant reports' and then list them.
         If there are no participants yet, indicate so."""
     )
 
     # This meeting likely won't have participants yet, so just check for valid response
-    assert response, "No response returned from zoom_get_meeting_participant_reports"
+    assert response, "No response returned from get_meeting_participant_reports"
 
     print(f"Response: {response}")
-    print("✅ zoom_get_meeting_participant_reports passed.")
+    print("✅ get_meeting_participant_reports passed.")
 
 
 @pytest.mark.asyncio
@@ -297,10 +297,10 @@ async def test_delete_meeting(client):
         client: The test client fixture for the MCP server.
     """
     if not created_meeting_id:
-        pytest.skip("No meeting ID available - run create_zoom_meeting test first")
+        pytest.skip("No meeting ID available - run create_meeting test first")
 
     response = await client.process_query(
-        f"""Use the zoom_delete_meeting tool to delete meeting with ID {created_meeting_id}.
+        f"""Use the delete_meeting tool to delete meeting with ID {created_meeting_id}.
         If successful, start your response with 'Deleted Zoom meeting successfully' and then
         include the meeting ID in format 'ID: <meeting_id>'."""
     )
@@ -308,7 +308,7 @@ async def test_delete_meeting(client):
     assert (
         "deleted zoom meeting successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from zoom_delete_meeting"
+    assert response, "No response returned from delete_meeting"
 
     print(f"Response: {response}")
-    print("✅ zoom_delete_meeting passed.")
+    print("✅ delete_meeting passed.")
