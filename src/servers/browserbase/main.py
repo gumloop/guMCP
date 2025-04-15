@@ -27,7 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger("browserbase-server")
+logger = logging.getLogger(SERVICE_NAME)
 
 from src.utils.browserbase.util import (
     authenticate_and_save_browserbase_key,
