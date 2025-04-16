@@ -77,7 +77,9 @@ Example content:
 {
   "client_id": "your-client-id",
   "client_secret": "your-client-secret",
-  "redirect_uri": "your-redirect-uri"
+  "redirect_uri": "your-redirect-uri",
+  "login_domain":"your-login-domain" #this is optional, add this only if you have custom login subdomain
+
 }
 ```
 
