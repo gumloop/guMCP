@@ -1,3 +1,4 @@
+
 # Zoom GuMCP Server
 
 GuMCP server implementation for interacting with Zoom Meetings API using OAuth authentication.
@@ -10,13 +11,35 @@ GuMCP server implementation for interacting with Zoom Meetings API using OAuth a
 - A Zoom OAuth App created at [Zoom App Marketplace](https://marketplace.zoom.us/develop/create)
 - A local OAuth config file with your Zoom credentials
 
+---
+
+### 🛠️ Create a Zoom OAuth App
+
+1. Visit the [Zoom App Marketplace](https://marketplace.zoom.us/develop/create) and log in with your Zoom account.
+2. Click **"Create"** > **"OAuth"**.
+3. Choose **App Type** as `OAuth` and provide basic app information (name, company, etc.).
+4. Under **OAuth Information**, fill out the following:
+   - **Redirect URL for OAuth**: e.g. `http://localhost:8080/callback` (for local testing)
+   - **Add Whitelist URL**: Same as redirect URL
+5. Save and continue to **Scopes** section. Add the following scopes at minimum:
+   - `meeting:write:admin`
+   - `meeting:read:admin`
+   - `recording:read:admin`
+   - `report:read:admin`
+6. Continue through the submission process, and **Activate the App** once done.
+7. Copy your **Client ID** and **Client Secret**.
+
+---
+
+### 🔐 OAuth Configuration
+
 Create a file at the path `local_auth/oauth_configs/zoom/oauth.json`:
 
 ```json
 {
   "client_id": "your-client-id",
   "client_secret": "your-client-secret",
-  "redirect_uris": ["http://localhost:8080/callback"]
+  "redirect_uri": "http://localhost:8080/callback"
 }
 ```
 
@@ -33,15 +56,16 @@ python src/servers/zoom/main.py auth
 ```
 
 This will:
+
 1. Print a Zoom OAuth URL for you to open in your browser.
 2. Prompt you to authenticate with your Zoom account.
-3. After authorization, you'll be redirected to the callback URL code.
-4. Copy that code from your browser and paste it back in the terminal.
-5. The token will be stored securely for future use.
+3. After authorization, you'll be redirected to the callback URL with a code.
+4. Copy that code from your browser and paste it into the terminal.
+5. The token will be securely stored for future use.
 
-You only need to do this once, unless your token expires.
+> You only need to do this once, unless your token expires.
 
-> **Note**: Due to Zoom's URL length limitations, the authorization URL will only include minimal scopes. However, your app will have access to all scopes configured in the Zoom App Marketplace.
+> ⚠️ Note: Zoom limits the URL length for scopes. Only minimal scopes are used in the authorization URL, but your app will still receive access to all scopes configured in the Zoom App Marketplace.
 
 ---
 
@@ -67,7 +91,7 @@ This server exposes the following tools for interacting with Zoom:
 
 #### Local Development
 
-You can launch the server for local development using:
+Start the server:
 
 ```bash
 ./start_sse_dev_server.sh
@@ -75,7 +99,7 @@ You can launch the server for local development using:
 
 This will start the Zoom MCP server and make it available for integration and testing.
 
-You can also start the local client using the following:
+Start the local client:
 
 ```bash
 python RemoteMCPTestClient.py --endpoint http://localhost:8000/zoom/local
@@ -86,13 +110,13 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/zoom/local
 ### 📎 Notes
 
 - The server requires OAuth authentication for improved security.
-- Make sure your Zoom app has the following scopes configured in the Zoom App Marketplace:
-  - `meeting:write:meeting`
-  - `meeting:write:meeting:admin`
-  - `meeting:read:meeting:admin`
-  - Plus any additional scopes needed for your specific use case
-- All dates should be in ISO format with timezone (e.g., `2025-05-25T15:00:00Z`)
-- The server handles automatically adding timezone information if missing
+- Ensure the following scopes are configured in your Zoom App:
+  - `meeting:write:admin`
+  - `meeting:read:admin`
+  - `recording:read:admin`
+  - `report:read:admin`
+- All date inputs should be in ISO format with timezone (e.g., `2025-05-25T15:00:00Z`)
+- If the timezone is not provided, it will be added automatically by the server.
 
 ---
 
