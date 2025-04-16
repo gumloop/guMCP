@@ -13,7 +13,9 @@ async def test_create_database(client):
         f"Use the create_database tool to create a new database with name {DB_NAME}."
         " Respond with 'Database created successfully' followed by 'Database: <database_name>'."
     )
-    assert "database created successfully" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "database created successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from create_database"
     print(f"Response: {response}")
     print("✅ create_database passed.")
@@ -26,7 +28,9 @@ async def test_create_table(client):
         " The table should have columns: id INT, name STRING, email STRING."
         " Respond with 'Table created successfully' followed by 'Table: <table_name>'."
     )
-    assert "table created successfully" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "table created successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from create_table"
     print(f"Response: {response}")
     print("✅ create_table passed.")
@@ -38,7 +42,9 @@ async def test_list_tables(client):
         f"Use the list_tables tool to list all tables in the database {DB_NAME}."
         " Respond with 'Here are all the tables in the database <database_name>:'"
     )
-    assert "here are all the tables in the database" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "here are all the tables in the database" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from list_tables"
     print(f"Response: {response}")
     print("✅ list_tables passed.")
@@ -50,7 +56,9 @@ async def test_describe_table(client):
         f"Use the describe_table tool to describe the table {TABLE_NAME} in the database {DB_NAME} and schema {SCHEMA_NAME}."
         " Respond with 'Here is the description of the table <table_name>:'"
     )
-    assert "here is the description of the table" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "here is the description of the table" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from describe_table"
     print(f"Response: {response}")
     print("✅ describe_table passed.")
@@ -62,7 +70,9 @@ async def test_create_warehouse(client):
         f"Use the create_warehouse tool to create a new warehouse with name {WAREHOUSE_NAME}."
         " Respond with 'Warehouse created successfully' followed by 'Warehouse: <warehouse_name>'."
     )
-    assert "warehouse created successfully" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "warehouse created successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from create_warehouse"
     print(f"Response: {response}")
     print("✅ create_warehouse passed.")
@@ -74,7 +84,9 @@ async def test_list_warehouses(client):
         "Use the list_warehouses tool to list all warehouses in Snowflake."
         " Respond with 'Here are all the warehouses in Snowflake:'"
     )
-    assert "here are all the warehouses in snowflake" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "here are all the warehouses in snowflake" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from list_warehouses"
     print(f"Response: {response}")
     print("✅ list_warehouses passed.")
@@ -102,7 +114,9 @@ async def test_list_databases(client):
         "Use the list_databases tool to list all databases in Snowflake."
         " Respond with 'Here are all the databases in Snowflake:'"
     )
-    assert "here are all the databases in snowflake" in response.lower(), f"Expected success phrase not found in response: {response}"
+    assert (
+        "here are all the databases in snowflake" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from list_databases"
     print(f"Response: {response}")
     print("✅ list_databases passed.")

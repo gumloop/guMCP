@@ -16,7 +16,10 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-from src.utils.snowflake.util import get_snowflake_credentials, authenticate_and_save_snowflake_credentials
+from src.utils.snowflake.util import (
+    get_snowflake_credentials,
+    authenticate_and_save_snowflake_credentials,
+)
 
 SERVICE_NAME = Path(__file__).parent.name
 
@@ -25,6 +28,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(SERVICE_NAME)
+
 
 def create_server(user_id, api_key=None):
     server = Server("snowflake-server")
@@ -39,16 +43,14 @@ def create_server(user_id, api_key=None):
                 description="Create a new database in Snowflake",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "db_name": {"type": "string"}
-                    },
-                    "required": ["db_name"]
-                }
+                    "properties": {"db_name": {"type": "string"}},
+                    "required": ["db_name"],
+                },
             ),
             Tool(
                 name="list_databases",
                 description="List all databases in Snowflake",
-                inputSchema={"type": "object", "properties": {}, "required": []}
+                inputSchema={"type": "object", "properties": {}, "required": []},
             ),
             Tool(
                 name="create_table",
@@ -60,10 +62,10 @@ def create_server(user_id, api_key=None):
                         "warehouse_name": {"type": "string"},
                         "schema_name": {"type": "string", "default": "PUBLIC"},
                         "table_name": {"type": "string"},
-                        "columns": {"type": "string"}
+                        "columns": {"type": "string"},
                     },
-                    "required": ["database_name", "table_name", "columns"]
-                }
+                    "required": ["database_name", "table_name", "columns"],
+                },
             ),
             Tool(
                 name="list_tables",
@@ -72,10 +74,10 @@ def create_server(user_id, api_key=None):
                     "type": "object",
                     "properties": {
                         "database_name": {"type": "string"},
-                        "warehouse_name": {"type": "string"}
+                        "warehouse_name": {"type": "string"},
                     },
-                    "required": ["database_name"]
-                }
+                    "required": ["database_name"],
+                },
             ),
             Tool(
                 name="describe_table",
@@ -86,15 +88,15 @@ def create_server(user_id, api_key=None):
                         "database_name": {"type": "string"},
                         "warehouse_name": {"type": "string"},
                         "schema_name": {"type": "string", "default": "PUBLIC"},
-                        "table_name": {"type": "string"}
+                        "table_name": {"type": "string"},
                     },
-                    "required": ["database_name", "table_name"]
-                }
+                    "required": ["database_name", "table_name"],
+                },
             ),
             Tool(
                 name="list_warehouses",
                 description="List all warehouses",
-                inputSchema={"type": "object", "properties": {}, "required": []}
+                inputSchema={"type": "object", "properties": {}, "required": []},
             ),
             Tool(
                 name="create_warehouse",
@@ -105,10 +107,10 @@ def create_server(user_id, api_key=None):
                         "warehouse_name": {"type": "string"},
                         "warehouse_size": {"type": "string", "default": "X-SMALL"},
                         "auto_suspend": {"type": "integer", "default": 300},
-                        "auto_resume": {"type": "boolean", "default": True}
+                        "auto_resume": {"type": "boolean", "default": True},
                     },
-                    "required": ["warehouse_name"]
-                }
+                    "required": ["warehouse_name"],
+                },
             ),
             Tool(
                 name="execute_query",
@@ -117,11 +119,11 @@ def create_server(user_id, api_key=None):
                     "type": "object",
                     "properties": {
                         "database_name": {"type": "string"},
-                        "query": {"type": "string"}
+                        "query": {"type": "string"},
                     },
-                    "required": ["database_name", "query"]
-                }
-            )
+                    "required": ["database_name", "query"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -130,10 +132,10 @@ def create_server(user_id, api_key=None):
         credentials = get_snowflake_credentials(server.user_id, server.api_key)
 
         conn = snowflake.connector.connect(
-            user=credentials['username'],
-            password=credentials['password'],
-            account=credentials['account'],
-            client_session_keep_alive=True
+            user=credentials["username"],
+            password=credentials["password"],
+            account=credentials["account"],
+            client_session_keep_alive=True,
         )
         cursor = conn.cursor()
 
@@ -191,7 +193,9 @@ def create_server(user_id, api_key=None):
                 raise ValueError(f"Unknown tool: {name}")
 
         except Exception as e:
-            logger.error(f"Error executing tool {name}: {str(e)} {e.__traceback__.tb_lineno}")
+            logger.error(
+                f"Error executing tool {name}: {str(e)} {e.__traceback__.tb_lineno}"
+            )
             return [TextContent(type="text", text=str(e))]
 
         finally:
@@ -200,7 +204,9 @@ def create_server(user_id, api_key=None):
 
     return server
 
+
 server = create_server
+
 
 def get_initialization_options(server_instance: Server) -> InitializationOptions:
     return InitializationOptions(
@@ -211,6 +217,7 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
             experimental_capabilities={},
         ),
     )
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
