@@ -1,6 +1,8 @@
 import base64
 import logging
 from typing import Dict, List, Any
+import json
+from pathlib import Path
 
 from src.utils.oauth.util import (
     run_oauth_flow,
@@ -9,11 +11,20 @@ from src.utils.oauth.util import (
 
 logger = logging.getLogger(__name__)
 
-# Salesforce Oauth endpoints
-SALESFORCE_OAUTH_AUTHORIZE_URL = (
-    "https://login.salesforce.com/services/oauth2/authorize"
-)
-SALESFORCE_OAUTH_TOKEN_URL = "https://login.salesforce.com/services/oauth2/token"
+
+def get_salesforce_url(service: str, url_type: str) -> str:
+    # Open the JSON config for the given service
+    config_path = Path(f"local_auth/oauth_configs/{service}/oauth.json")
+    with config_path.open("r") as f:
+        oauth_config = json.load(f)
+
+    # Fall back to login.salesforce.com if "login_domain" is not in the config
+    login_domain = oauth_config.get("login_domain", "login.salesforce.com")
+
+    if url_type == "auth":
+        return f"https://{login_domain}/services/oauth2/authorize"
+    else:
+        return f"https://{login_domain}/services/oauth2/token"
 
 
 def build_salesforce_auth_params(
@@ -128,8 +139,8 @@ def authenticate_and_save_credentials(
         Dictionary containing final credentials (e.g., access_token).
     """
     # Construct the authorization and token URLs
-    auth_url = SALESFORCE_OAUTH_AUTHORIZE_URL
-    token_url = SALESFORCE_OAUTH_TOKEN_URL
+    auth_url = get_salesforce_url(service_name, "auth")
+    token_url = get_salesforce_url(service_name, "token")
 
     return run_oauth_flow(
         service_name=service_name,
@@ -158,7 +169,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
     Returns:
         A valid access token string.
     """
-    token_url = SALESFORCE_OAUTH_TOKEN_URL
+    token_url = get_salesforce_url(service_name, "token")
 
     return await refresh_token_if_needed(
         user_id=user_id,
