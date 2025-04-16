@@ -33,7 +33,7 @@ Follow these steps to create a Connected App in Salesforce and obtain the creden
 4. **Enable OAuth Settings**
    - Scroll to **API (Enable OAuth Settings)** and check ✅ `Enable OAuth Settings`
    - **Callback URL (redirect URI)**:
-     - Use an HTTPS URL (e.g., `http://localhost:8080/callback`)
+     - (e.g., `http://localhost:8080/callback`)
    - **Selected OAuth Scopes**:
      Add the required scopes: 
      e.g.
