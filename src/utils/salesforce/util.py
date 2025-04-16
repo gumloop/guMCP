@@ -127,11 +127,6 @@ def authenticate_and_save_credentials(
     Returns:
         Dictionary containing final credentials (e.g., access_token).
     """
-    # Get the Snowflake account from the oauth config
-    from src.auth.factory import create_auth_client
-
-    auth_client = create_auth_client()
-    oauth_config = auth_client.get_oauth_config(service_name)
     # Construct the authorization and token URLs
     auth_url = SALESFORCE_OAUTH_AUTHORIZE_URL
     token_url = SALESFORCE_OAUTH_TOKEN_URL
@@ -163,12 +158,6 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
     Returns:
         A valid access token string.
     """
-    # Get the Snowflake account from the oauth config
-    from src.auth.factory import create_auth_client
-
-    auth_client = create_auth_client()
-    oauth_config = auth_client.get_oauth_config(service_name)
-
     token_url = SALESFORCE_OAUTH_TOKEN_URL
 
     return await refresh_token_if_needed(
