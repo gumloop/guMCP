@@ -1,114 +1,143 @@
+
 # Salesforce Server
 
 guMCP server implementation for interacting with Salesforce.
 
-### Prerequisites
+---
+
+## 🚀 Prerequisites
 
 - Python 3.11+
 - A Salesforce Developer Account ([Sign up for Developer Edition](https://developer.salesforce.com/signup))
-- A Connected App in Salesforce with the following OAuth scopes:
-  - full
-  - api
-  - id
-  - profile
-  - email
-  - address
-  - phone
-  - web
-  - refresh_token
-  - offline_access
-  - openid
-  - custom_permissions
+- A Connected App in Salesforce with OAuth enabled
 
-### Local Authentication
+---
 
-Local authentication uses a OAuth Configuration JSON file:
+## 🔧 Creating a Salesforce Connected App
+
+Follow these steps to create a Connected App in Salesforce and obtain the credentials:
+
+1. **Login to Salesforce Developer Account**
+   - Visit: https://developer.salesforce.com/signup
+
+2. **Navigate to App Manager**
+   - Click on the gear icon ⚙️ → **Setup**
+   - Search for **App Manager** in the Quick Find box
+   - Click **New Connected App**
+
+3. **Basic Information**
+   - Fill in the **Connected App Name** (e.g., `guMCP App`)
+   - Fill in **API Name** (auto-filled)
+   - Provide a valid **Contact Email**
+
+4. **Enable OAuth Settings**
+   - Scroll to **API (Enable OAuth Settings)** and check ✅ `Enable OAuth Settings`
+   - **Callback URL (redirect URI)**:
+     - Use an HTTPS URL (e.g., `http://localhost:8080/callback`)
+   - **Selected OAuth Scopes**:
+     Add the required scopes: 
+     e.g.
+     ```
+     - full
+     - api
+     - id
+     - profile
+     - email
+     - address
+     - phone
+     - web
+     - refresh_token
+     - offline_access
+     - openid
+     - custom_permissions
+     ```
+
+5. **Save and Continue**
+   - Click **Save**. It may take 2-10 minutes to activate.
+
+6. **Get Client ID and Secret**
+   - Once saved, open your Connected App from the App Manager
+   - Go to **View** → You’ll find your:
+     - **Consumer Key** (Client ID)
+     - **Consumer Secret** (Client Secret)
+
+---
+
+## 🔐 Local Authentication Setup
+
+Create the following file:
 
 ```
 local_auth/oauth_configs/salesforce/oauth.json
 ```
 
-Create the following file with the relevant attributes for your Connected App:
+Example content:
 
 ```json
 {
-  "client_id": "xxxxxxxxxxxxxxxxxxxxx",
-  "client_secret": "xxxxxxxxxxxxxxxxxxxxx",
-  "redirect_uri": "https://xxxxxxxxxxxxx"
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "redirect_uri": "your-redirect-uri"
 }
 ```
 
-- Note: Salesforce requires https for the redirect uri, so if running locally, setup an [ngrok redirect](https://ngrok.com/docs/universal-gateway/http/) to port 8080
+---
 
-To set up and verify authentication, run:
+## 🧪 Verify Authentication
+
+To initiate the auth flow:
 
 ```bash
 python src/servers/salesforce/main.py auth
 ```
 
-### Available Tools
+---
 
-The Salesforce server provides the following tools:
+## 🛠️ Available Tools
 
 1. **SOQL Query** (`soql_query`)
-   - Executes SOQL queries to retrieve Salesforce records
-   - Supports relationships and complex filters
-   - Example: `SELECT Id, Name FROM Account WHERE Industry = 'Technology'`
+   - Retrieve records using Salesforce Object Query Language
 
 2. **SOSL Search** (`sosl_search`)
-   - Performs text-based searches across multiple Salesforce objects
-   - Example: `FIND {Cloud} IN ALL FIELDS RETURNING Account, Opportunity`
+   - Full-text search across multiple objects
 
 3. **Object Description** (`describe_object`)
-   - Retrieves detailed metadata about a Salesforce object
-   - Includes fields, relationships, and permissions
-   - Shows field types, requirements, and picklist values
+   - Retrieves metadata like field types, required fields, picklists
 
 4. **Record Operations**
-   - **Get Record** (`get_record`): Retrieve specific records by ID
-   - **Create Record** (`create_record`): Create new records
-   - **Update Record** (`update_record`): Modify existing records
-   - **Delete Record** (`delete_record`): Remove records
+   - `get_record`: Retrieve by ID
+   - `create_record`: Add new record
+   - `update_record`: Modify existing
+   - `delete_record`: Delete record
 
 5. **Organization Limits** (`get_org_limits`)
-   - Retrieves current organization limits and usage
-   - Shows maximum, used, and remaining values
-   - Calculates usage percentages
+   - API usage stats and limits overview
 
-### Run
+---
+
+### ▶️ Run
 
 #### Local Development
 
+You can launch the server for local development using:
+
 ```bash
-python src/servers/local.py --server salesforce --user-id local
+./start_sse_dev_server.sh
 ```
 
-### Security Notes
+This will start the Salesforce MCP server and make it available for integration and testing.
 
-- Always keep your OAuth credentials secure
-- Use appropriate OAuth scopes for your use case
-- Regularly rotate your client secret
-- Monitor API usage to stay within limits
+You can also start the local client using the following:
 
-### Error Handling
+```bash
+python RemoteMCPTestClient.py --endpoint http://localhost:8000/salesforce/local
+```
 
-The server provides detailed error messages for:
-- Missing or invalid parameters
-- API limits exceeded
-- Authentication issues
-- Invalid SOQL/SOSL syntax
-- Record access permissions
+---
 
-### Rate Limiting
+## 🔐 Security Notes
 
-- Be mindful of Salesforce API limits
-- Check organization limits before performing bulk operations
-- Use `get_org_limits` to monitor API usage
-
-### Best Practices
-
-1. Always use SOQL queries with appropriate WHERE clauses
-2. Include only necessary fields in queries
-3. Use SOSL search for text-based queries across multiple objects
-4. Check field accessibility before performing operations
-5. Handle rate limits and bulk operations appropriately
+- Keep OAuth credentials private
+- Use only necessary scopes
+- Rotate `client_secret` periodically
+- Monitor usage to avoid quota issues
