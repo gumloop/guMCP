@@ -1,78 +1,33 @@
-# Snowflake Server
+# ❄️ Snowflake Server
 
-guMCP server implementation for interacting with the **Snowflake**.
+guMCP server implementation for interacting with **Snowflake**.
 
 ---
 
 ### 📦 Prerequisites
 
 - Python 3.11+
-- Snowflake account with appropriate privileges
-- OAuth 2.0 credentials from Snowflake Security Integration
+- A valid Snowflake account with appropriate roles and privileges
 
 ---
 
-### 🔐 OAuth Setup
+### 🔐 Authentication
 
-#### Option 1: HTTPS Setup (Recommended)
-```sql
-CREATE SECURITY INTEGRATION MY_SNOWSQL_CLIENT
-TYPE = OAUTH
-ENABLED = TRUE
-OAUTH_CLIENT = CUSTOM
-OAUTH_CLIENT_TYPE = 'CONFIDENTIAL'
-OAUTH_REDIRECT_URI = 'https://your-redirect-uri'
-OAUTH_ISSUE_REFRESH_TOKENS = TRUE
-OAUTH_REFRESH_TOKEN_VALIDITY = 86400;
-```
+Before using the server, you need to authenticate with your Snowflake account.
 
-#### Option 2: HTTP Setup (Development Only)
-```sql
-CREATE SECURITY INTEGRATION MY_SNOWSQL_CLIENT
-TYPE = OAUTH
-ENABLED = TRUE
-OAUTH_CLIENT = CUSTOM
-OAUTH_CLIENT_TYPE = 'CONFIDENTIAL'
-OAUTH_REDIRECT_URI = 'http://your-redirect-uri'
-OAUTH_ISSUE_REFRESH_TOKENS = TRUE
-OAUTH_REFRESH_TOKEN_VALIDITY = 86400
-OAUTH_ALLOW_NON_TLS_REDIRECT_URI = TRUE;
-```
-
-After creating the security integration, run these commands to get the required credentials:
-
-```sql
--- Get OAuth details
-DESC SECURITY INTEGRATION MY_SNOWSQL_CLIENT;
-
--- Get client secret
-SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS('MY_SNOWSQL_CLIENT');
-
-You will get 2 secrets, note down either one.
-```
-
----
-
-### 🔐 Local Authentication
-
-Create a file named `oauth_configs/snowflake/oauth.json` with the following structure:
-
-```json
-{
-  "client_id": "your-oauth-client-id",
-  "client_secret": "your-oauth-client-secret",
-  "redirect_uri": "your-redirect-uri",
-  "account": "your-account-identifier",
-}
-```
-
-To authenticate and save credentials for local testing, run:
+To authenticate and save credentials locally, run:
 
 ```bash
 python src/servers/snowflake/main.py auth
 ```
 
-After successful authentication, your credentials will be stored securely for reuse.
+You'll be prompted to enter the following:
+
+- Username
+- Password
+- Account identifier (e.g., `abcd.us-east-1`)
+
+These credentials will be stored securely for reuse during development.
 
 ---
 
@@ -80,16 +35,27 @@ After successful authentication, your credentials will be stored securely for re
 
 This server exposes the following tools for interacting with Snowflake:
 
-- `create_database` – Create a new database in Snowflake
-- `create_schema` – Create a new schema in Snowflake
-- `list_schemas` – List all schemas in a database
-- `list_databases` – List all databases in Snowflake
-- `create_table` – Create a new table with support for constraints and indexes
-- `list_tables` – List all tables in a database with filtering and sorting options
-- `describe_table` – Get the structure of a Snowflake table including columns, data types, and constraints
-- `create_warehouse` – Create a new warehouse in Snowflake
-- `list_warehouses` – List all warehouses in Snowflake
-- `execute_query` – Execute any SQL query on Snowflake with transaction support
+#### 📁 Database Management
+- `create_database` – Create a new database
+- `list_databases` – List all databases
+- `use_database` – Switch to a specific database
+- `drop_database` – Drop a database
+
+#### 📦 Table Management
+- `create_table` – Create a new table with specified columns
+- `list_tables` – List all tables in a given schema
+- `drop_table` – Drop an existing table
+- `describe_table` – View the structure of a table
+
+#### ⚙️ Warehouse Management
+- `create_warehouse` – Create a warehouse with custom size and settings
+- `list_warehouses` – List all configured warehouses
+- `use_warehouse` – Set the current warehouse
+
+#### 🔍 Query Execution
+- `execute_query` – Execute raw SQL queries
+- `fetch_query_results` – Retrieve results of a previously executed query
+- `handle_query_errors` – Standardized handling of SQL and connection errors
 
 ---
 
@@ -97,15 +63,13 @@ This server exposes the following tools for interacting with Snowflake:
 
 #### Local Development
 
-You can launch the server for local development using:
+Start the Snowflake MCP server using:
 
 ```bash
 ./start_sse_dev_server.sh
 ```
 
-This will start the Snowflake MCP server and make it available for integration and testing.
-
-You can also start the local client using the following:
+Then run the local test client with:
 
 ```bash
 python RemoteMCPTestClient.py --endpoint http://localhost:8000/snowflake/local
@@ -113,15 +77,16 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/snowflake/local
 
 ---
 
-### 📎 Notes
+### 🔒 Security Best Practices
 
-- Ensure your Snowflake account has the necessary privileges to create and manage databases and tables
-- For production environments, always use HTTPS for OAuth redirect URIs
-- Make sure your `.env` file contains the appropriate API keys if you're using external LLM services like Anthropic.
+- Never commit secrets or config files with sensitive data to version control
+- Use least privilege roles for all Snowflake operations
+- Enable Multi-Factor Authentication (MFA) for all user accounts
 
 ---
 
 ### 📚 Resources
 
-- [Snowflake OAuth Documentation](https://docs.snowflake.com/en/user-guide/oauth-custom)
-- [Snowflake SQL Reference](https://docs.snowflake.com/en/sql-reference)
+- [Snowflake Documentation](https://docs.snowflake.com/)
+- [Snowflake Python Connector](https://docs.snowflake.com/en/user-guide/python-connector)
+- [SQL Command Reference](https://docs.snowflake.com/en/sql-reference)
