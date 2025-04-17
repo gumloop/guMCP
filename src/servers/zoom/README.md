@@ -36,7 +36,21 @@ GuMCP server implementation for interacting with Zoom Meetings API using OAuth a
 ### 🛠️ Step 3: Add Required Scopes
 
 1. In the **Scopes** section, click **"Add Scopes"**
-2. Search for and add required scopes:
+2. Search for and add the following scopes:
+
+**Required Scopes:**
+- `meeting:read:list_upcoming_meetings` - List upcoming meetings
+- `meeting:read:participant` - Read meeting participants
+- `meeting:read:list_meetings` - List all meetings
+- `meeting:read:meeting` - Read meeting details
+- `meeting:write:meeting` - Create and update meetings
+- `meeting:write:registrant` - Add meeting registrants
+- `meeting:update:meeting` - Update meeting settings
+- `meeting:delete:meeting` - Delete meetings
+- `meeting:write:invite_links` - Manage meeting invite links
+- `cloud_recording:read:list_recording_files` - Access recording files
+- `cloud_recording:read:list_user_recordings` - List user recordings
+
 3. Click **"Continue"**
 
 ---

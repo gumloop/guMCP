@@ -22,23 +22,17 @@ from src.auth.factory import create_auth_client
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
+    "meeting:read:list_upcoming_meetings",
+    "meeting:read:participant",
+    "meeting:read:list_meetings",
+    "meeting:read:meeting",
     "meeting:write:meeting",
-    "meeting:delete:meeting:admin",
-    "meeting:read:meeting:admin",
-    "meeting:write:meeting:admin",
-    "meeting:read:list_meetings:admin",
-    "meeting:read:list_upcoming_meetings:admin",
-    "meeting:update:meeting:admin",
-    "meeting:write:registrant:admin",
-    "meeting:read:list_past_participants:admin",
-    "meeting:read:participant:admin",
-    "cloud_recording:read:list_recording_files:admin",
-    "cloud_recording:read:recording:admin",
-    "cloud_recording:read:list_user_recordings:admin",
-    "report:read:list_users:admin",
-    "report:read:cloud_recording:admin",
-    "report:read:list_meeting_participants:admin",
-    "report:read:user:admin",
+    "meeting:write:registrant",
+    "meeting:update:meeting",
+    "meeting:delete:meeting",
+    "meeting:write:invite_links",
+    "cloud_recording:read:list_recording_files",
+    "cloud_recording:read:list_user_recordings",
 ]
 
 # Configure logging
@@ -304,8 +298,15 @@ def create_server(user_id, api_key=None):
                 response = client.patch(
                     f"{BASE_URL}/meetings/{arguments['meeting_id']}", json=data
                 )
-                response.raise_for_status()
-                result = response.json()
+
+                if response.status_code == 204:
+                    result = {
+                        "status": "success",
+                        "message": "Meeting updated successfully",
+                    }
+                else:
+                    response.raise_for_status()
+                    result = response.json()
 
             elif name == "get_meeting":
                 response = client.get(f"{BASE_URL}/meetings/{arguments['meeting_id']}")
@@ -370,8 +371,14 @@ def create_server(user_id, api_key=None):
                     f"{BASE_URL}/meetings/{arguments['meeting_id']}",
                     json={"settings": {"meeting_invitees": attendees}},
                 )
-                response.raise_for_status()
-                result = response.json()
+                if response.status_code == 204:
+                    result = {
+                        "status": "success",
+                        "message": "Attendees added successfully",
+                    }
+                else:
+                    response.raise_for_status()
+                    result = response.json()
 
             elif name == "fetch_meetings_by_date":
                 # Format the date with proper time boundaries for the full day
@@ -391,8 +398,6 @@ def create_server(user_id, api_key=None):
                     f"{BASE_URL}/meetings/{arguments['meeting_id']}",
                     params={"schedule_for_reminder": "false"},
                 )
-
-                # For delete operations, Zoom returns 204 No Content
                 if response.status_code == 204:
                     result = {
                         "status": "success",
