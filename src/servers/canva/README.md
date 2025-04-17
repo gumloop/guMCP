@@ -16,20 +16,26 @@ guMCP server implementation for interacting with the **Canva API**.
 
 1. **Go to the [Canva Developers Page](https://www.canva.com/developers/)** and sign in.
 2. Navigate to the **Integrations** tab.
-3. If you haven’t already, complete the **Multi-Factor Authentication (MFA)** setup as it's required to create an integration.
+3. If you haven't already, complete the **Multi-Factor Authentication (MFA)** setup as it's required to create an integration.
 4. Click on **"Create an integration"** and select relevant type from **public** or **private**
 5. Fill out the basic integration details:
    - **Integration name**
    - **Scopes**
-   - **Redirect URI** – e.g. `http://localhost:8080` for local development
+   - **Redirect URI** – e.g. `http://127.0.0.1:8080` for local development
 6. Generate Client Secret:
    - Copy your **Client ID**
    - Click on **Generate Secret** and copy the secret token
-   - Make sure `http://localhost:8080` is listed in the Redirect URIs
+   - Make sure `http://127.0.0.1:8080` is listed in the Redirect URIs
 7. Go to the **Scopes** tab and enable the required scopes:
-   - `design:read`, `design:write`
+   - `app:read`, `app:write`
+   - `design:content:read`, `design:meta:read`, `design:content:write`
+   - `design:permission:read`, `design:permission:write`
    - `folder:read`, `folder:write`
+   - `folder:permission:read`, `folder:permission:write`
+   - `asset:read`, `asset:write`
    - `comment:read`, `comment:write`
+   - `brandtemplate:meta:read`, `brandtemplate:content:read`
+   - `profile:read`
 
 ---
 
@@ -47,7 +53,7 @@ With content like:
 {
   "client_id": "your-client-id",
   "client_secret":"your-client-secret",
-  "redirect_uri": "http://localhost:8080"
+  "redirect_uri": "your-redirect-uri" e.g. `http://127.0.0.1:8080`
 }
 ```
 
@@ -112,9 +118,15 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/canva/local
 ### 📎 Notes
 
 - Ensure your Canva app has the correct **OAuth scopes** enabled:
-  - `design:read`, `design:write`
+  - `app:read`, `app:write`
+  - `design:content:read`, `design:meta:read`, `design:content:write`
+  - `design:permission:read`, `design:permission:write`
   - `folder:read`, `folder:write`
+  - `folder:permission:read`, `folder:permission:write`
+  - `asset:read`, `asset:write`
   - `comment:read`, `comment:write`
+  - `brandtemplate:meta:read`, `brandtemplate:content:read`
+  - `profile:read`
 - If testing with multiple users or environments, use distinct `user_id` values
 - Add any external API keys to a `.env` file if needed
 
