@@ -318,6 +318,7 @@ def create_server(user_id, api_key=None):
                 )
                 response.raise_for_status()
                 result = response.json()
+                result = result.get("meetings", result)
 
             elif name == "list_upcoming_meetings":
                 # Get scheduled meetings and filter for upcoming ones
