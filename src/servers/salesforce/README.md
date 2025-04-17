@@ -33,24 +33,9 @@ Follow these steps to create a Connected App in Salesforce and obtain the creden
 4. **Enable OAuth Settings**
    - Scroll to **API (Enable OAuth Settings)** and check ✅ `Enable OAuth Settings`
    - **Callback URL (redirect URI)**:
-     - (e.g., `http://localhost:8080/callback`)
+     - (e.g., `http://localhost:8080`)
    - **Selected OAuth Scopes**:
-     Add the required scopes: 
-     e.g.
-     ```
-     - full
-     - api
-     - id
-     - profile
-     - email
-     - address
-     - phone
-     - web
-     - refresh_token
-     - offline_access
-     - openid
-     - custom_permissions
-     ```
+     Add the required scopes
 
 5. **Save and Continue**
    - Click **Save**. It may take 2-10 minutes to activate.
@@ -78,7 +63,7 @@ Example content:
   "client_id": "your-client-id",
   "client_secret": "your-client-secret",
   "redirect_uri": "your-redirect-uri",
-  "login_domain":"your-login-domain" #this is optional, add this only if you have custom login subdomain
+  "login_domain":"your-company.my.salesforce.com" # This is optional, add this only if you have custom login subdomain (ex.)
 
 }
 ```
