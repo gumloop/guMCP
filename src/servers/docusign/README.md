@@ -24,8 +24,11 @@ guMCP server implementation for interacting with DocuSign for electronic signatu
    - Under **Authentication**, click **"Add Secret Key"** and copy it (this is your `client_secret`)
    - Under **Redirect URIs**, click **"Add URI"** and add your redirect uri, e.g.:
      ```
-     http://localhost:8080
+     http://localhost:8080/
      ```
+
+- **Note: Make sure to use a _trailing slash_ in the redirect URI**
+
 6. Save all values securely.
 
 ---
@@ -65,17 +68,20 @@ local_auth/credentials/docusign/local_credentials.json
 This server exposes tools grouped into the following categories:
 
 #### 📑 Template Management
+
 - `list_templates` – List templates in your account
 - `get_template` – Get details of a specific template
 - `create_template` – Create a new reusable template
 
 #### ✉️ Envelope Management
+
 - `create_envelope` – Create envelope from templates or files
 - `get_envelope` – Retrieve envelope details
 - `send_envelope` – Send envelope to recipients
 - `get_envelope_status_bulk` – Get statuses for multiple envelopes
 
 #### 👤 User Management
+
 - `create_user` – Add users to your account
 - `list_users` – List users with filtering
 - `get_user` – Get information on a specific user
