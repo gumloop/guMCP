@@ -36,26 +36,20 @@ These credentials will be stored securely for reuse during development.
 This server exposes the following tools for interacting with Snowflake:
 
 #### 📁 Database Management
-- `create_database` – Create a new database
-- `list_databases` – List all databases
-- `use_database` – Switch to a specific database
-- `drop_database` – Drop a database
+- `create_database` – Create a new database in Snowflake
+- `list_databases` – List all databases in Snowflake
 
 #### 📦 Table Management
-- `create_table` – Create a new table with specified columns
-- `list_tables` – List all tables in a given schema
-- `drop_table` – Drop an existing table
-- `describe_table` – View the structure of a table
+- `create_table` – Create a new table in Snowflake with support for constraints and indexes
+- `list_tables` – List all tables in a database with filtering and sorting options
+- `describe_table` – Describe the structure of a table in Snowflake
 
 #### ⚙️ Warehouse Management
-- `create_warehouse` – Create a warehouse with custom size and settings
-- `list_warehouses` – List all configured warehouses
-- `use_warehouse` – Set the current warehouse
+- `create_warehouse` – Create a new warehouse in Snowflake
+- `list_warehouses` – List all warehouses in Snowflake
 
 #### 🔍 Query Execution
-- `execute_query` – Execute raw SQL queries
-- `fetch_query_results` – Retrieve results of a previously executed query
-- `handle_query_errors` – Standardized handling of SQL and connection errors
+- `execute_query` – Execute a SQL query on Snowflake
 
 ---
 

@@ -30,18 +30,14 @@ def authenticate_and_save_snowflake_credentials(user_id):
     account = input(
         "Enter Snowflake account identifier (e.g., abcd.us-east-1): "
     ).strip()
-    database = input("Enter default database: ").strip()
-    warehouse = input("Enter default warehouse: ").strip()
 
-    if not all([username, password, account, database, warehouse]):
+    if not all([username, password, account]):
         raise ValueError("Username, password, and account are required")
 
     credentials = {
         "username": username,
         "password": password,
         "account": account,
-        "database": database,
-        "warehouse": warehouse,
     }
 
     auth_client.save_user_credentials(SERVICE_NAME, user_id, credentials)
