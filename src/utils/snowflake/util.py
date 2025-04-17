@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import logging
 from pathlib import Path
 
@@ -52,5 +53,27 @@ def get_snowflake_credentials(user_id, api_key=None):
         raise ValueError(
             f"Snowflake credentials not found for user {user_id}. Run 'auth' first."
         )
+
+    # Check if we're in the Gumloop environment, as the Snowflake credentials are stored slightly differently
+    if os.environ.get("ENVIRONMENT") == "gumloop":
+        credentials_data = json.loads(credentials_data)
+
+        # If credentials contain metadata, map the fields to the expected format
+        if "metadata" in credentials_data:
+            metadata = credentials_data["metadata"]
+
+            # Create a new credentials dictionary with the expected keys
+            mapped_credentials = {}
+            # Map the metadata fields to the expected keys
+            for item in metadata:
+                if item["name"] == "Account Identifier":
+                    mapped_credentials["account"] = item["value"]
+                elif item["name"] == "Username":
+                    mapped_credentials["username"] = item["value"]
+                elif item["name"] == "Password":
+                    mapped_credentials["password"] = item["value"]
+
+            # Replace the original credentials with the mapped ones
+            credentials_data = mapped_credentials
 
     return credentials_data
