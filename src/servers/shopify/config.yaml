@@ -1,0 +1,7 @@
+name: "Shopify guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Shopify's Admin API using GraphQL"
+documentation_path: "README.md"
+tools:
+  - name: "graphql"
+    description: "Execute GraphQL queries and mutations against the Shopify Admin API"
