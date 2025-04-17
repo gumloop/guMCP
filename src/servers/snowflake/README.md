@@ -25,7 +25,7 @@ You'll be prompted to enter the following:
 
 - Username
 - Password
-- Account identifier (e.g., `abcd.us-east-1`)
+- Account identifier (e.g., `abcd.us-east-1`) - you can find this by following the [Snowflake documentation on account identifiers](https://docs.snowflake.com/en/user-guide/admin-account-identifier#finding-the-organization-and-account-name-for-an-account)
 
 These credentials will be stored securely for reuse during development.
 
@@ -36,19 +36,23 @@ These credentials will be stored securely for reuse during development.
 This server exposes the following tools for interacting with Snowflake:
 
 #### 📁 Database Management
+
 - `create_database` – Create a new database in Snowflake
 - `list_databases` – List all databases in Snowflake
 
 #### 📦 Table Management
+
 - `create_table` – Create a new table in Snowflake with support for constraints and indexes
 - `list_tables` – List all tables in a database with filtering and sorting options
 - `describe_table` – Describe the structure of a table in Snowflake
 
 #### ⚙️ Warehouse Management
+
 - `create_warehouse` – Create a new warehouse in Snowflake
 - `list_warehouses` – List all warehouses in Snowflake
 
 #### 🔍 Query Execution
+
 - `execute_query` – Execute a SQL query on Snowflake
 
 ---

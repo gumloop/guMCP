@@ -11,7 +11,7 @@ SCHEMA_NAME = "PUBLIC"
 async def test_create_database(client):
     response = await client.process_query(
         f"Use the create_database tool to create a new database with name {DB_NAME}."
-        " Respond with 'Database created successfully' followed by 'Database: <database_name>'."
+        " If successful, respond with 'Database created successfully' followed by 'Database: <database_name>'."
     )
     assert (
         "database created successfully" in response.lower()
@@ -26,7 +26,7 @@ async def test_create_table(client):
     response = await client.process_query(
         f"Use the create_table tool to create a new table with name {TABLE_NAME} in the database {DB_NAME} and schema {SCHEMA_NAME}."
         " The table should have columns: id INT, name STRING, email STRING."
-        " Respond with 'Table created successfully' followed by 'Table: <table_name>'."
+        " If successful, respond with 'Table created successfully' followed by 'Table: <table_name>'."
     )
     assert (
         "table created successfully" in response.lower()
@@ -40,7 +40,7 @@ async def test_create_table(client):
 async def test_list_tables(client):
     response = await client.process_query(
         f"Use the list_tables tool to list all tables in the database {DB_NAME}."
-        " Respond with 'Here are all the tables in the database <database_name>:'"
+        " If successful, respond with 'Here are all the tables in the database <database_name>:'"
     )
     assert (
         "here are all the tables in the database" in response.lower()
@@ -54,7 +54,7 @@ async def test_list_tables(client):
 async def test_describe_table(client):
     response = await client.process_query(
         f"Use the describe_table tool to describe the table {TABLE_NAME} in the database {DB_NAME} and schema {SCHEMA_NAME}."
-        " Respond with 'Here is the description of the table <table_name>:'"
+        " If successful, respond with 'Here is the description of the table <table_name>:'"
     )
     assert (
         "here is the description of the table" in response.lower()
@@ -68,7 +68,7 @@ async def test_describe_table(client):
 async def test_create_warehouse(client):
     response = await client.process_query(
         f"Use the create_warehouse tool to create a new warehouse with name {WAREHOUSE_NAME}."
-        " Respond with 'Warehouse created successfully' followed by 'Warehouse: <warehouse_name>'."
+        " If successful, respond with 'Warehouse created successfully' followed by 'Warehouse: <warehouse_name>'."
     )
     assert (
         "warehouse created successfully" in response.lower()
@@ -82,7 +82,7 @@ async def test_create_warehouse(client):
 async def test_list_warehouses(client):
     response = await client.process_query(
         "Use the list_warehouses tool to list all warehouses in Snowflake."
-        " Respond with 'Here are all the warehouses in Snowflake:'"
+        " If successful, respond with 'Here are all the warehouses in Snowflake:'"
     )
     assert (
         "here are all the warehouses in snowflake" in response.lower()
@@ -97,7 +97,7 @@ async def test_execute_query(client):
     response = await client.process_query(
         f"Use the execute_query tool to run the query: INSERT INTO {TABLE_NAME} (id, name, email) VALUES (1, 'John Doe', 'john.doe@example.com')"
         f" in the database {DB_NAME}."
-        " Respond with 'Data inserted successfully' followed by 'Table: <table_name>'."
+        " If successful, respond with 'Data inserted successfully' followed by 'Table: <table_name>'."
     )
     assert (
         "data inserted successfully" in response.lower()
@@ -112,7 +112,7 @@ async def test_execute_query(client):
 async def test_list_databases(client):
     response = await client.process_query(
         "Use the list_databases tool to list all databases in Snowflake."
-        " Respond with 'Here are all the databases in Snowflake:'"
+        " If successful, respond with 'Here are all the databases in Snowflake:'"
     )
     assert (
         "here are all the databases in snowflake" in response.lower()
