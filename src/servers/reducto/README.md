@@ -5,7 +5,7 @@ guMCP server implementation for interacting with Reducto's document processing A
 ### Prerequisites
 
 - Python 3.11+
-- A Reducto API key
+- A Reducto API key (for more information, see https://reducto.ai/)
 
 ### Features
 
