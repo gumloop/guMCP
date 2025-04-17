@@ -6,19 +6,19 @@ logger = logging.getLogger(__name__)
 
 
 def authenticate_and_save_browserbase_key(user_id: str, service_name: str):
-    """Authenticate with Browser Base and save API key"""
-    logger.info("Starting Browser Base authentication for user %s...", user_id)
+    """Authenticate with Browserbase and save API key"""
+    logger.info("Starting Browserbase authentication for user %s...", user_id)
 
     # Get auth client
     auth_client = create_auth_client()
 
     # Prompt user for API key if running locally
-    api_key = input("Please enter your Browser Base API key: ").strip()
+    api_key = input("Please enter your Browserbase API key: ").strip()
 
     if not api_key:
         raise ValueError("API key cannot be empty")
 
-    project_id = input("Please enter your Browser Base Project ID: ").strip()
+    project_id = input("Please enter your Browserbase Project ID: ").strip()
 
     if not project_id:
         raise ValueError("Project key cannot be empty")
@@ -29,7 +29,7 @@ def authenticate_and_save_browserbase_key(user_id: str, service_name: str):
     )
 
     logger.info(
-        "Browser Base API key saved for user %s. You can now run the server.", user_id
+        "Browserbase API key saved for user %s. You can now run the server.", user_id
     )
     return api_key
 
@@ -37,7 +37,7 @@ def authenticate_and_save_browserbase_key(user_id: str, service_name: str):
 async def get_browserbase_credentials(
     user_id: str, service_name: str, api_key: str = None
 ):
-    """Get Browser Base API key for the specified user"""
+    """Get Browserbase API key for the specified user"""
     # Get auth client
     auth_client = create_auth_client(api_key=api_key)
 
@@ -45,7 +45,7 @@ async def get_browserbase_credentials(
     credentials_data = auth_client.get_user_credentials(service_name, user_id)
 
     def handle_missing_credentials():
-        error_str = f"Browser Base API key not found for user {user_id}."
+        error_str = f"Browserbase API key not found for user {user_id}."
         if os.environ.get("ENVIRONMENT", "local") == "local":
             error_str += " Please run authentication first."
         logger.error(error_str)
