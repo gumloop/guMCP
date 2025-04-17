@@ -36,9 +36,9 @@ Create the following file with the relevant attributes for your app:
 
 ```json
 {
-  "client_id": "xxxxxxxxxxxxxxxxxxxxx",
-  "client_secret": "xxxxxxxxxxxxxxxxxxxxx",
-  "redirect_uri": "https://xxxxxxxxxxxxx"
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "redirect_uri": "your-redirect-uri" e.g. `http://localhost:8080`
 }
 ```
 
@@ -86,3 +86,14 @@ python src/servers/local.py --server onedrive --user-id local
    - Generates a sharing link for a file
    - Can create view-only or edit links
    - Requires file path
+
+### 📎 Notes
+
+- Ensure your Microsoft Entra ID application has the correct API permissions (Files.ReadWrite.All) configured.
+- The OAuth configuration file should be kept secure and not committed to version control.
+- Make sure your redirect URI matches exactly what's configured in your Microsoft Entra ID application.
+
+### 📚 Resources
+
+- [Microsoft Graph API Documentation](https://learn.microsoft.com/en-us/graph/overview)
+- [OneDrive API Reference](https://learn.microsoft.com/en-us/onedrive/developer/rest-api/)
