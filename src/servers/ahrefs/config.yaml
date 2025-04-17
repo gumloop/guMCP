@@ -1,0 +1,78 @@
+name: "Ahrefs guMCP Server"
+icon: "assets/icon.png"
+description: "Access Ahrefs SEO and backlink analytics data"
+documentation_path: "README.md"
+tools:
+  # Overview tools
+  - name: "domain_rating"
+    description: "Get domain rating for a domain"
+  - name: "backlinks_stats"
+    description: "Get backlinks statistics for a domain or URL"
+  - name: "outlinks_stats"
+    description: "Get outlinks statistics for a domain or URL"
+  - name: "metrics"
+    description: "Get comprehensive metrics for a domain or URL"
+  - name: "domain_rating_history"
+    description: "Get domain rating history for a domain"
+  - name: "url_rating_history"
+    description: "Get URL rating history for a URL"
+  - name: "refdomains_history"
+    description: "Get referring domains history for a domain or URL"
+  - name: "pages_history"
+    description: "Get pages history for a domain or URL"
+  - name: "metrics_history"
+    description: "Get metrics history for a domain or URL"
+  - name: "keywords_history"
+    description: "Get keywords history for a domain or URL"
+  - name: "total_search_volume_history"
+    description: "Get total search volume history for a domain or URL"
+  
+  # Backlinks profile tools
+  - name: "backlinks"
+    description: "Get backlinks for a domain or URL"
+  - name: "broken_backlinks"
+    description: "Get broken backlinks for a domain or URL"
+  - name: "refdomains"
+    description: "Get referring domains for a domain or URL"
+  - name: "anchors"
+    description: "Get anchor text for a domain or URL"
+  
+  # Organic search tools
+  - name: "organic_keywords"
+    description: "Get organic keywords for a domain or URL"
+  - name: "organic_competitors"
+    description: "Get organic competitors for a domain or URL"
+  - name: "top_pages"
+    description: "Get top organic pages for a domain"
+  
+  # Paid search tools
+  - name: "paid_pages"
+    description: "Get paid pages for a domain or URL"
+  
+  # Pages tools
+  - name: "best_by_external_links"
+    description: "Get pages with the most external links"
+  - name: "best_by_internal_links"
+    description: "Get pages with the most internal links"
+  
+  # Outgoing links tools
+  - name: "linked_domains"
+    description: "Get domains that are linked from the target"
+  - name: "outgoing_external_anchors"
+    description: "Get external anchor texts used in outgoing links"
+  - name: "outgoing_internal_anchors"
+    description: "Get internal anchor texts used in outgoing links"
+  
+  # Keywords Explorer tools
+  - name: "keywords_overview"
+    description: "Get metrics for keywords from Keywords Explorer"
+  - name: "volume_history"
+    description: "Get search volume history for a keyword"
+  - name: "volume_by_country"
+    description: "Get search volume by country for a keyword"
+  - name: "matching_terms"
+    description: "Get matching terms for keywords"
+  - name: "related_terms"
+    description: "Get related terms for keywords"
+  - name: "search_suggestions"
+    description: "Get search suggestions for keywords"
