@@ -1,0 +1,7 @@
+name: "Browserbase guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with headless browsers using Browserbase for web automation and content extraction"
+documentation_path: "README.md"
+tools:
+  - name: "load_webpage_tool"
+    description: "Load a webpage URL in a headless browser using Browserbase"
