@@ -2,43 +2,36 @@
 
 guMCP server implementation for interacting with Shopify's Admin API using GraphQL.
 
-## Features
-
-- GraphQL support for all Shopify Admin API endpoints
-- Create, read, update, and delete products, collections, orders, and more
-- Support for complex queries and mutations through GraphQL
-
 ## Prerequisites
 
 - Python 3.11+
 - A Shopify store (Partner or Development store)
 - A Shopify Custom App with API access
 
+## Creating a Development Store
+
+1. Log in to your Shopify partners dashboard (https://partners.shopify.com/)
+2. Go to **Stores** > **Add store**
+3. Select **Development store**
+4. Fill in the required information:
+   - Store name (will become your `your-store-name.myshopify.com` URL)
+   - Store type (Development store)
+   - Development store purpose (choose appropriate option)
+   - Login credentials
+5. Click **Save** to create your test store
+6. Once created, you can access your development store from the Stores section
+
 ## Setting Up a Shopify Custom App
 
-1. Log in to your Shopify Admin dashboard
-2. Go to **Apps** > **App and sales channel settings**
-3. Click **Develop apps** (you may need to enable Developer Preview in your store)
-4. Click **Create an app**
+1. Log in to your Shopify partners dashboard (https://partners.shopify.com/)
+2. Go to **Apps**
+3. Click **Create an app**
+4. Click on **Create app manually**
 5. Enter a name for your app (e.g. "guMCP Integration")
-6. Select **Custom app** as the app type
-7. Click **Create app**
-
-### Configure API Scopes
-
-1. In your app settings, go to the **Configuration** tab
-2. Click **Configure** in the Admin API section
-3. Select the required API scopes (at minimum, you'll need):
-   - `read_products`, `write_products` for product operations
-   - Add additional scopes as needed for your specific use case
-4. Click **Save**
-
-### Get API Credentials
-
-1. Go to the **API credentials** tab
-2. Click **Install app** to generate API credentials
-3. Note your Admin API access token
-4. In the same page, find the Client ID and Client Secret for OAuth 
+6. Copy the `client id` and `client secrets`
+7. Click on **Choose Distribution** > **Public distribution** 
+8. Click on **Configuration** > Add your desired **Allowed redirection URL**
+9. Select **Store** > select the store you created above
 
 ## Local Authentication
 
@@ -71,3 +64,10 @@ python src/servers/shopify/main.py auth
 ```
 
 This will guide you through the authentication process and save your credentials locally.
+
+## Testing with Development Store
+
+1. Ensure your app is installed on your development store
+2. Update the `custom_subdomain` in your OAuth config to match your development store
+3. Run the authentication flow to generate credentials for your development store
+4. All API calls will now use your development store data, keeping your production data safe

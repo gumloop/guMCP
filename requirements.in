@@ -19,3 +19,6 @@ stripe
 PyGithub
 googlemaps
 dropbox
+browserbase
+playwright
+snowflake-connector-python

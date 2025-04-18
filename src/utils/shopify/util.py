@@ -202,7 +202,7 @@ async def get_service_config(
     if isinstance(credentials, dict) and "custom_subdomain" in credentials:
         return {
             "custom_subdomain": credentials["custom_subdomain"],
-            "api_version": credentials.get("api_version", "2023-10"),
+            "api_version": credentials.get("api_version", "2024-07"),
         }
 
     # If not in credentials, try OAuth config
@@ -211,7 +211,7 @@ async def get_service_config(
         if "custom_subdomain" in oauth_config:
             return {
                 "custom_subdomain": oauth_config["custom_subdomain"],
-                "api_version": oauth_config.get("api_version", "2023-10"),
+                "api_version": oauth_config.get("api_version", "2024-07"),
             }
         else:
             raise ValueError(
