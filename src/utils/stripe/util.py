@@ -43,7 +43,9 @@ def process_stripe_token_response(token_response: Dict[str, Any]) -> Dict[str, A
 
     return {
         "access_token": token_response.get("access_token"),
-        "refresh_token": token_response.get("refresh_token"),  # May be None in test mode
+        "refresh_token": token_response.get(
+            "refresh_token"
+        ),  # May be None in test mode
         "stripe_user_id": token_response.get("stripe_user_id"),
         "stripe_publishable_key": token_response.get("stripe_publishable_key"),
         "scope": token_response.get("scope"),
@@ -73,6 +75,11 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         user_id=user_id,
         service_name=service_name,
         token_url=STRIPE_OAUTH_TOKEN_URL,
-        token_data_builder=lambda *args: {},  # Stripe doesn't support refresh in test mode
+        token_data_builder=lambda oauth_config, refresh_token, credentials: {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_secret": oauth_config.get("client_secret"),
+        },
+        process_token_response=process_stripe_token_response,
         api_key=api_key,
     )

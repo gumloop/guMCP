@@ -152,7 +152,12 @@ def create_starlette_app():
 
                 try:
                     # Increment metrics
-                    active_connections.labels(server=server_name).inc()
+
+                    # Only increment active connections for new sessions
+                    if not session_key in user_server_instances:
+                        active_connections.labels(server=server_name).inc()
+
+                    # Always increment total connections counter
                     connection_total.labels(server=server_name).inc()
 
                     async with sse_transport.connect_sse(

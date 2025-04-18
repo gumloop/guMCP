@@ -38,7 +38,9 @@ async def get_credentials(user_id, api_key=None):
     credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
 
     if not credentials_data:
-        raise ValueError(f"Credentials not found for user {user_id}. Run with 'auth' first.")
+        raise ValueError(
+            f"Credentials not found for user {user_id}. Run with 'auth' first."
+        )
 
     token = credentials_data.get("token")
     if token:
@@ -68,53 +70,91 @@ def create_server(user_id, api_key=None):
             types.Tool(
                 name="get_video_details",
                 description="Get details of a video by ID",
-                inputSchema={"type": "object", "properties": {"video_id": {"type": "string"}}, "required": ["video_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"video_id": {"type": "string"}},
+                    "required": ["video_id"],
+                },
             ),
             types.Tool(
                 name="list_channel_videos",
                 description="List videos for a channel",
-                inputSchema={"type": "object", "properties": {"channel_id": {"type": "string"}}, "required": ["channel_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"channel_id": {"type": "string"}},
+                    "required": ["channel_id"],
+                },
             ),
             types.Tool(
                 name="get_video_statistics",
                 description="Get statistics for a video",
-                inputSchema={"type": "object", "properties": {"video_id": {"type": "string"}}, "required": ["video_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"video_id": {"type": "string"}},
+                    "required": ["video_id"],
+                },
             ),
             types.Tool(
                 name="search_videos",
                 description="Search videos across YouTube",
-                inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}},
+                    "required": ["query"],
+                },
             ),
             types.Tool(
                 name="get_channel_details",
                 description="Get details for a channel",
-                inputSchema={"type": "object", "properties": {"channel_id": {"type": "string"}}, "required": ["channel_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"channel_id": {"type": "string"}},
+                    "required": ["channel_id"],
+                },
             ),
             types.Tool(
                 name="list_channel_playlists",
                 description="List playlists of a channel",
-                inputSchema={"type": "object", "properties": {"channel_id": {"type": "string"}}, "required": ["channel_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"channel_id": {"type": "string"}},
+                    "required": ["channel_id"],
+                },
             ),
             types.Tool(
                 name="get_channel_statistics",
                 description="Get statistics for a channel",
-                inputSchema={"type": "object", "properties": {"channel_id": {"type": "string"}}, "required": ["channel_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"channel_id": {"type": "string"}},
+                    "required": ["channel_id"],
+                },
             ),
             types.Tool(
                 name="list_playlist_items",
                 description="List videos in a playlist",
-                inputSchema={"type": "object", "properties": {"playlist_id": {"type": "string"}}, "required": ["playlist_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"playlist_id": {"type": "string"}},
+                    "required": ["playlist_id"],
+                },
             ),
             types.Tool(
                 name="get_playlist_details",
                 description="Get details of a playlist",
-                inputSchema={"type": "object", "properties": {"playlist_id": {"type": "string"}}, "required": ["playlist_id"]},
+                inputSchema={
+                    "type": "object",
+                    "properties": {"playlist_id": {"type": "string"}},
+                    "required": ["playlist_id"],
+                },
             ),
         ]
 
     @server.call_tool()
     async def handle_call_tool(name: str, arguments: dict | None):
-        logger.info(f"User {server.user_id} calling tool: {name} with arguments: {arguments}")
+        logger.info(
+            f"User {server.user_id} calling tool: {name} with arguments: {arguments}"
+        )
         yt = await create_youtube_service(server.user_id, server.api_key)
 
         if arguments is None:
@@ -122,23 +162,75 @@ def create_server(user_id, api_key=None):
 
         try:
             if name == "get_video_details":
-                result = yt.videos().list(part="snippet,contentDetails", id=arguments["video_id"]).execute()
+                result = (
+                    yt.videos()
+                    .list(part="snippet,contentDetails", id=arguments["video_id"])
+                    .execute()
+                )
             elif name == "list_channel_videos":
-                result = yt.search().list(part="snippet", channelId=arguments["channel_id"], type="video", maxResults=25).execute()
+                result = (
+                    yt.search()
+                    .list(
+                        part="snippet",
+                        channelId=arguments["channel_id"],
+                        type="video",
+                        maxResults=25,
+                    )
+                    .execute()
+                )
             elif name == "get_video_statistics":
-                result = yt.videos().list(part="statistics", id=arguments["video_id"]).execute()
+                result = (
+                    yt.videos()
+                    .list(part="statistics", id=arguments["video_id"])
+                    .execute()
+                )
             elif name == "search_videos":
-                result = yt.search().list(part="snippet", q=arguments["query"], type="video", maxResults=25).execute()
+                result = (
+                    yt.search()
+                    .list(
+                        part="snippet",
+                        q=arguments["query"],
+                        type="video",
+                        maxResults=25,
+                    )
+                    .execute()
+                )
             elif name == "get_channel_details":
-                result = yt.channels().list(part="snippet", id=arguments["channel_id"]).execute()
+                result = (
+                    yt.channels()
+                    .list(part="snippet", id=arguments["channel_id"])
+                    .execute()
+                )
             elif name == "list_channel_playlists":
-                result = yt.playlists().list(part="snippet", channelId=arguments["channel_id"], maxResults=25).execute()
+                result = (
+                    yt.playlists()
+                    .list(
+                        part="snippet", channelId=arguments["channel_id"], maxResults=25
+                    )
+                    .execute()
+                )
             elif name == "get_channel_statistics":
-                result = yt.channels().list(part="statistics", id=arguments["channel_id"]).execute()
+                result = (
+                    yt.channels()
+                    .list(part="statistics", id=arguments["channel_id"])
+                    .execute()
+                )
             elif name == "list_playlist_items":
-                result = yt.playlistItems().list(part="snippet", playlistId=arguments["playlist_id"], maxResults=25).execute()
+                result = (
+                    yt.playlistItems()
+                    .list(
+                        part="snippet",
+                        playlistId=arguments["playlist_id"],
+                        maxResults=25,
+                    )
+                    .execute()
+                )
             elif name == "get_playlist_details":
-                result = yt.playlists().list(part="snippet", id=arguments["playlist_id"]).execute()
+                result = (
+                    yt.playlists()
+                    .list(part="snippet", id=arguments["playlist_id"])
+                    .execute()
+                )
             else:
                 raise ValueError(f"Unknown tool: {name}")
 

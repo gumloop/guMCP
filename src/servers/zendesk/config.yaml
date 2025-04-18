@@ -1,0 +1,13 @@
+name: "Zendesk guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Zendesk tickets, views, and support features"
+documentation_path: "README.md"
+tools:
+  - name: "search_tickets"
+    description: "Search for tickets in Zendesk"
+  - name: "create_ticket"
+    description: "Create a new ticket in Zendesk"
+  - name: "update_ticket"
+    description: "Update an existing ticket in Zendesk"
+  - name: "add_comment"
+    description: "Add a comment to an existing ticket"

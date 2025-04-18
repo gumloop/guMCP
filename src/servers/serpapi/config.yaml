@@ -1,0 +1,11 @@
+name: "SerpAPI guMCP Server"
+icon: "assets/icon.png"
+description: "Perform Google searches using SerpAPI"
+documentation_path: "README.md"
+tools:
+  - name: "google_search"
+    description: "Search Google using SerpAPI"
+  - name: "google_images_search"
+    description: "Search Google Images using SerpAPI"
+  - name: "google_news_search"
+    description: "Search Google News using SerpAPI"

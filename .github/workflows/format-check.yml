@@ -1,0 +1,27 @@
+name: Formatting Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install Black
+        run: |
+          python -m pip install --upgrade pip
+          pip install black
+
+      - name: Check formatting with Black
+        run: |
+          black --check src/ tests/ scripts/

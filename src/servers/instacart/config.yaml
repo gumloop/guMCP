@@ -1,0 +1,9 @@
+name: "Instacart guMCP Server"
+icon: "assets/icon.png"
+description: "Create shopping lists and recipes on Instacart"
+documentation_path: "README.md"
+tools:
+  - name: "create_shopping_list"
+    description: "Create a shopping list page on Instacart"
+  - name: "create_recipe"
+    description: "Create a recipe page on Instacart"
