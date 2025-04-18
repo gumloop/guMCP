@@ -23,7 +23,7 @@ guMCP server implementation for interacting with Microsoft OneDrive.
 ### Local Authentication
 
 1. [Register a new application in Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate%2Cexpose-a-web-api)
-2. Add the required Microsoft Graph API permissions (Files.ReadWrite.All)
+2. Add the required Microsoft Graph API permissions. Add it as a "Delegated" permission. (Files.ReadWrite.All)
 3. Configure a redirect URI for your application (e.g., http://localhost:8080)
 4. Get your application's client ID and client secret
 5. Create an `oauth.json` file:
@@ -59,26 +59,32 @@ python src/servers/local.py --server onedrive --user-id local
 ### Available Tools
 
 1. `list_files`
+
    - Lists files and folders in a specified OneDrive directory
    - Default path is root "/"
 
 2. `upload_file`
+
    - Uploads a local file to OneDrive
    - Requires local file path and destination path
 
 3. `download_file`
+
    - Downloads a file from OneDrive to local storage
    - Requires OneDrive file path and local destination path
 
 4. `create_folder`
+
    - Creates a new folder in OneDrive
    - Requires parent folder path and new folder name
 
 5. `delete_item`
+
    - Deletes a file or folder from OneDrive
    - Requires path to the item to delete
 
 6. `search_files`
+
    - Searches for files in OneDrive
    - Requires search term
 

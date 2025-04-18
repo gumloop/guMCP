@@ -28,10 +28,7 @@ from src.utils.microsoft.util import authenticate_and_save_credentials, get_cred
 
 SERVICE_NAME = Path(__file__).parent.name
 
-SCOPES = [
-    "https://graph.microsoft.com/.default",
-    "offline_access",
-]
+SCOPES = ["https://graph.microsoft.com/Files.ReadWrite.All", "offline_access"]
 
 # Configure logging
 logging.basicConfig(
