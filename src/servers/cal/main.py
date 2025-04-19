@@ -27,33 +27,37 @@ logging.basicConfig(
 )
 logger = logging.getLogger(SERVICE_NAME)
 
+
 def authenticate_and_save_cal_key(user_id):
     logger.info(f"Starting Cal.com authentication for user {user_id}...")
-    
+
     auth_client = create_auth_client()
     api_key = input("Please enter your Cal.com API key: ").strip()
-    
+
     if not api_key:
         raise ValueError("API key cannot be empty")
-    
+
     auth_client.save_user_credentials("cal", user_id, {"api_key": api_key})
-    logger.info(f"Cal.com API key saved for user {user_id}. You can now run the server.")
+    logger.info(
+        f"Cal.com API key saved for user {user_id}. You can now run the server."
+    )
     return api_key
+
 
 async def get_cal_credentials(user_id, api_key=None):
     auth_client = create_auth_client(api_key=api_key)
     credentials_data = auth_client.get_user_credentials("cal", user_id)
-    
+
     def handle_missing_credentials():
         error_str = f"Cal.com API key not found for user {user_id}."
         if os.environ.get("ENVIRONMENT", "local") == "local":
             error_str += " Please run authentication first."
         logging.error(error_str)
         raise ValueError(error_str)
-    
+
     if not credentials_data:
         handle_missing_credentials()
-    
+
     api_key = (
         credentials_data.get("api_key")
         if not isinstance(credentials_data, str)
@@ -61,13 +65,16 @@ async def get_cal_credentials(user_id, api_key=None):
     )
     if not api_key:
         handle_missing_credentials()
-    
+
     return api_key
 
-async def make_cal_request(method, endpoint, data=None, params=None, api_key=None, api_version=None):
+
+async def make_cal_request(
+    method, endpoint, data=None, params=None, api_key=None, api_version=None
+):
     if not api_key:
         raise ValueError("Cal.com API key is required")
-    
+
     url = f"{CAL_API_BASE_URL}/{endpoint}"
     cal_api_version = api_version or DEFAULT_CAL_API_VERSION
     headers = {
@@ -75,7 +82,7 @@ async def make_cal_request(method, endpoint, data=None, params=None, api_key=Non
         "cal-api-version": cal_api_version,
         "Content-Type": "application/json",
     }
-    
+
     try:
         async with httpx.AsyncClient() as client:
             if method.lower() == "get":
@@ -96,7 +103,7 @@ async def make_cal_request(method, endpoint, data=None, params=None, api_key=Non
                 )
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
-            
+
             response.raise_for_status()
             response_json = response.json()
             response_json["_status_code"] = response.status_code
@@ -113,25 +120,23 @@ async def make_cal_request(method, endpoint, data=None, params=None, api_key=Non
         logger.error(f"Error making request to Cal.com API: {str(e)}")
         raise ValueError(f"Error communicating with Cal.com API: {str(e)}")
 
+
 def create_server(user_id, api_key=None):
     server = Server(f"{SERVICE_NAME}-server")
     server.user_id = user_id
     server.api_key = api_key
-    
+
     @server.list_resources()
     async def handle_list_resources(cursor=None) -> list[Resource]:
         return []
-    
+
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
         return [
             Tool(
                 name="get_me",
                 description="Get your Cal.com user profile information",
-                inputSchema={
-                    "type": "object",
-                    "properties": {}
-                }
+                inputSchema={"type": "object", "properties": {}},
             ),
             Tool(
                 name="get_event_types",
@@ -141,28 +146,27 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "username": {
                             "type": "string",
-                            "description": "The username of the user to get event types for. If only username provided will get all event types."
+                            "description": "The username of the user to get event types for. If only username provided will get all event types.",
                         },
                         "eventSlug": {
                             "type": "string",
-                            "description": "Slug of event type to return. If eventSlug is provided then username must be provided too."
+                            "description": "Slug of event type to return. If eventSlug is provided then username must be provided too.",
                         },
                         "usernames": {
                             "type": "string",
-                            "description": "Get dynamic event type for multiple usernames separated by comma. e.g usernames=alice,bob"
+                            "description": "Get dynamic event type for multiple usernames separated by comma. e.g usernames=alice,bob",
                         },
                         "orgSlug": {
                             "type": "string",
-                            "description": "Slug of the user's organization if they are in one. orgId is not required if using this parameter."
+                            "description": "Slug of the user's organization if they are in one. orgId is not required if using this parameter.",
                         },
                         "orgId": {
                             "type": "number",
-                            "description": "ID of the organization. orgSlug is not needed when using this parameter."
-                        }
+                            "description": "ID of the organization. orgSlug is not needed when using this parameter.",
+                        },
                     },
-                    "required": ["username"]
+                    "required": ["username"],
                 },
-               
             ),
             Tool(
                 name="get_booking",
@@ -172,11 +176,11 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "bookingUid": {
                             "type": "string",
-                            "description": "The unique ID of the booking to fetch. Can be uid of a normal booking, uid of a recurring booking recurrence, or uid of a recurring booking which will return an array of all recurrences."
+                            "description": "The unique ID of the booking to fetch. Can be uid of a normal booking, uid of a recurring booking recurrence, or uid of a recurring booking which will return an array of all recurrences.",
                         }
                     },
-                    "required": ["bookingUid"]
-                }
+                    "required": ["bookingUid"],
+                },
             ),
             Tool(
                 name="reschedule_booking",
@@ -186,23 +190,23 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "bookingUid": {
                             "type": "string",
-                            "description": "The unique ID of the booking to reschedule."
+                            "description": "The unique ID of the booking to reschedule.",
                         },
                         "start": {
                             "type": "string",
-                            "description": "Start time in ISO 8601 format for the new booking (e.g., '2024-08-13T10:00:00Z')"
+                            "description": "Start time in ISO 8601 format for the new booking (e.g., '2024-08-13T10:00:00Z')",
                         },
                         "rescheduledBy": {
                             "type": "string",
-                            "description": "Email of the person who is rescheduling the booking (optional)"
+                            "description": "Email of the person who is rescheduling the booking (optional)",
                         },
                         "reschedulingReason": {
                             "type": "string",
-                            "description": "Reason for rescheduling the booking (optional)"
-                        }
+                            "description": "Reason for rescheduling the booking (optional)",
+                        },
                     },
-                    "required": ["bookingUid", "start"]
-                }
+                    "required": ["bookingUid", "start"],
+                },
             ),
             Tool(
                 name="cancel_booking",
@@ -212,19 +216,19 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "bookingUid": {
                             "type": "string",
-                            "description": "The unique ID of the booking to cancel."
+                            "description": "The unique ID of the booking to cancel.",
                         },
                         "cancellationReason": {
                             "type": "string",
-                            "description": "Reason for cancelling the booking (optional)"
+                            "description": "Reason for cancelling the booking (optional)",
                         },
                         "cancelSubsequentBookings": {
                             "type": "boolean",
-                            "description": "For recurring bookings, whether to cancel subsequent bookings too (optional)"
-                        }
+                            "description": "For recurring bookings, whether to cancel subsequent bookings too (optional)",
+                        },
                     },
-                    "required": ["bookingUid"]
-                }
+                    "required": ["bookingUid"],
+                },
             ),
             Tool(
                 name="confirm_booking",
@@ -234,11 +238,11 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "bookingUid": {
                             "type": "string",
-                            "description": "The unique ID of the booking to confirm."
+                            "description": "The unique ID of the booking to confirm.",
                         }
                     },
-                    "required": ["bookingUid"]
-                }
+                    "required": ["bookingUid"],
+                },
             ),
             Tool(
                 name="decline_booking",
@@ -248,15 +252,15 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "bookingUid": {
                             "type": "string",
-                            "description": "The unique ID of the booking to decline."
+                            "description": "The unique ID of the booking to decline.",
                         },
                         "reason": {
                             "type": "string",
-                            "description": "Reason for declining the booking (optional)"
-                        }
+                            "description": "Reason for declining the booking (optional)",
+                        },
                     },
-                    "required": ["bookingUid"]
-                }
+                    "required": ["bookingUid"],
+                },
             ),
             Tool(
                 name="create_booking",
@@ -321,9 +325,7 @@ def create_server(user_id, api_key=None):
                         },
                         "guests": {
                             "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
+                            "items": {"type": "string"},
                             "description": "Optional list of guest emails attending the event",
                         },
                         "instant": {
@@ -343,7 +345,7 @@ def create_server(user_id, api_key=None):
                             "description": "Booking field responses with field slug as keys and user response as values",
                         },
                     },
-                    "required": ["start", "attendee"]
+                    "required": ["start", "attendee"],
                 },
             ),
             Tool(
@@ -356,7 +358,13 @@ def create_server(user_id, api_key=None):
                             "type": "array",
                             "items": {
                                 "type": "string",
-                                "enum": ["upcoming", "recurring", "past", "cancelled", "unconfirmed"],
+                                "enum": [
+                                    "upcoming",
+                                    "recurring",
+                                    "past",
+                                    "cancelled",
+                                    "unconfirmed",
+                                ],
                             },
                             "description": "Filter bookings by status",
                         },
@@ -390,62 +398,87 @@ def create_server(user_id, api_key=None):
             Tool(
                 name="get_schedules",
                 description="Get all schedules from the authenticated user in Cal.com",
-                inputSchema={
-                    "type": "object",
-                    "properties": {}
-                }
+                inputSchema={"type": "object", "properties": {}},
             ),
         ]
-    
+
     @server.call_tool()
     async def handle_call_tool(
         name: str, arguments: dict | None
     ) -> list[TextContent | ImageContent | EmbeddedResource]:
         api_key = await get_cal_credentials(server.user_id, server.api_key)
         arguments = arguments or {}
-        
+
         endpoints = {
             "get_me": {"method": "get", "endpoint": "me"},
             "get_event_types": {"method": "get", "endpoint": "event-types"},
-            "get_booking": {"method": "get", "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}"},
-            "reschedule_booking": {"method": "post", "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/reschedule"},
-            "cancel_booking": {"method": "post", "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/cancel"},
-            "confirm_booking": {"method": "post", "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/confirm", "api_version": "2024-08-13"},
-            "decline_booking": {"method": "post", "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/decline", "api_version": "2024-08-13"},
+            "get_booking": {
+                "method": "get",
+                "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}",
+            },
+            "reschedule_booking": {
+                "method": "post",
+                "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/reschedule",
+            },
+            "cancel_booking": {
+                "method": "post",
+                "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/cancel",
+            },
+            "confirm_booking": {
+                "method": "post",
+                "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/confirm",
+                "api_version": "2024-08-13",
+            },
+            "decline_booking": {
+                "method": "post",
+                "endpoint": lambda args: f"bookings/{args.pop('bookingUid')}/decline",
+                "api_version": "2024-08-13",
+            },
             "create_booking": {"method": "post", "endpoint": "bookings"},
             "get_bookings": {"method": "get", "endpoint": "bookings"},
-            "get_schedules": {"method": "get", "endpoint": "schedules", "api_version": "2024-06-11"},
+            "get_schedules": {
+                "method": "get",
+                "endpoint": "schedules",
+                "api_version": "2024-06-11",
+            },
         }
-        
+
         if name not in endpoints:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
-        
+
         try:
             endpoint_info = endpoints[name]
             method = endpoint_info["method"]
             api_version = endpoint_info.get("api_version")
-            
+
             if callable(endpoint_info["endpoint"]):
                 endpoint = endpoint_info["endpoint"](arguments)
             else:
                 endpoint = endpoint_info["endpoint"]
-            
+
             data = arguments if method in ["post", "patch"] else None
             params = arguments if method in ["get", "delete"] else None
-            
+
             response = await make_cal_request(
-                method, endpoint, data=data, params=params, api_key=api_key, api_version=api_version
+                method,
+                endpoint,
+                data=data,
+                params=params,
+                api_key=api_key,
+                api_version=api_version,
             )
-            
+
             return [TextContent(type="text", text=json.dumps(response, indent=2))]
-        
+
         except Exception as e:
             logger.error(f"Error in tool {name}: {str(e)}")
             return [TextContent(type="text", text=f"Error using {name} tool: {str(e)}")]
-    
+
     return server
 
+
 server = create_server
+
 
 def get_initialization_options(server_instance: Server) -> InitializationOptions:
     return InitializationOptions(
@@ -456,6 +489,7 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
             experimental_capabilities={},
         ),
     )
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
