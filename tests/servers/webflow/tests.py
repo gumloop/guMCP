@@ -18,27 +18,27 @@ TOOL_TESTS = [
         "regex_extractors": {"site_id": r"site_id:\s*([^,\s\n]+)"},
         "description": "list all sites the provided access token can access and return site_id",
     },
-    # {
-    #     "name": "get_site",
-    #     "args_template": 'with site_id="{site_id}"',
-    #     "expected_keywords": ["displayName", "workspaceId"],
-    #     "regex_extractors": {
-    #         "workspace_id": r"workspaceId:\s*([^,\s\n]+)",
-    #     },
-    #     "description": "get details of a specific site by its ID",
-    #     "depends_on": ["site_id"],
-    # },
-    # {
-    #     "name": "get_custom_domains",
-    #     "args_template": 'with site_id="{site_id}"',
-    #     "expected_keywords": ["customDomains"],
-    #     "regex_extractors": {
-    #         "domain_id": r"domain_id:\s*([^,\s\n]+)",
-    #         "domain_url": r"domain_url:\s*([^,\s\n]+)",
-    #     },
-    #     "description": "get a list of all custom domains related to a site",
-    #     "depends_on": ["site_id"],
-    # },
+    {
+        "name": "get_site",
+        "args_template": 'with site_id="{site_id}"',
+        "expected_keywords": ["displayName", "workspaceId"],
+        "regex_extractors": {
+            "workspace_id": r"workspaceId:\s*([^,\s\n]+)",
+        },
+        "description": "get details of a specific site by its ID",
+        "depends_on": ["site_id"],
+    },
+    {
+        "name": "get_custom_domains",
+        "args_template": 'with site_id="{site_id}"',
+        "expected_keywords": ["customDomains"],
+        "regex_extractors": {
+            "domain_id": r"domain_id:\s*([^,\s\n]+)",
+            "domain_url": r"domain_url:\s*([^,\s\n]+)",
+        },
+        "description": "get a list of all custom domains related to a site",
+        "depends_on": ["site_id"],
+    },
     {
         "name": "list_pages",
         "args_template": 'with site_id="{site_id}"',
