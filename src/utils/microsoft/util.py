@@ -43,7 +43,7 @@ def build_microsoft_refresh_data(
     """Build the token refresh data for Microsoft OAuth."""
     return {
         "client_id": oauth_config.get("client_id"),
-        "scope": "https://graph.microsoft.com/Mail.ReadWrite Mail.Send offline_access",
+        "scope": "https://graph.microsoft.com/Mail.ReadWrite Mail.Send offline_access .default",
         "refresh_token": refresh_token,
         "grant_type": "refresh_token",
         "client_secret": oauth_config.get("client_secret"),
