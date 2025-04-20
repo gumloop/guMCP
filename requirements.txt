@@ -7,7 +7,12 @@
 aiohappyeyeballs==2.6.1
     # via aiohttp
 aiohttp==3.11.14
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   aiohttp-retry
+    #   twilio
+aiohttp-retry==2.9.1
+    # via twilio
 aiosignal==1.3.2
     # via aiohttp
 annotated-types==0.7.0
@@ -144,16 +149,16 @@ notion-client==2.3.0
     # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
-playwright==1.51.0
-    # via -r requirements.in
-ply==3.11
-    # via stone
 packaging==24.2
     # via snowflake-connector-python
 platformdirs==4.3.7
     # via snowflake-connector-python
 platformdirs==4.3.7
     # via zeep
+playwright==1.51.0
+    # via -r requirements.in
+ply==3.11
+    # via stone
 prometheus-client==0.21.1
     # via -r requirements.in
 propcache==0.3.1
@@ -195,6 +200,7 @@ pyjwt[crypto]==2.10.1
     #   pygithub
     #   snowflake-connector-python
     #   simple-salesforce
+    #   twilio
 pynacl==1.5.0
     # via pygithub
 pyopenssl==25.0.0
@@ -231,6 +237,7 @@ requests==2.32.3
     #   zeep
 requests-file==2.1.0
     # via zeep
+    #   twilio
 requests-oauthlib==2.0.0
     # via
     #   google-auth-oauthlib
@@ -274,6 +281,8 @@ stripe==12.0.0
     # via -r requirements.in
 tomlkit==0.13.2
     # via snowflake-connector-python
+twilio==9.5.2
+    # via -r requirements.in
 typing-extensions==4.13.0
     # via
     #   anthropic
