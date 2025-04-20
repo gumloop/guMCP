@@ -1,6 +1,6 @@
 # Hunter.io Server
 
-guMCP server implementation for interacting with **Hunter.io**.
+guMCP server implementation for interacting with **Hunter.io** API V2.
 
 ---
 
@@ -86,7 +86,7 @@ This will start the Hunter.io MCP server and make it available for integration a
 You can also start the local client using:
 
 ```bash
-python RemoteMCPTestClient.py --endpoint http://localhost:8000/hunter.io/local
+python RemoteMCPTestClient.py --endpoint http://localhost:8000/hunter_io/local
 ```
 
 ---
@@ -97,7 +97,6 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/hunter.io/local
   - 50 requests per day on the free plan
   - 500 requests per day on the starter plan
   - Custom limits for higher-tier plans
-- If you're testing with multiple users or environments, use different `user_id` values
 - Make sure your `.env` file contains the appropriate API keys if you're using external LLM services like Anthropic
 
 ---
@@ -105,6 +104,3 @@ python RemoteMCPTestClient.py --endpoint http://localhost:8000/hunter.io/local
 ### 📚 Resources
 
 - [Hunter.io API Documentation](https://hunter.io/api/docs)
-- [Hunter.io API Reference](https://hunter.io/api/v2/docs)
-
-
