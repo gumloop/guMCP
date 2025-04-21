@@ -5,7 +5,6 @@ import uuid
 created_campaign_id = None
 created_lead_email = None
 created_schedule_id = None
-enrichment_id = None
 
 
 # Create operations
@@ -60,7 +59,7 @@ async def test_create_schedule(client):
         "timezone": "UTC",
         "start": "09:00",
         "end": "17:00",
-        "weekdays": [1, 2, 3, 4, 5]
+        "weekdays": [1, 2, 3, 4, 5],
     }
 
     response = await client.process_query(
@@ -103,7 +102,7 @@ async def test_create_lead_in_campaign(client):
         "firstName": "Test",
         "lastName": "User",
         "companyName": "Test Company",
-        "email": lead_email
+        "email": lead_email,
     }
 
     response = await client.process_query(
@@ -120,43 +119,6 @@ async def test_create_lead_in_campaign(client):
     print(f"Created lead email: {created_lead_email}")
     print(f"Response: {response}")
     print("✅ create_lead_in_campaign passed.")
-
-
-@pytest.mark.asyncio
-async def test_enrich_data(client):
-    """Enrich lead data using Lemlist's enrichment capabilities.
-
-    Verifies that the enrichment process is started successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    test_email = f"test_{str(uuid.uuid4())}@example.com"
-    enrich_data = {
-        "email": test_email,
-        "firstName": "Test",
-        "lastName": "User",
-        "companyName": "Test Company",
-        "linkedinUrl": "https://linkedin.com/in/testuser",
-        "companyDomain": "testcompany.com",
-        "findEmail": True,
-        "verifyEmail": True,
-        "linkedinEnrichment": True,
-        "findPhone": True
-    }
-
-    response = await client.process_query(
-        f"Use the enrich_data tool to enrich lead data with {enrich_data}. "
-        "If successful, start your response with 'Started enrichment successfully'."
-    )
-
-    assert (
-        "started enrichment successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from enrich_data"
-
-    print(f"Response: {response}")
-    print("✅ enrich_data passed.")
 
 
 # Read operations
@@ -400,30 +362,6 @@ async def test_get_all_unsubscribes(client):
 
 
 @pytest.mark.asyncio
-async def test_get_enrichment(client):
-    """Get enrichment data from Lemlist.
-
-    Verifies that the enrichment data is retrieved successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    # Now get the enrichment data
-    response = await client.process_query(
-        f"Use the get_enrichment tool to fetch enrichment data for enrichId {enrichment_id}. "
-        "If successful, start your response with 'Here is the enrichment data' and then list it."
-    )
-
-    assert (
-        "here is the enrichment data" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from get_enrichment"
-
-    print(f"Response: {response}")
-    print("✅ get_enrichment passed.")
-
-
-@pytest.mark.asyncio
 async def test_get_database_filters(client):
     """Get database filters from Lemlist.
 
@@ -464,7 +402,7 @@ async def test_update_campaign(client):
         "name": campaign_name,
         "stopOnEmailReplied": True,
         "stopOnMeetingBooked": True,
-        "stopOnLinkClicked": True
+        "stopOnLinkClicked": True,
     }
 
     response = await client.process_query(
@@ -499,7 +437,7 @@ async def test_update_schedule(client):
         "timezone": "UTC",
         "start": "10:00",
         "end": "18:00",
-        "weekdays": [1, 2, 3, 4, 5]
+        "weekdays": [1, 2, 3, 4, 5],
     }
 
     response = await client.process_query(
@@ -526,7 +464,9 @@ async def test_associate_schedule_with_campaign(client):
         client: The test client fixture for the MCP server.
     """
     if not created_campaign_id or not created_schedule_id:
-        pytest.skip("No campaign ID or schedule ID available - run create_campaign and create_schedule tests first")
+        pytest.skip(
+            "No campaign ID or schedule ID available - run create_campaign and create_schedule tests first"
+        )
 
     response = await client.process_query(
         f"Use the associate_schedule_with_campaign tool to associate schedule {created_schedule_id} "
@@ -553,7 +493,9 @@ async def test_mark_lead_as_interested_in_campaign(client):
         client: The test client fixture for the MCP server.
     """
     if not created_campaign_id or not created_lead_email:
-        pytest.skip("No campaign ID or lead email available - run create_campaign and create_lead_in_campaign tests first")
+        pytest.skip(
+            "No campaign ID or lead email available - run create_campaign and create_lead_in_campaign tests first"
+        )
 
     response = await client.process_query(
         f"Use the mark_lead_as_interested_in_campaign tool to mark lead {created_lead_email} "
@@ -580,7 +522,9 @@ async def test_mark_lead_as_not_interested_in_campaign(client):
         client: The test client fixture for the MCP server.
     """
     if not created_campaign_id or not created_lead_email:
-        pytest.skip("No campaign ID or lead email available - run create_campaign and create_lead_in_campaign tests first")
+        pytest.skip(
+            "No campaign ID or lead email available - run create_campaign and create_lead_in_campaign tests first"
+        )
 
     response = await client.process_query(
         f"Use the mark_lead_as_not_interested_in_campaign tool to mark lead {created_lead_email} "
@@ -643,9 +587,12 @@ async def test_mark_lead_as_not_interested_all_campaigns(client):
     )
 
     assert (
-        "marked lead as not interested in all campaigns successfully" in response.lower()
+        "marked lead as not interested in all campaigns successfully"
+        in response.lower()
     ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from mark_lead_as_not_interested_all_campaigns"
+    assert (
+        response
+    ), "No response returned from mark_lead_as_not_interested_all_campaigns"
 
     print(f"Response: {response}")
     print("✅ mark_lead_as_not_interested_all_campaigns passed.")
@@ -687,7 +634,9 @@ async def test_delete_lead(client):
         client: The test client fixture for the MCP server.
     """
     if not created_campaign_id or not created_lead_email:
-        pytest.skip("No campaign ID or lead email available - run create_campaign and create_lead_in_campaign tests first")
+        pytest.skip(
+            "No campaign ID or lead email available - run create_campaign and create_lead_in_campaign tests first"
+        )
 
     response = await client.process_query(
         f"Use the delete_lead tool to delete lead {created_lead_email} from campaign {created_campaign_id}. "
@@ -808,6 +757,7 @@ async def test_get_campaign_export_status(client):
     response = await client.process_query(
         f"Use the start_lemlist_campaign_export tool to start export for campaign {created_campaign_id}. "
         "If successful, start your response with 'Started campaign export successfully'."
+        "Provide export ID in format 'ID: <export_id>'."
     )
 
     assert (
@@ -816,7 +766,7 @@ async def test_get_campaign_export_status(client):
 
     # Extract export ID
     try:
-        export_id = response.lower().split("export id: ")[1].split()[0]
+        export_id = response.lower().split(": ")[1].split()[0]
         print(f"Export ID: {export_id}")
     except IndexError:
         pytest.fail("Could not extract export ID from response")
@@ -852,6 +802,7 @@ async def test_export_lemlist_campaign(client):
     response = await client.process_query(
         f"Use the start_lemlist_campaign_export tool to start export for campaign {created_campaign_id}. "
         "If successful, start your response with 'Started campaign export successfully'."
+        "Provide export ID in format 'ID: <export_id>'."
     )
 
     assert (
@@ -860,7 +811,7 @@ async def test_export_lemlist_campaign(client):
 
     # Extract export ID
     try:
-        export_id = response.lower().split("export id: ")[1].split()[0]
+        export_id = response.split("ID: ")[1].split()[0]
         print(f"Export ID: {export_id}")
     except IndexError:
         pytest.fail("Could not extract export ID from response")

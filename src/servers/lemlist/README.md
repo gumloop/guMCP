@@ -93,8 +93,6 @@ This server exposes the following tools for interacting with Lemlist:
 
 #### Enrichment & Database
 
-- `get_enrichment` – Retrieve enriched data from Lemlist using the enrichment ID.
-- `enrich_data` – Start an enrichment process for a lead, including email, LinkedIn, and company data enrichment.
 - `get_database_filters` – Retrieve all available Lemlist database filters for constructing advanced queries.
 
 ---

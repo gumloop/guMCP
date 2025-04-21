@@ -67,10 +67,6 @@ tools:
     description: "Add an email address or domain to Lemlist's unsubscribed list. Domains must start with @ (e.g. @domain.com)."
   - name: "delete_unsubscribe"
     description: "Delete an email address or domain from Lemlist's unsubscribed list. Domains must start with @ (e.g. @domain.com)."
-  # Enrichment & Database
-  - name: "get_enrichment"
-    description: "Retrieve enriched data from Lemlist using the enrichment ID."
-  - name: "enrich_data"
-    description: "Start an enrichment process for a lead, including email, LinkedIn, and company data enrichment."
+  # Database
   - name: "get_database_filters"
     description: "Retrieve all available Lemlist database filters for constructing advanced queries."

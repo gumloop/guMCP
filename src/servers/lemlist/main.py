@@ -671,20 +671,6 @@ def create_server(user_id, api_key=None):
                 },
             ),
             types.Tool(
-                name="get_enrichment",
-                description="Retrieve enriched data from Lemlist using the enrichment ID. Returns detailed enrichment results for a given enrichId.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "enrichId": {
-                            "type": "string",
-                            "description": "The enrichment ID for which to retrieve the enriched data.",
-                        }
-                    },
-                    "required": ["enrichId"],
-                },
-            ),
-            types.Tool(
                 name="get_database_filters",
                 description=(
                     "Retrieve all available Lemlist database filters. "
@@ -692,64 +678,6 @@ def create_server(user_id, api_key=None):
                     "Use these filters to construct advanced queries for leads or companies."
                 ),
                 inputSchema={"type": "object", "properties": {}, "required": []},
-            ),
-            types.Tool(
-                name="enrich_data",
-                description="Enrich lead data using Lemlist's enrichment capabilities. Supports email verification, LinkedIn enrichment, phone finding, and custom lead data.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "description": "The email address of the lead to enrich.",
-                        },
-                        "firstName": {
-                            "type": "string",
-                            "description": "First name of the lead.",
-                        },
-                        "lastName": {
-                            "type": "string",
-                            "description": "Last name of the lead.",
-                        },
-                        "linkedinUrl": {
-                            "type": "string",
-                            "description": "LinkedIn profile URL of the lead.",
-                        },
-                        "companyDomain": {
-                            "type": "string",
-                            "description": "Domain of the lead's company.",
-                        },
-                        "companyName": {
-                            "type": "string",
-                            "description": "Company name of the lead.",
-                        },
-                        "findEmail": {
-                            "type": "boolean",
-                            "description": "If true, will attempt to find the lead's email. Default is false.",
-                            "default": False,
-                        },
-                        "verifyEmail": {
-                            "type": "boolean",
-                            "description": "If true, will verify the existing email (debounce). Default is false.",
-                            "default": False,
-                        },
-                        "linkedinEnrichment": {
-                            "type": "boolean",
-                            "description": "If true, will run LinkedIn enrichment to find verified email. Default is false.",
-                            "default": False,
-                        },
-                        "findPhone": {
-                            "type": "boolean",
-                            "description": "If true, will attempt to find the lead's phone number. Default is false.",
-                            "default": False,
-                        },
-                        "webhookUrl": {
-                            "type": "string",
-                            "description": "Optional webhook URL to receive enrichment results.",
-                        },
-                    },
-                    "required": ["email"],
-                },
             ),
         ]
 
@@ -1303,60 +1231,6 @@ def create_server(user_id, api_key=None):
                     result = {
                         "status": "error",
                         "message": f"Failed to export unsubscribes: {response.text}",
-                    }
-            elif name == "get_enrichment":
-
-                enrichId = arguments.get("enrichId")
-                response = requests.get(
-                    f"{public_host}/enrich/{enrichId}", headers=headers
-                )
-
-                if response.status_code == 200:
-                    result = {"status": "success", "enrichment": response.json()}
-                else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get enrichment: {response.text}",
-                    }
-            elif name == "enrich_data":
-                data = {
-                    "email": arguments.get("email"),
-                    "firstName": arguments.get("firstName"),
-                    "lastName": arguments.get("lastName"),
-                    "linkedinUrl": arguments.get("linkedinUrl"),
-                    "companyDomain": arguments.get("companyDomain"),
-                    "companyName": arguments.get("companyName"),
-                    "findEmail": arguments.get("findEmail", False),
-                    "verifyEmail": arguments.get("verifyEmail", False),
-                    "linkedinEnrichment": arguments.get("linkedinEnrichment", False),
-                    "findPhone": arguments.get("findPhone", False),
-                    "webhookUrl": arguments.get("webhookUrl"),
-                }
-
-                email = data.get("email")
-                firstName = data.get("firstName")
-                lastName = data.get("lastName")
-                linkedinUrl = data.get("linkedinUrl")
-                companyDomain = data.get("companyDomain")
-                companyName = data.get("companyName")
-
-                if not email:
-                    raise ValueError("The 'email' field is required for enrichment.")
-
-                response = requests.post(
-                    f"{public_host}/enrich?verifyEmail=true&email={email}"
-                    f"&linkedinUrl={linkedinUrl or ''}&firstName={firstName or ''}"
-                    f"&lastName={lastName or ''}&companyDomain={companyDomain or ''}"
-                    f"&companyName={companyName or ''}",
-                    headers=headers,
-                )
-
-                if response.status_code == 200:
-                    result = {"status": "success", "enrichmentId": response.json()}
-                else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to start enrichment: {response.text}",
                     }
 
             elif name == "get_database_filters":
