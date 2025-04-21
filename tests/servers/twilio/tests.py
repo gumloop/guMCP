@@ -17,7 +17,9 @@ from_number = ""  # TODO: Add phone number from Twilio
 # Test verification code (for verification tests)
 # The test case for verification code will fail if you run all tests at once as the verification code will a new one each time
 # So run the other tests first to get the service SID, then run the verification code test separately
-test_verification_code = ""  # TODO: Add verification code that was sent to your phone number
+test_verification_code = (
+    ""  # TODO: Add verification code that was sent to your phone number
+)
 
 
 @pytest.mark.asyncio
