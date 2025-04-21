@@ -10,6 +10,7 @@ created_conversation_service_sid = None
 created_video_room_sid = None
 
 # Test phone numbers
+# You can only send messages to verified numbers unless your account is upgraded
 to_number = ""  # TODO: Add your phone number
 from_number = ""  # TODO: Add phone number from Twilio
 
