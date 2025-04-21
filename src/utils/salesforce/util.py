@@ -7,6 +7,8 @@ from pathlib import Path
 from src.utils.oauth.util import (
     run_oauth_flow,
     refresh_token_if_needed,
+    generate_code_verifier,
+    generate_code_challenge,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,11 +43,20 @@ def build_salesforce_auth_params(
     Returns:
         Dictionary of query params for the OAuth URL.
     """
+    # Generate PKCE code verifier and challenge
+    code_verifier = generate_code_verifier()
+    code_challenge = generate_code_challenge(code_verifier)
+
+    # Store code_verifier in oauth_config for later use
+    oauth_config["code_verifier"] = code_verifier
+
     return {
         "client_id": oauth_config.get("client_id"),
         "response_type": "code",
         "redirect_uri": redirect_uri,
         "scope": " ".join(scopes),
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
 
 
@@ -70,6 +81,7 @@ def build_salesforce_token_data(
         "redirect_uri": redirect_uri,
         "client_id": oauth_config.get("client_id"),
         "client_secret": oauth_config.get("client_secret"),
+        "code_verifier": oauth_config.get("code_verifier"),
     }
 
 
