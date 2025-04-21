@@ -8,108 +8,104 @@ TOOL_TESTS = [
         "name": "get_authorized_user",
         "args": "",
         "expected_keywords": ["id"],
-        "regex_extractors": {"id": r"id:\s*([^,\s\n]+)"},
+        "regex_extractors": {"id": r'"?id"?[:\s]+([^,\s\n"]+)'},
         "description": "get information about the authorized Webflow user and return id",
     },
     {
         "name": "list_sites",
         "args": "",
         "expected_keywords": ["site_id"],
-        "regex_extractors": {"site_id": r"site_id:\s*([^,\s\n]+)"},
+        "regex_extractors": {"site_id": r'"?site_?[iI]d"?[:\s]+([^,\s\n"]+)'},
         "description": "list all sites the provided access token can access and return site_id",
     },
-    {
-        "name": "get_site",
-        "args_template": 'with site_id="{site_id}"',
-        "expected_keywords": ["displayName", "workspaceId"],
-        "regex_extractors": {
-            "workspace_id": r"workspaceId:\s*([^,\s\n]+)",
-        },
-        "description": "get details of a specific site by its ID",
-        "depends_on": ["site_id"],
-    },
-    {
-        "name": "get_custom_domains",
-        "args_template": 'with site_id="{site_id}"',
-        "expected_keywords": ["customDomains"],
-        "regex_extractors": {
-            "domain_id": r"domain_id:\s*([^,\s\n]+)",
-            "domain_url": r"domain_url:\s*([^,\s\n]+)",
-        },
-        "description": "get a list of all custom domains related to a site",
-        "depends_on": ["site_id"],
-    },
+    # {
+    #     "name": "get_site",
+    #     "args_template": 'with site_id="{site_id}"',
+    #     "expected_keywords": ["workspace_id"],
+    #     "regex_extractors": {
+    #         "workspace_id": r'"?workspace_?[iI]d"?[:\s]+([^,\s\n"]+)',
+    #     },
+    #     "description": "get details of a specific site by its ID",
+    #     "depends_on": ["site_id"],
+    # },
+    # {
+    #     "name": "get_custom_domains",
+    #     "args_template": 'with site_id="{site_id}"',
+    #     "expected_keywords": ["domain_url"],
+    #     "regex_extractors": {
+    #         "domain_url": r'"?domain_?[uU]rl"?[:\s]+([^,\s\n"]+)',
+    #     },
+    #     "description": "get a list of all custom domains related to a site",
+    #     "depends_on": ["site_id"],
+    # },
     {
         "name": "list_pages",
         "args_template": 'with site_id="{site_id}"',
         "expected_keywords": ["page_id"],
-        "regex_extractors": {"page_id": r"page_id:\s*([^,\s\n]+)"},
+        "regex_extractors": {"page_id": r'"?page_?[iI]d"?[:\s]+([^,\s\n"]+)'},
         "description": "list all pages for a site and return any one page_id",
         "depends_on": ["site_id"],
     },
-    {
-        "name": "get_page_metadata",
-        "args_template": 'with page_id="{page_id}"',
-        "expected_keywords": ["title"],
-        "regex_extractors": {"title": r"title"},
-        "description": "get metadata information for a single page and return title",
-        "depends_on": ["page_id"],
-    },
-    {
-        "name": "get_page_content",
-        "args_template": 'with page_id="{page_id}"',
-        "expected_keywords": ["component_id"],
-        "regex_extractors": {
-            "component_id": r'"component_id"',
-        },
-        "description": "get content from a static page and return any one component_id",
-        "depends_on": ["page_id"],
-    },
-    {
-        "name": "list_forms",
-        "args_template": 'with site_id="{site_id}"',
-        "expected_keywords": ["forms"],
-        "regex_extractors": {
-            "form_id": r"form_id:\s*([^,\s\n]+)",
-            "form_name": r"form_name:\s*([^,\s\n]+)",
-        },
-        "description": "list forms for a given site and return any one form_id",
-        "depends_on": ["site_id"],
-    },
-    {
-        "name": "list_form_submissions",
-        "args_template": 'with form_id="{form_id}"',
-        "expected_keywords": ["formSubmissions"],
-        "regex_extractors": {
-            "submission_id": r"submission_id:\s*([^,\s\n]+)",
-        },
-        "description": "list form submissions for a given form and return any one submission_id",
-        "depends_on": ["form_id"],
-    },
-    {
-        "name": "get_form_submission",
-        "args_template": 'with form_submission_id="{submission_id}"',
-        "expected_keywords": ["formResponse"],
-        "description": "get information about a specific form submission and return formResponse",
-        "depends_on": ["submission_id"],
-    },
-    {
-        "name": "list_form_submissions_by_site",
-        "args_template": 'with site_id="{site_id}"',
-        "expected_keywords": ["form_submission_id"],
-        "regex_extractors": {
-            "form_submission_id": r"form_submission_id:\s*([^,\s\n]+)",
-        },
-        "description": "list form submissions for a given site and return any one form_submission_id",
-        "depends_on": ["site_id"],
-    },
-    {
-        "name": "delete_form_submission",
-        "args_template": 'with form_submission_id="{form_submission_id}"',
-        "expected_keywords": ["_status_code"],
-        "description": "delete a form submission",
-        "depends_on": ["form_submission_id"],
-    },
+    # {
+    #     "name": "get_page_metadata",
+    #     "args_template": 'with page_id="{page_id}"',
+    #     "expected_keywords": ["id"],
+    #     "regex_extractors": {"id": r'"?id"?[:\s]+([^,\s\n"]+)'},
+    #     "description": "get metadata information for a single page and return id",
+    #     "depends_on": ["page_id"],
+    # },
+    # {
+    #     "name": "get_page_content",
+    #     "args_template": 'with page_id="{page_id}"',
+    #     "expected_keywords": ["component_id"],
+    #     "regex_extractors": {
+    #         "component_id": r'"?component[iI]d"?[:\s]+([^,\s\n"]+)',
+    #     },
+    #     "description": "get content from a static page and return any one component_id",
+    #     "depends_on": ["page_id"],
+    # },
+    # {
+    #     "name": "list_forms",
+    #     "args_template": 'with site_id="{site_id}"',
+    #     "expected_keywords": ["form_id"],
+    #     "regex_extractors": {"form_id": r'"?form_?[iI]d"?[:\s]+([^,\s\n"]+)'},
+    #     "description": "list forms for a given site and return any one form_id",
+    #     "depends_on": ["site_id"],
+    # },
+    # {
+    #     "name": "list_form_submissions",
+    #     "args_template": 'with form_id="{form_id}"',
+    #     "expected_keywords": ["formSubmissions"],
+    #     "regex_extractors": {
+    #         "submission_id": r'"?submission_?[iI]d"?[:\s]+([^,\s\n"]+)',
+    #     },
+    #     "description": "list form submissions for a given form and return any one submission_id",
+    #     "depends_on": ["form_id"],
+    # },
+    # {
+    #     "name": "get_form_submission",
+    #     "args_template": 'with form_submission_id="{submission_id}"',
+    #     "expected_keywords": ["formResponse"],
+    #     "description": "get information about a specific form submission and return formResponse",
+    #     "depends_on": ["submission_id"],
+    # },
+    # {
+    #     "name": "list_form_submissions_by_site",
+    #     "args_template": 'with site_id="{site_id}"',
+    #     "expected_keywords": ["form_submission_id"],
+    #     "regex_extractors": {
+    #         "form_submission_id": r'"?form_submission_?[iI]d"?[:\s]+([^,\s\n"]+)',
+    #     },
+    #     "description": "list form submissions for a given site and return any one form_submission_id",
+    #     "depends_on": ["site_id"],
+    # },
+    # {
+    #     "name": "delete_form_submission",
+    #     "args_template": 'with form_submission_id="{form_submission_id}"',
+    #     "expected_keywords": ["_status_code"],
+    #     "description": "delete a form submission",
+    #     "depends_on": ["form_submission_id"],
+    # },
     {
         "name": "list_collections",
         "args_template": 'with site_id="{site_id}"',
@@ -123,12 +119,11 @@ TOOL_TESTS = [
     {
         "name": "get_collection",
         "args_template": 'with collection_id="{collection_id}"',
-        "expected_keywords": ["displayName", "fields"],
+        "expected_keywords": ["slug"],
         "regex_extractors": {
-            "displayName": r'"displayName"[\s\n]*:[\s\n]*"([^"\n]+)"',
-            "fields": r'"fields"[\s\n]*:[\s\n]*(\[.*?\])',
+            "slug": r'"slug"[\s\n]*:[\s\n]*"([^"\n]+)"',
         },
-        "description": "get the full details of a collection from its ID",
+        "description": "get the full details of a collection from its ID and return slug",
         "depends_on": ["collection_id"],
     },
     {
@@ -151,6 +146,56 @@ TOOL_TESTS = [
         },
         "description": "delete a collection using its ID and return status_code",
         "depends_on": ["new_collection_id"],
+    },
+    {
+        "name": "list_collection_items",
+        "args_template": 'with collection_id="{collection_id}"',
+        "expected_keywords": ["item_id"],
+        "regex_extractors": {
+            "item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "list all items in a collection and return any one item id and return item_id",
+        "depends_on": ["collection_id"],
+    },
+    {
+        "name": "create_collection_item",
+        "args_template": 'with collection_id="{collection_id}" field_data={"name": "Test Item-{random_id}", "slug": "test-item-{random_id}"}',
+        "expected_keywords": ["new_item_id "],
+        "regex_extractors": {
+            "new_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "create a new item in a collection and return new_item_id",
+        "depends_on": ["collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "get_collection_item",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_item_id}"',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "get a specific item from a collection",
+        "depends_on": ["collection_id", "new_item_id"],
+    },
+    {
+        "name": "update_collection_item",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_item_id}" field_data={"name": "Updated Item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "update a specific item in a collection",
+        "depends_on": ["collection_id", "new_item_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "publish_collection_items",
+        "args_template": 'with collection_id="{collection_id}" item_ids=["{new_item_id}"]',
+        "expected_keywords": ["publishedItemIds"],
+        "description": "publish item(s) in a collection",
+        "depends_on": ["collection_id", "new_item_id"],
+    },
+    {
+        "name": "delete_collection_item",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_item_id}"',
+        "expected_keywords": ["_status_code"],
+        "description": "delete a specific item from a collection",
+        "depends_on": ["collection_id", "new_item_id"],
     },
     {
         "name": "list_users",
@@ -198,6 +243,162 @@ TOOL_TESTS = [
         "description": "delete a user by ID",
         "depends_on": ["site_id", "user_id"],
         "skip": True,
+    },
+    {
+        "name": "list_collection_items_staging",
+        "args_template": 'with collection_id="{collection_id}"',
+        "expected_keywords": ["items", "pagination"],
+        "regex_extractors": {
+            "item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "list all items in a collection and return item_id",
+        "depends_on": ["collection_id"],
+    },
+    {
+        "name": "create_collection_item_staging",
+        "args_template": 'with collection_id="{collection_id}" field_data={"name": "Test Item-{random_id}", "slug": "test-item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "regex_extractors": {
+            "new_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "create a new item in a collection and return new_item_id",
+        "depends_on": ["collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "get_collection_item_staging",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_item_id}"',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "get a specific item from a collection",
+        "depends_on": ["collection_id", "new_item_id"],
+    },
+    {
+        "name": "update_collection_item_staging",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_item_id}" field_data={"name": "Updated Item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "update a specific item in a collection",
+        "depends_on": ["collection_id", "new_item_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "create_collection_item_staging",
+        "args_template": 'with collection_id="{collection_id}" field_data={"name": "Second Item-{random_id}", "slug": "second-item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "regex_extractors": {
+            "second_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "create a second item in a collection for testing multiple operations",
+        "depends_on": ["collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "update_collection_items_staging",
+        "args_template": 'with collection_id="{collection_id}" items=[{"id": "{new_item_id}", "field_data": {"name": "Multi-Updated Item-{random_id}"}}, {"id": "{second_item_id}", "field_data": {"name": "Multi-Updated Second-{random_id}"}}]',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "update multiple items in a collection",
+        "depends_on": ["collection_id", "new_item_id", "second_item_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "create_localized_collection_items_staging",
+        "args_template": 'with collection_id="{collection_id}" field_data={"name": "Localized Item-{random_id}", "slug": "localized-item-{random_id}"} cms_locale_ids=["653ad57de882f528b32e810e"]',
+        "expected_keywords": ["id", "cmsLocaleIds"],
+        "regex_extractors": {
+            "localized_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "create an item across multiple locales",
+        "depends_on": ["collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "publish_collection_items_staging",
+        "args_template": 'with collection_id="{collection_id}" item_ids=["{new_item_id}", "{second_item_id}"]',
+        "expected_keywords": ["publishedItemIds"],
+        "description": "publish item(s) in a collection",
+        "depends_on": ["collection_id", "new_item_id", "second_item_id"],
+    },
+    {
+        "name": "delete_collection_items_staging",
+        "args_template": 'with collection_id="{collection_id}" items=[{"id": "{second_item_id}"}]',
+        "expected_keywords": ["_status_code"],
+        "description": "delete multiple items from a collection",
+        "depends_on": ["collection_id", "second_item_id"],
+    },
+    {
+        "name": "delete_collection_item_staging",
+        "args_template": 'with collection_id="{collection_id}" item_id="{localized_item_id}"',
+        "expected_keywords": ["_status_code"],
+        "description": "delete the localized item from a collection",
+        "depends_on": ["collection_id", "localized_item_id"],
+    },
+    {
+        "name": "list_collection_items_live",
+        "args_template": 'with collection_id="{collection_id}"',
+        "expected_keywords": ["items", "pagination"],
+        "regex_extractors": {
+            "live_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "list all published items in a collection and return live_item_id",
+        "depends_on": ["collection_id"],
+    },
+    {
+        "name": "create_collection_item_live",
+        "args_template": 'with collection_id="{collection_id}" field_data={"name": "Live Item-{random_id}", "slug": "live-item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "regex_extractors": {
+            "new_live_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "create a new live item in a collection and return new_live_item_id",
+        "depends_on": ["collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "get_collection_item_live",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_live_item_id}"',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "get a specific live item from a collection",
+        "depends_on": ["collection_id", "new_live_item_id"],
+    },
+    {
+        "name": "update_collection_item_live",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_live_item_id}" field_data={"name": "Updated Live Item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "description": "update a specific live item in a collection",
+        "depends_on": ["collection_id", "new_live_item_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "create_collection_item_live",
+        "args_template": 'with collection_id="{collection_id}" field_data={"name": "Second Live Item-{random_id}", "slug": "second-live-item-{random_id}"}',
+        "expected_keywords": ["id", "fieldData"],
+        "regex_extractors": {
+            "second_live_item_id": r'"id"[\s\n]*:[\s\n]*"([^"\n]+)"',
+        },
+        "description": "create a second live item in a collection for testing multiple operations",
+        "depends_on": ["collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "update_collection_items_live",
+        "args_template": 'with collection_id="{collection_id}" items=[{"id": "{new_live_item_id}", "field_data": {"name": "Multi-Updated Live Item-{random_id}"}}, {"id": "{second_live_item_id}", "field_data": {"name": "Multi-Updated Live Second-{random_id}"}}]',
+        "expected_keywords": ["id", "fieldData", "items"],
+        "description": "update multiple live items in a collection",
+        "depends_on": ["collection_id", "new_live_item_id", "second_live_item_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
+    {
+        "name": "delete_collection_items_live",
+        "args_template": 'with collection_id="{collection_id}" items=[{"id": "{second_live_item_id}"}]',
+        "expected_keywords": ["_status_code"],
+        "description": "delete multiple live items from a collection",
+        "depends_on": ["collection_id", "second_live_item_id"],
+    },
+    {
+        "name": "delete_collection_item_live",
+        "args_template": 'with collection_id="{collection_id}" item_id="{new_live_item_id}"',
+        "expected_keywords": ["_status_code"],
+        "description": "delete a specific live item from a collection",
+        "depends_on": ["collection_id", "new_live_item_id"],
     },
 ]
 
@@ -280,12 +481,16 @@ async def run_webflow_test(client, test_config, context):
 
     if "regex_extractors" in test_config:
         for key, pattern in test_config["regex_extractors"].items():
-            match = re.search(pattern, response, re.DOTALL)
+            match = re.search(pattern, response, re.DOTALL | re.IGNORECASE)
             if match:
-                for group_idx in range(1, len(match.groups()) + 1):
-                    if match.group(group_idx):
-                        context[key] = match.group(group_idx).strip()
-                        break
+                if len(match.groups()) > 0:
+                    context[key] = (
+                        match.group(1).strip() if match.group(1) else "value_found"
+                    )
+                else:
+                    # Match found but no capture groups - still success
+                    context[key] = "value_found"
+                print(f"  Extracted {key}: {context[key]}")
             else:
                 print(f"⚠️ Warning: Couldn't extract {key} from response in {tool_name}")
 

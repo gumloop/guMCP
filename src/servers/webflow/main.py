@@ -392,6 +392,508 @@ def create_server(user_id, api_key=None):
                 },
             ),
             Tool(
+                name="list_collection_items_staging",
+                description="List all Items within a Collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a CMS Locale",
+                        },
+                        "offset": {
+                            "type": "number",
+                            "description": "Offset used for pagination if the results have more than limit records",
+                        },
+                        "limit": {
+                            "type": "number",
+                            "description": "Maximum number of records to be returned (max limit: 100)",
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Filter by the exact name of the item(s)",
+                        },
+                        "slug": {
+                            "type": "string",
+                            "description": "Filter by the exact slug of the item",
+                        },
+                        "last_published": {
+                            "type": "object",
+                            "description": "Filter by the last published date of the item(s)",
+                        },
+                        "sort_by": {
+                            "type": "string",
+                            "description": "Sort results by the provided value (lastPublished, name, slug)",
+                        },
+                        "sort_order": {
+                            "type": "string",
+                            "description": "Sorts the results by asc or desc",
+                        },
+                    },
+                    "required": ["collection_id"],
+                },
+            ),
+            Tool(
+                name="get_collection_item_staging",
+                description="Get details of a selected Collection Item",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_id": {
+                            "type": "string",
+                            "description": "Unique identifier for an Item",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a CMS Locale",
+                        },
+                    },
+                    "required": ["collection_id", "item_id"],
+                },
+            ),
+            Tool(
+                name="update_collection_item_staging",
+                description="Update a selected Item in a Collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_id": {
+                            "type": "string",
+                            "description": "Unique identifier for an Item",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Identifier for the locale of the CMS item",
+                        },
+                        "is_archived": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to archived",
+                        },
+                        "is_draft": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to draft",
+                        },
+                        "field_data": {
+                            "type": "object",
+                            "description": "Fields to update for the item",
+                        },
+                    },
+                    "required": ["collection_id", "item_id"],
+                },
+            ),
+            Tool(
+                name="update_collection_items_staging",
+                description="Update a single item or multiple items in a Collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "items": {
+                            "type": "array",
+                            "description": "Array of items to update",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the Item",
+                                    },
+                                    "cms_locale_id": {
+                                        "type": "string",
+                                        "description": "Identifier for the locale of the CMS item",
+                                    },
+                                    "is_archived": {
+                                        "type": "boolean",
+                                        "description": "Boolean determining if the Item is set to archived",
+                                    },
+                                    "is_draft": {
+                                        "type": "boolean",
+                                        "description": "Boolean determining if the Item is set to draft",
+                                    },
+                                    "field_data": {
+                                        "type": "object",
+                                        "description": "Fields to update for the item",
+                                    },
+                                },
+                                "required": ["id"],
+                            },
+                        },
+                    },
+                    "required": ["collection_id", "items"],
+                },
+            ),
+            Tool(
+                name="create_collection_item_staging",
+                description="Create Item in a Collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "is_archived": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to archived",
+                        },
+                        "is_draft": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to draft",
+                        },
+                        "field_data": {
+                            "type": "object",
+                            "description": "Fields for the new item including name and slug",
+                        },
+                    },
+                    "required": ["collection_id", "field_data"],
+                },
+            ),
+            Tool(
+                name="create_localized_collection_items_staging",
+                description="Create an item or multiple items in a CMS Collection across multiple corresponding locales",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "field_data": {
+                            "type": "object",
+                            "description": "Fields for the new item including name and slug",
+                        },
+                        "cms_locale_ids": {
+                            "type": "array",
+                            "description": "Array of identifiers for the locales where the item will be created",
+                            "items": {"type": "string"},
+                        },
+                        "is_archived": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to archived",
+                        },
+                        "is_draft": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to draft",
+                        },
+                    },
+                    "required": ["collection_id", "field_data"],
+                },
+            ),
+            Tool(
+                name="delete_collection_item_staging",
+                description="Delete an item from a collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_id": {
+                            "type": "string",
+                            "description": "Unique identifier for an Item",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a CMS Locale",
+                        },
+                    },
+                    "required": ["collection_id", "item_id"],
+                },
+            ),
+            Tool(
+                name="delete_collection_items_staging",
+                description="Delete Items from a Collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "items": {
+                            "type": "array",
+                            "description": "Array of items to delete",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the Item",
+                                    },
+                                    "cms_locale_id": {
+                                        "type": "string",
+                                        "description": "Identifier for the locale of the CMS item",
+                                    },
+                                },
+                                "required": ["id"],
+                            },
+                        },
+                    },
+                    "required": ["collection_id", "items"],
+                },
+            ),
+            Tool(
+                name="publish_collection_items_staging",
+                description="Publish an item or multiple items",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_ids": {
+                            "type": "array",
+                            "description": "Array of item identifiers to publish",
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "required": ["collection_id", "item_ids"],
+                },
+            ),
+            Tool(
+                name="list_collection_items_live",
+                description="List all published items in a collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a CMS Locale",
+                        },
+                        "offset": {
+                            "type": "number",
+                            "description": "Offset used for pagination if the results have more than limit records",
+                        },
+                        "limit": {
+                            "type": "number",
+                            "description": "Maximum number of records to be returned (max limit: 100)",
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Filter by the exact name of the item(s)",
+                        },
+                        "slug": {
+                            "type": "string",
+                            "description": "Filter by the exact slug of the item",
+                        },
+                        "last_published": {
+                            "type": "object",
+                            "description": "Filter by the last published date of the item(s)",
+                        },
+                        "sort_by": {
+                            "type": "string",
+                            "description": "Sort results by the provided value (lastPublished, name, slug)",
+                        },
+                        "sort_order": {
+                            "type": "string",
+                            "description": "Sorts the results by asc or desc",
+                        },
+                    },
+                    "required": ["collection_id"],
+                },
+            ),
+            Tool(
+                name="get_collection_item_live",
+                description="Get details of a selected Collection live Item",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_id": {
+                            "type": "string",
+                            "description": "Unique identifier for an Item",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a CMS Locale",
+                        },
+                    },
+                    "required": ["collection_id", "item_id"],
+                },
+            ),
+            Tool(
+                name="create_collection_item_live",
+                description="Create item(s) in a collection that will be immediately published to the live site",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "is_archived": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to archived",
+                        },
+                        "is_draft": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to draft",
+                        },
+                        "field_data": {
+                            "type": "object",
+                            "description": "Fields for the new item including name and slug",
+                        },
+                    },
+                    "required": ["collection_id", "field_data"],
+                },
+            ),
+            Tool(
+                name="update_collection_item_live",
+                description="Update a selected live Item in a Collection. The updates will be published to the live site",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_id": {
+                            "type": "string",
+                            "description": "Unique identifier for an Item",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Identifier for the locale of the CMS item",
+                        },
+                        "is_archived": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to archived",
+                        },
+                        "is_draft": {
+                            "type": "boolean",
+                            "description": "Boolean determining if the Item is set to draft",
+                        },
+                        "field_data": {
+                            "type": "object",
+                            "description": "Fields to update for the item",
+                        },
+                    },
+                    "required": ["collection_id", "item_id"],
+                },
+            ),
+            Tool(
+                name="update_collection_items_live",
+                description="Update a single published item or multiple published items in a Collection",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "items": {
+                            "type": "array",
+                            "description": "Array of items to update",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the Item",
+                                    },
+                                    "cms_locale_id": {
+                                        "type": "string",
+                                        "description": "Identifier for the locale of the CMS item",
+                                    },
+                                    "is_archived": {
+                                        "type": "boolean",
+                                        "description": "Boolean determining if the Item is set to archived",
+                                    },
+                                    "is_draft": {
+                                        "type": "boolean",
+                                        "description": "Boolean determining if the Item is set to draft",
+                                    },
+                                    "field_data": {
+                                        "type": "object",
+                                        "description": "Fields to update for the item",
+                                    },
+                                },
+                                "required": ["id"],
+                            },
+                        },
+                    },
+                    "required": ["collection_id", "items"],
+                },
+            ),
+            Tool(
+                name="delete_collection_item_live",
+                description="Remove a live item from the site. Removing a published item will unpublish the item and set it to draft",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "item_id": {
+                            "type": "string",
+                            "description": "Unique identifier for an Item",
+                        },
+                        "cms_locale_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a CMS Locale",
+                        },
+                    },
+                    "required": ["collection_id", "item_id"],
+                },
+            ),
+            Tool(
+                name="delete_collection_items_live",
+                description="Remove an item or multiple items from the live site. This will unpublish the item(s) and set to draft",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "Unique identifier for a Collection",
+                        },
+                        "items": {
+                            "type": "array",
+                            "description": "Array of items to delete",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the Item",
+                                    },
+                                    "cms_locale_id": {
+                                        "type": "string",
+                                        "description": "Identifier for the locale of the CMS item",
+                                    },
+                                },
+                                "required": ["id"],
+                            },
+                        },
+                    },
+                    "required": ["collection_id", "items"],
+                },
+            ),
+            Tool(
                 name="list_users",
                 description="Get a list of users for a site",
                 inputSchema={
@@ -564,6 +1066,183 @@ def create_server(user_id, api_key=None):
             "create_collection": {
                 "method": "post",
                 "endpoint": lambda args: f"/sites/{args.pop('site_id')}/collections",
+            },
+            "list_collection_items_staging": {
+                "method": "get",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                    "last_published": "lastPublished",
+                    "sort_by": "sortBy",
+                    "sort_order": "sortOrder",
+                },
+            },
+            "get_collection_item_staging": {
+                "method": "get",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/{args.pop('item_id')}",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                },
+            },
+            "update_collection_item_staging": {
+                "method": "patch",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/{args.pop('item_id')}",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                    "is_archived": "isArchived",
+                    "is_draft": "isDraft",
+                    "field_data": "fieldData",
+                },
+            },
+            "update_collection_items_staging": {
+                "method": "patch",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items",
+                "param_preprocessing": lambda args: (
+                    {
+                        "items": [
+                            {
+                                "id": item.get("id"),
+                                "cmsLocaleId": item.get("cms_locale_id"),
+                                "isArchived": item.get("is_archived"),
+                                "isDraft": item.get("is_draft"),
+                                "fieldData": item.get("field_data"),
+                            }
+                            for item in args.get("items", [])
+                        ]
+                    }
+                    if "items" in args
+                    else args
+                ),
+            },
+            "create_collection_item_staging": {
+                "method": "post",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items",
+                "param_mapping": {
+                    "is_archived": "isArchived",
+                    "is_draft": "isDraft",
+                    "field_data": "fieldData",
+                },
+            },
+            "create_localized_collection_items_staging": {
+                "method": "post",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/bulk",
+                "param_mapping": {
+                    "cms_locale_ids": "cmsLocaleIds",
+                    "is_archived": "isArchived",
+                    "is_draft": "isDraft",
+                    "field_data": "fieldData",
+                },
+            },
+            "delete_collection_item_staging": {
+                "method": "delete",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/{args.pop('item_id')}",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                },
+            },
+            "delete_collection_items_staging": {
+                "method": "delete",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items",
+                "param_preprocessing": lambda args: (
+                    {
+                        "items": [
+                            {
+                                "id": item.get("id"),
+                                "cmsLocaleId": item.get("cms_locale_id"),
+                            }
+                            for item in args.get("items", [])
+                        ]
+                    }
+                    if "items" in args
+                    else args
+                ),
+            },
+            "publish_collection_items_staging": {
+                "method": "post",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/publish",
+                "param_mapping": {
+                    "item_ids": "itemIds",
+                },
+            },
+            "list_collection_items_live": {
+                "method": "get",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/live",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                    "last_published": "lastPublished",
+                    "sort_by": "sortBy",
+                    "sort_order": "sortOrder",
+                },
+            },
+            "get_collection_item_live": {
+                "method": "get",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/{args.pop('item_id')}/live",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                },
+            },
+            "create_collection_item_live": {
+                "method": "post",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/live",
+                "param_mapping": {
+                    "is_archived": "isArchived",
+                    "is_draft": "isDraft",
+                    "field_data": "fieldData",
+                },
+            },
+            "update_collection_item_live": {
+                "method": "patch",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/{args.pop('item_id')}/live",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                    "is_archived": "isArchived",
+                    "is_draft": "isDraft",
+                    "field_data": "fieldData",
+                },
+            },
+            "update_collection_items_live": {
+                "method": "patch",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/live",
+                "param_preprocessing": lambda args: (
+                    {
+                        "items": [
+                            {
+                                "id": item.get("id"),
+                                "cmsLocaleId": item.get("cms_locale_id"),
+                                "isArchived": item.get("is_archived"),
+                                "isDraft": item.get("is_draft"),
+                                "fieldData": item.get("field_data"),
+                            }
+                            for item in args.get("items", [])
+                        ]
+                    }
+                    if "items" in args
+                    else args
+                ),
+            },
+            "delete_collection_item_live": {
+                "method": "delete",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/{args.pop('item_id')}/live",
+                "param_mapping": {
+                    "cms_locale_id": "cmsLocaleId",
+                },
+            },
+            "delete_collection_items_live": {
+                "method": "delete",
+                "endpoint": lambda args: f"/collections/{args.pop('collection_id')}/items/live",
+                "param_preprocessing": lambda args: (
+                    {
+                        "items": [
+                            {
+                                "id": item.get("id"),
+                                "cmsLocaleId": item.get("cms_locale_id"),
+                            }
+                            for item in args.get("items", [])
+                        ]
+                    }
+                    if "items" in args
+                    else args
+                ),
             },
             "list_users": {
                 "method": "get",
