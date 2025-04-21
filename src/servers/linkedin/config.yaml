@@ -1,0 +1,13 @@
+name: LinkedIn
+icon: assets/icon.png
+description: A server for interacting with LinkedIn's API, enabling users to manage their professional profile, create posts, and engage with their network.
+tools:
+  - name: get_user_info
+    description: Get information about the authenticated user including profile and email
+  - name: create_text_post
+    description: Create a text-only post on LinkedIn
+  - name: create_article_post
+    description: Create a post on LinkedIn with an article
+  - name: create_image_post
+    description: Create a post on LinkedIn with an image
+
