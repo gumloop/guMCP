@@ -348,6 +348,8 @@ async def test_list_conversations(client):
 @pytest.mark.asyncio
 async def test_create_conversation(client):
     """Create a new conversation."""
+    global created_conversation_sid
+
     if not created_conversation_service_sid:
         pytest.skip(
             "No conversation service SID available - run create_conversation_service test first"
@@ -376,18 +378,41 @@ async def test_create_conversation(client):
 
 
 @pytest.mark.asyncio
+async def test_add_conversation_participant(client):
+    """Add a participant to the conversation."""
+    global test_participant_identity
+    test_participant_identity = f"user_{uuid.uuid4()}"  # any unique string
+
+    if not created_conversation_sid:
+        pytest.skip("No conversation SID - run create_conversation test first")
+
+    response = await client.process_query(
+        f"Use the add_conversation_participant tool to add a participant with identity '{test_participant_identity}' "
+        f"to conversation SID {created_conversation_sid} in service SID {created_conversation_service_sid}. "
+        "If successful, start your response with 'Participant added successfully'."
+    )
+
+    assert (
+        "participant added successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+
+    print("✅ add_conversation_participant passed.")
+
+
+@pytest.mark.asyncio
 async def test_send_conversation_message(client):
     """Send a message in a conversation."""
-    if not created_conversation_sid:
+    if not created_conversation_sid or not created_conversation_service_sid:
         pytest.skip(
-            "No conversation SID available - run create_conversation test first"
+            "No conversation SID or service SID available - run create_conversation test first"
         )
 
     body = f"Test message from guMCP Twilio tests {uuid.uuid4()}"
 
     response = await client.process_query(
         f"Use the send_conversation_message tool to send a message in conversation SID {created_conversation_sid} "
-        f"with body '{body}'. If successful, start your response with 'Message sent successfully'."
+        f"with body '{body}' in service SID {created_conversation_service_sid}. "
+        "If successful, start your response with 'Message sent successfully'."
     )
 
     assert (

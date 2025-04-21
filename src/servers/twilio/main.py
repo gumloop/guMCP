@@ -316,11 +316,25 @@ def create_server(user_id: str, api_key: Optional[str] = None):
                 },
             ),
             types.Tool(
+                name="add_conversation_participant",
+                description="Add a Participant to a Conversation",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "service_sid": {"type": "string"},
+                        "conversation_sid": {"type": "string"},
+                        "identity": {"type": "string"},
+                    },
+                    "required": ["conversation_sid", "identity"],
+                },
+            ),
+            types.Tool(
                 name="send_conversation_message",
                 description="Send a Message in a Conversation",
                 inputSchema={
                     "type": "object",
                     "properties": {
+                        "service_sid": {"type": "string"},
                         "conversation_sid": {"type": "string"},
                         "body": {"type": "string"},
                     },
@@ -1099,13 +1113,42 @@ def create_server(user_id: str, api_key: Optional[str] = None):
                         type="text", text=f"Error creating conversation: {str(e)}"
                     )
                 ]
+        if name == "add_conversation_participant":
+            try:
+                service_sid = arguments["service_sid"]
+                conversation_sid = arguments["conversation_sid"]
+                identity = arguments["identity"]
+
+                participant = (
+                    client.conversations.services(service_sid)
+                    .conversations(conversation_sid)
+                    .participants.create(identity=identity)
+                )
+
+                data = process_resource(participant)
+                return [types.TextContent(type="text", text=json.dumps(data, indent=2))]
+            except Exception as e:
+                logger.error(f"Error adding participant: {e}")
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=f"Error adding participant: {str(e)}",
+                    )
+                ]
 
         if name == "send_conversation_message":
             try:
-                m = client.conversations.conversations(
-                    arguments["conversation_sid"]
-                ).messages.create(body=arguments["body"])
-                data = process_resource(m)
+                service_sid = arguments["service_sid"]
+                conversation_sid = arguments["conversation_sid"]
+                body = arguments["body"]
+
+                message = (
+                    client.conversations.services(service_sid)
+                    .conversations(conversation_sid)
+                    .messages.create(body=body)
+                )
+
+                data = process_resource(message)
                 return [types.TextContent(type="text", text=json.dumps(data, indent=2))]
             except Exception as e:
                 logger.error(f"Error sending conversation message: {e}")
