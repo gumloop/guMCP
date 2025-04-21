@@ -1,0 +1,38 @@
+name: "Microsoft Teams guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Microsoft Teams for team management, channels, chats, and meetings"
+documentation_path: "README.md"
+tools:
+  # TEAM MANAGEMENT TOOLS
+  - name: "get_teams"
+    description: "Get the list of teams the user is a member of"
+  - name: "get_team_details"
+    description: "Get details of a specific Microsoft Teams team"
+  # CHANNEL MANAGEMENT TOOLS
+  - name: "get_channels"
+    description: "Get the list of channels in a team"
+  - name: "create_channel"
+    description: "Create a new channel in a team"
+  # CHAT AND MESSAGE TOOLS
+  - name: "get_chats"
+    description: "Get the list of chats for the user"
+  - name: "get_chat_messages"
+    description: "Get messages from a specific chat"
+  - name: "send_chat_message"
+    description: "Send a message in a chat"
+  - name: "get_channel_messages"
+    description: "Get messages from a channel"
+  - name: "send_channel_message"
+    description: "Send a message to a channel"
+  - name: "post_message_reply"
+    description: "Post a reply to a message in a Teams channel"
+  # TEAM MEMBERSHIP TOOLS
+  - name: "get_team_members"
+    description: "Get the list of members in a team"
+  - name: "add_team_member"
+    description: "Add a user to a team"
+  - name: "remove_team_member"
+    description: "Remove a user from a team"
+  # MEETINGS TOOLS
+  - name: "create_meeting"
+    description: "Create a new online meeting in Microsoft Teams"
