@@ -77,6 +77,7 @@ The Twilio server supports a comprehensive set of operations grouped into catego
 - `create_conversation_service`: Create a new conversation service
 - `list_conversations`: List conversations in a service
 - `create_conversation`: Create a new conversation
+- `add_conversation_participant`: Add a participant to a conversation
 - `send_conversation_message`: Send a message in a conversation
 
 ### Video Tools:

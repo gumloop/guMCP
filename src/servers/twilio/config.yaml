@@ -40,6 +40,8 @@ tools:
     description: "List conversations in a service"
   - name: "create_conversation"
     description: "Create a new conversation"
+  - name: "add_conversation_participant"
+    description: "Add a participant to a conversation"
   - name: "send_conversation_message"
     description: "Send a message in a conversation"
   # Video Tools
