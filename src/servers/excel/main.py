@@ -1206,7 +1206,7 @@ server = create_server
 def get_initialization_options(server_instance: Server) -> InitializationOptions:
     """Get the initialization options for the server"""
     return InitializationOptions(
-        server_name="mexcel-server",
+        server_name=f"{SERVICE_NAME}-server",
         server_version="1.0.0",
         capabilities=server_instance.get_capabilities(
             notification_options=NotificationOptions(),
