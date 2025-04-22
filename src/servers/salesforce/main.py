@@ -1,12 +1,9 @@
-import asyncio
 import json
-from typing import Any, Optional
 import os
 from pathlib import Path
 import logging
 import sys
 from simple_salesforce import Salesforce
-from simple_salesforce.exceptions import SalesforceError
 
 project_root = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -17,8 +14,7 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 import mcp.types as types
 from mcp.server import Server, NotificationOptions
 from mcp.server.models import InitializationOptions
-from src.auth.factory import create_auth_client
-from src.utils.salesforce.util import authenticate_and_save_credentials
+from src.utils.salesforce.util import authenticate_and_save_credentials, get_credentials
 
 
 SERVICE_NAME = Path(__file__).parent.name
@@ -47,36 +43,6 @@ logging.basicConfig(
 logger = logging.getLogger(SERVICE_NAME)
 
 
-async def get_credentials(user_id, api_key=None):
-    """
-    Retrieves the OAuth access token for a specific Notion user.
-
-    Args:
-        user_id (str): The identifier of the user.
-        api_key (Optional[str]): Optional API key passed during server creation.
-
-    Returns:
-        str: The access token to authenticate with the Salesforce SDK.
-
-    Raises:
-        ValueError: If credentials are missing or invalid.
-    """
-    auth_client = create_auth_client(api_key=api_key)
-    credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id=user_id)
-
-    def handle_missing():
-        err = f"Salesforce credentials not found for user {user_id}."
-        if os.environ.get("ENVIRONMENT", "local") == "local":
-            err += "Please run with 'auth' argument first."
-        logger.error(err)
-        raise ValueError(err)
-
-    if not credentials_data:
-        handle_missing()
-
-    return credentials_data
-
-
 async def get_salesforce_token(user_id, api_key=None):
     """
     This function is used to get the Salesforce access token for a specific user.
@@ -88,7 +54,7 @@ async def get_salesforce_token(user_id, api_key=None):
     Returns:
         str: The access token to authenticate with the Snowflake API.
     """
-    token = await get_credentials(user_id, api_key)
+    token = await get_credentials(user_id, SERVICE_NAME, api_key)
     return token
 
 

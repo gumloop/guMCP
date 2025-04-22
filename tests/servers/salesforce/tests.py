@@ -1,6 +1,5 @@
 import pytest
 import uuid
-import json
 
 # Global variables to store created record IDs
 created_account_id = None

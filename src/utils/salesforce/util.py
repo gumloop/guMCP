@@ -195,4 +195,5 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         },
         token_header_builder=build_salesforce_token_headers,
         api_key=api_key,
+        return_full_credentials=True,
     )
