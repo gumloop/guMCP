@@ -86,6 +86,8 @@ While many MCP server providers are closed source, and open-source alternatives 
    - Server configuration options
    - Development environment settings
 
+Note: For local usage, by default, the `local_auth` folder should be located in the root of the repository
+
 ## Usage
 
 ### Running SSE Servers
@@ -142,8 +144,9 @@ The following table provides an overview of the current servers implemented in g
 | **Productivity Tools**  |           |                                                                         |                                                      |                                                                 |
 | Airtable                | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/airtable)   | ⚠️ Requires Airtable OAuth application               | [Airtable Docs](/src/servers/airtable/README.md)                |
 | Linear                  | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/linear)     | ⚠️ Requires Linear OAuth application                 | [Linear Docs](/src/servers/linear/README.md)                    |
-| Attio                   | Mixed     | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/attio)      | ⚠️ Requires Attio OAuth application                  | [Attio Docs](/src/servers/attio/README.md)                      |
+| Attio                   | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/attio)      | ⚠️ Requires Attio OAuth application                  | [Attio Docs](/src/servers/attio/README.md)                      |
 | Notion                  | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/notion)     | ⚠️ Requires Notion OAuth application                 | [Notion Docs](/src/servers/notion/README.md)                    |
+| Webflow                 | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Webflow OAuth application                | [Webflow Docs](/src/servers/webflow/README.md)                  |
 | ClickUp                 | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires ClickUp OAuth application                | [ClickUp Docs](/src/servers/clickup/README.md)                  |
 | Dropbox                 | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Dropbox OAuth application                | [Dropbox Docs](/src/servers/dropbox/README.md)                  |
 | OneDrive                | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Microsoft OAuth application              | [OneDrive Docs](/src/servers/onedrive/README.md)                |
@@ -154,11 +157,13 @@ The following table provides an overview of the current servers implemented in g
 | **Business Tools**      |           |                                                                         |                                                      |                                                                 |
 | Apollo                  | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/apollo)     | ✅ Easy - Simple API key setup                       | [Apollo Docs](/src/servers/apollo/README.md)                    |
 | HubSpot                 | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/hubspot)    | ⚠️ Requires HubSpot OAuth application                | [HubSpot Docs](/src/servers/hubspot/README.md)                  |
+| Hunter.io               | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/hunter)     | ✅ Easy - Simple API key setup                       | [Hunter.io Docs](/src/servers/hunter_io/README.md)              |
 | SendGrid                | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/sendgrid)   | ✅ Easy - Simple API key setup                       | [SendGrid Docs](/src/servers/sendgrid/README.md)                |
 | QuickBooks              | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Intuit OAuth application                 | [QuickBooks Docs](/src/servers/quickbooks/README.md)            |
 | Typeform                | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/typeform)   | ✅ Easy - Simple API key setup                       | [Typeform Docs](/src/servers/typeform/README.md)                |
 | Stripe                  | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/stripe)     | ⚠️ Requires Stripe OAuth setup                       | [Stripe Docs](/src/servers/stripe/README.md)                    |
 | Instacart               | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/instacart)  | ✅ Easy - Simple API key setup                       | [Instacart Docs](/src/servers/instacart/README.md)              |
+| PagerDuty               | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires PagerDuty OAuth application              | [PagerDuty Docs](/src/servers/pagerduty/README.md)              |
 | Shopify                 | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Shopify OAuth Application                | [Shopify Docs](/src/servers/shopify/README.md)                  |
 | DocuSign                | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires OAuth setup                              | [DocuSign Docs](/src/servers/docusign/README.md)                |
 | Patreon                 | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Patreon OAuth application                | [Patreon Docs](/src/servers/patreon/README.md)                  |
@@ -175,7 +180,7 @@ The following table provides an overview of the current servers implemented in g
 | Figma                   | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Figma OAuth application                  | [Figma Docs](/src/servers/figma/README.md)                      |
 | GitHub                  | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires GitHub OAuth application                 | [GitHub Docs](/src/servers/github/README.md)                    |
 | Browserbase             | API Key   | ⚠️ Coming soon                                                          | ✅ Easy - Simple API key setup                       | [Browserbase Docs](/src/servers/browserbase/README.md)          |
-| Snowflake               | OAuth 2.0 | ⚠️ Coming soon                                                          | ⚠️ Requires Snowflake Security Integration for OAuth | [Snowflake Docs](/src/servers/snowflake/README.md)              |
+| Snowflake               | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/snowflake)  | ⚠️ Requires Snowflake Security Integration for OAuth | [Snowflake Docs](/src/servers/snowflake/README.md)              |
 | Simple Tools Server     | None      | ✅ No auth required                                                     | ✅ No auth required                                  | [Simple Tools Docs](/src/servers/simple-tools-server/README.md) |
 
 ## Contributing
