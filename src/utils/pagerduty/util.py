@@ -100,7 +100,6 @@ def authenticate_and_save_credentials(
         auth_params_builder=build_pagerduty_auth_params,
         token_data_builder=build_pagerduty_token_data,
         process_token_response=process_pagerduty_token_response,
-        email_from=oauth_config.get("email_from"),
     )
 
 
