@@ -388,7 +388,7 @@ def create_server(user_id, api_key=None):
                     raise ValueError("Missing id parameter")
 
                 company_id = arguments["id"]
-                response = await client.get(f"/companies/{company_id}")
+                response = await client.get(f"/objects/companies/records/{company_id}")
 
                 if response.status_code == 200:
                     company_data = response.json()
