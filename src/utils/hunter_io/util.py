@@ -45,4 +45,7 @@ async def get_hunter_credentials(user_id: str, service_name: str, api_key: str =
     if not credentials_data:
         handle_missing_credentials()
 
+    if os.environ.get("ENVIRONMENT") == "gumloop":
+        return {"api_key": credentials_data}
+
     return credentials_data
