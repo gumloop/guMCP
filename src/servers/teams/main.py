@@ -613,7 +613,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to get chats
                 response = requests.get(
-                    url, headers=teams_client["headers"], params=params
+                    url, headers=teams_client["headers"], params=params, timeout=30
                 )
 
                 # Check if the request was successful
@@ -660,7 +660,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to get chat messages
                 response = requests.get(
-                    url, headers=teams_client["headers"], params=params
+                    url, headers=teams_client["headers"], params=params, timeout=30
                 )
 
                 # Check if the request was successful
@@ -715,7 +715,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to send the message
                 response = requests.post(
-                    url, headers=teams_client["headers"], json=message_data
+                    url, headers=teams_client["headers"], json=message_data, timeout=30
                 )
 
                 # Check if the request was successful
@@ -764,7 +764,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to get channel messages
                 response = requests.get(
-                    url, headers=teams_client["headers"], params=params
+                    url, headers=teams_client["headers"], params=params, timeout=30
                 )
 
                 # Check if the request was successful
@@ -828,7 +828,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to send the message
                 response = requests.post(
-                    url, headers=teams_client["headers"], json=message_data
+                    url, headers=teams_client["headers"], json=message_data, timeout=30
                 )
 
                 # Check if the request was successful
@@ -889,7 +889,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to send the reply
                 response = requests.post(
-                    url, headers=teams_client["headers"], json=reply_data
+                    url, headers=teams_client["headers"], json=reply_data, timeout=30
                 )
 
                 # Check if the request was successful
@@ -932,7 +932,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to get team members
                 response = requests.get(
-                    url, headers=teams_client["headers"], params=params
+                    url, headers=teams_client["headers"], params=params, timeout=30
                 )
 
                 # Check if the request was successful
@@ -992,7 +992,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Make the API request to add the team member
                 response = requests.post(
-                    url, headers=teams_client["headers"], json=member_data
+                    url, headers=teams_client["headers"], json=member_data, timeout=30
                 )
 
                 # Check if the request was successful
@@ -1033,7 +1033,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 members_url = f"{GRAPH_TEAMS_URL}{team_id}/members"
 
                 members_response = requests.get(
-                    members_url, headers=teams_client["headers"]
+                    members_url, headers=teams_client["headers"], timeout=30
                 )
 
                 if members_response.status_code != 200:
@@ -1063,7 +1063,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 url = f"{GRAPH_TEAMS_URL}{team_id}/members/{member_id}"
 
                 # Make the API request to remove the team member
-                response = requests.delete(url, headers=teams_client["headers"])
+                response = requests.delete(
+                    url, headers=teams_client["headers"], timeout=30
+                )
 
                 # Check if the request was successful
                 # DELETE operations return 204 No Content when successful
