@@ -2,7 +2,11 @@ import pytest
 import uuid
 
 # Global variables to store created project and issue IDs
+<<<<<<< Updated upstream
 SITE_NAME = "gumloop"
+=======
+site_name = "gumloop"
+>>>>>>> Stashed changes
 project_key = "TEST" + str(uuid.uuid4())[:4].upper()
 
 created_issue_key = None

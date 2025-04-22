@@ -56,3 +56,69 @@ python src/servers/webflow/main.py auth
 
 This will launch a browser-based authentication flow to obtain and save credentials.
 
+### Available Tools
+
+The Webflow server provides tools to interact with the Webflow API:
+
+#### User Management
+- `get_authorized_user` - Get information about the authorized Webflow user
+- `list_users` - Get a list of users for a site
+- `get_user` - Get a User by ID
+- `delete_user` - Delete a User by ID
+- `invite_user` - Create and invite a user with an email address
+
+#### Site Management
+- `list_sites` - List all sites the access token can access
+- `get_site` - Get details of a specific site by ID
+- `get_custom_domains` - Get a list of all custom domains for a site
+
+#### Forms and Submissions
+- `list_forms` - List forms for a given site
+- `list_form_submissions` - List form submissions for a given form
+- `get_form_submission` - Get information about a specific form submission
+- `list_form_submissions_by_site` - List form submissions for a given site
+- `delete_form_submission` - Delete a form submission
+
+#### Pages
+- `list_pages` - List all pages for a site
+- `get_page_metadata` - Get metadata information for a single page
+- `get_page_content` - Get content from a static page
+
+#### Collections
+- `list_collections` - List all Collections within a Site
+- `get_collection` - Get the full details of a collection from its ID
+- `delete_collection` - Delete a collection using its ID
+- `create_collection` - Create a Collection for a site
+
+### Response Handling
+
+All API responses contain a `_status_code` field that indicates the HTTP status of the request:
+- 200: Success with data
+- 204: Success with no content (common for delete operations)
+- 4xx/5xx: Error conditions
+
+For collection operations:
+- `get_collection` returns collection details including `name`, `slug`, `fields`, etc.
+- `delete_collection` returns a 204 status code on success with no content body
+- When creating or updating collections, verify field validations (e.g., `maxLength`, `pattern`) to avoid errors
+
+### Example Usage
+
+To list all your Webflow sites:
+
+```
+Call the list_sites tool without any parameters.
+```
+
+To get details about a specific site:
+
+```
+Call the get_site tool with the site_id parameter.
+```
+
+To list form submissions:
+
+```
+Call list_form_submissions with the form_id parameter.
+```
+

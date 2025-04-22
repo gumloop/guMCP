@@ -1,4 +1,4 @@
-# QuickBooks Server for guMCP
+f# QuickBooks Server for guMCP
 
 This server provides integration with QuickBooks Online for financial data access and analysis.
 
