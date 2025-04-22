@@ -111,7 +111,9 @@ async def get_site_id_from_url(url: str, sharepoint_client: dict) -> str:
         logger.info(f"Making request to: {request_url}")
 
         # Make the API request
-        response = requests.get(request_url, headers=sharepoint_client["headers"])
+        response = requests.get(
+            request_url, headers=sharepoint_client["headers"], timeout=30
+        )
 
         # Log the response status
         logger.info(f"Response status: {response.status_code}")
@@ -379,20 +381,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
         if arguments is None:
             arguments = {}
 
-        # Ensure arguments is a dictionary - handle string inputs
-        if isinstance(arguments, str):
-            try:
-                arguments = json.loads(arguments)
-            except json.JSONDecodeError:
-                arguments = {"error": "Invalid JSON input"}
-                logger.error(f"Invalid arguments format: {arguments}")
-                return [
-                    types.TextContent(
-                        type="text",
-                        text="Error: Invalid arguments format. Arguments must be a valid JSON object.",
-                    )
-                ]
-
         try:
             if name == "get_users":
                 # Extract parameters for getting users
@@ -419,15 +407,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 if orderby:
                     params["$orderby"] = orderby
-
-                # Log the request details
                 logger.info(f"Making request to {url}")
-                logger.info(f"Headers: {sharepoint['headers']}")
-                logger.info(f"Params: {params}")
 
                 # Make the API request to get users
                 response = requests.get(
-                    url, headers=sharepoint["headers"], params=params
+                    url, headers=sharepoint["headers"], params=params, timeout=30
                 )
 
                 # Log the response status
@@ -499,13 +483,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 if template:
                     list_data["list"] = {"template": template}
 
-                # Log the request details (without sensitive data)
                 logger.info(f"Making request to {url}")
-                logger.info(f"Data: {list_data}")
 
                 # Make the API request to create the list
                 response = requests.post(
-                    url, headers=sharepoint["headers"], json=list_data
+                    url, headers=sharepoint["headers"], json=list_data, timeout=30
                 )
 
                 # Log the response status
@@ -561,12 +543,10 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 else:
                     # Get by title
                     url = f"{GRAPH_SITES_URL}{site_id}/lists/{list_title}"
-
-                # Log the request details
                 logger.info(f"Making request to {url}")
 
                 # Make the API request to get the list
-                response = requests.get(url, headers=sharepoint["headers"])
+                response = requests.get(url, headers=sharepoint["headers"], timeout=30)
 
                 # Log the response status
                 logger.info(f"Response status: {response.status_code}")
@@ -631,15 +611,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Add optional parameters if provided
                 if content_type:
                     item_data["contentType"] = content_type
-
-                # Log the request details
                 logger.info(f"Making request to {url}")
-                logger.info(f"Headers: {sharepoint['headers']}")
-                logger.info(f"Data: {item_data}")
 
                 # Make the API request to create the list item
                 response = requests.post(
-                    url, headers=sharepoint["headers"], json=item_data
+                    url, headers=sharepoint["headers"], json=item_data, timeout=30
                 )
 
                 # Log the response status
@@ -697,13 +673,10 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Build the request URL
                 url = f"{GRAPH_SITES_URL}{site_id}/lists/{list_id}/items/{item_id}"
-
-                # Log the request details
                 logger.info(f"Making request to {url}")
-                logger.info(f"Headers: {sharepoint['headers']}")
 
                 # Make the API request to get the list item
-                response = requests.get(url, headers=sharepoint["headers"])
+                response = requests.get(url, headers=sharepoint["headers"], timeout=30)
 
                 # Log the response status
                 logger.info(f"Response status: {response.status_code}")
@@ -770,15 +743,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Always expand fields to get the list item values
                 params["$expand"] = "fields"
-
-                # Log the request details
                 logger.info(f"Making request to {url}")
-                logger.info(f"Headers: {sharepoint['headers']}")
-                logger.info(f"Params: {params}")
 
                 # Make the API request to get the list items
                 response = requests.get(
-                    url, headers=sharepoint["headers"], params=params
+                    url, headers=sharepoint["headers"], params=params, timeout=30
                 )
 
                 # Log the response status
@@ -845,13 +814,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Build the request URL for deleting the list item
                 url = f"{GRAPH_SITES_URL}{site_id}/lists/{list_id}/items/{item_id}"
-
-                # Log the request details
-                logger.info(f"Making DELETE request to {url}")
-                logger.info(f"Headers: {sharepoint['headers']}")
+                logger.info(f"Making request to {url}")
 
                 # Make the API request to delete the list item
-                response = requests.delete(url, headers=sharepoint["headers"])
+                response = requests.delete(
+                    url, headers=sharepoint["headers"], timeout=30
+                )
 
                 # Log the response status
                 logger.info(f"Response status: {response.status_code}")
