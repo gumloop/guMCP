@@ -78,8 +78,11 @@ frozenlist==1.5.0
     #   aiosignal
 google==3.0.0
     # via -r requirements.in
-google-api-core==2.24.2
-    # via google-api-python-client
+google-api-core[grpc]==2.24.2
+    # via
+    #   google-api-python-client
+    #   google-cloud-bigquery
+    #   google-cloud-core
 google-api-python-client==2.166.0
     # via -r requirements.in
 google-auth==2.38.0
@@ -89,18 +92,36 @@ google-auth==2.38.0
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-cloud-bigquery
+    #   google-cloud-core
 google-auth-httplib2==0.2.0
     # via
     #   -r requirements.in
     #   google-api-python-client
 google-auth-oauthlib==1.2.1
     # via -r requirements.in
+google-cloud-bigquery==3.31.0
+    # via -r requirements.in
+google-cloud-core==2.4.3
+    # via google-cloud-bigquery
+google-crc32c==1.7.1
+    # via google-resumable-media
+google-resumable-media==2.7.2
+    # via google-cloud-bigquery
 googleapis-common-protos==1.69.2
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   grpcio-status
 googlemaps==4.10.0
     # via -r requirements.in
 greenlet==3.1.1
     # via playwright
+grpcio==1.72.0rc1
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.72.0rc1
+    # via google-api-core
 h11==0.14.0
     # via
     #   httpcore
@@ -140,14 +161,16 @@ notion-client==2.3.0
     # via -r requirements.in
 oauthlib==3.2.2
     # via requests-oauthlib
+packaging==24.2
+    # via
+    #   google-cloud-bigquery
+    #   snowflake-connector-python
+platformdirs==4.3.7
+    # via snowflake-connector-python
 playwright==1.51.0
     # via -r requirements.in
 ply==3.11
     # via stone
-packaging==24.2
-    # via snowflake-connector-python
-platformdirs==4.3.7
-    # via snowflake-connector-python
 prometheus-client==0.21.1
     # via -r requirements.in
 propcache==0.3.1
@@ -160,6 +183,7 @@ protobuf==6.30.2
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   grpcio-status
     #   proto-plus
 pyasn1==0.6.1
     # via
@@ -195,7 +219,9 @@ pyopenssl==25.0.0
 pyparsing==3.2.3
     # via httplib2
 python-dateutil==2.9.0.post0
-    # via python-quickbooks
+    # via
+    #   google-cloud-bigquery
+    #   python-quickbooks
 python-dotenv==1.1.0
     # via
     #   -r requirements.in
@@ -209,6 +235,7 @@ requests==2.32.3
     #   -r requirements.in
     #   dropbox
     #   google-api-core
+    #   google-cloud-bigquery
     #   googlemaps
     #   intuit-oauth
     #   pygithub

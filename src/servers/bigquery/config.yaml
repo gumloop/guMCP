@@ -1,0 +1,20 @@
+name: "BigQuery guMCP Server"
+icon: "assets/icon.png"
+description: "Access and interact with Google BigQuery for data analytics and SQL queries"
+documentation_path: "README.md"
+tools:
+  # QUERY TOOLS
+  - name: "run_query"
+    description: "Execute a SQL query on BigQuery and return formatted results"
+  # DATASET MANAGEMENT TOOLS
+  - name: "list_datasets"
+    description: "List all available datasets in the BigQuery project"
+  - name: "get_dataset_info"
+    description: "Get detailed information about a specific dataset"
+  # TABLE MANAGEMENT TOOLS
+  - name: "list_tables"
+    description: "List tables within a specific dataset"
+  - name: "get_table_schema"
+    description: "Get the schema details of a specific table"
+  - name: "preview_table_data"
+    description: "Preview data from a table (first rows)"
