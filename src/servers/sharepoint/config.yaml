@@ -1,0 +1,22 @@
+name: "SharePoint guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with SharePoint for list management, document handling, and user administration"
+documentation_path: "README.md"
+tools:
+  # USER MANAGEMENT TOOLS
+  - name: "get_users"
+    description: "Retrieve user information from Microsoft 365"
+  # LIST MANAGEMENT TOOLS
+  - name: "create_list"
+    description: "Create a new SharePoint list in a specific site"
+  - name: "get_list"
+    description: "Retrieve details of a SharePoint list by ID or title"
+  # LIST ITEM MANAGEMENT TOOLS
+  - name: "create_list_item"
+    description: "Create a new item in a SharePoint list"
+  - name: "get_list_item"
+    description: "Retrieve details of a specific item from a list"
+  - name: "get_list_items"
+    description: "Get all items from a SharePoint list with filtering options"
+  - name: "delete_list_item"
+    description: "Delete a specific item from a SharePoint list"

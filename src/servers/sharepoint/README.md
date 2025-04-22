@@ -1,0 +1,127 @@
+# SharePoint Server
+
+guMCP server implementation for interacting with Microsoft SharePoint for list management, document libraries, and user administration.
+
+---
+
+### 🚀 Prerequisites
+
+- Python 3.11+
+- A **Microsoft 365 account** with access to SharePoint
+- Administrative access for some features (optional)
+
+---
+
+### 🔐 Microsoft Azure App Setup (First-time Setup)
+
+1. **Log in to the [Azure Portal](https://portal.azure.com/)**
+2. Navigate to **Azure Active Directory** → **App registrations** → **New registration**
+3. Fill out:
+   - **Name**: e.g., `MCP SharePoint Integration`
+   - **Supported account types**: Choose the appropriate option based on your needs (typically "Accounts in this organizational directory only")
+   - **Redirect URI**: Select "Web" and enter your redirect URI, e.g.:
+     ```
+     http://localhost:8080/
+     ```
+   - Click **"Register"**
+
+4. After the app is created:
+   - Copy the **Application (client) ID** (this is your `client_id`)
+   - Navigate to **Certificates & secrets** → **New client secret**
+   - Add a description and choose an expiration period
+   - Copy the **Value** of the secret (this is your `client_secret`)
+
+5. Navigate to **API permissions** and add the following permissions:
+   - Microsoft Graph API permissions (all "Delegated" type):
+     - Sites.Read.All
+     - Sites.ReadWrite.All
+     - User.Read.All
+     - User.ReadWrite.All
+     - Directory.Read.All
+     - Sites.Manage.All
+     - Directory.ReadWrite.All
+     - Directory.AccessAsUser.All
+     - User.Read
+     - offline_access
+
+6. Click **"Add permissions"**
+7. Save all values securely.
+
+---
+
+### 📄 Local OAuth Credentials
+
+Create a file named `oauth.json` in your directory (local_auth/oauth_configs/sharepoint/) with the following content:
+
+```json
+{
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "redirect_uri": "your-redirect-uri",
+}
+```
+
+The tenant ID can be found in Azure Active Directory under "Properties" section.
+
+---
+
+### 🔓 Authenticate with SharePoint
+
+Run the following command to initiate the OAuth login:
+
+```bash
+python src/servers/sharepoint/main.py auth
+```
+
+This will open your browser and prompt you to log in to your Microsoft account. After successful authentication, the access credentials will be saved locally to:
+
+```
+local_auth/credentials/sharepoint/local_credentials.json
+```
+
+---
+
+### 🛠 Features
+
+This server exposes tools grouped into the following categories:
+
+#### 👥 User Management
+
+- `get_users` – Get all users from Microsoft 365 with filtering and pagination options
+
+#### 📊 List Management
+
+- `create_list` – Create a new list in SharePoint
+- `get_list` – Get details of a SharePoint list by ID or title
+
+#### 📝 List-Item Management
+
+- `create_list_item` – Create a new item in a SharePoint list
+- `get_list_item` – Get details of a specific item in a SharePoint list
+- `get_list_items` – Get all items from a SharePoint list with filtering and sorting options
+- `delete_list_item` – Delete a specific item from a SharePoint list
+
+---
+
+### ▶️ Running the Server and Client
+
+#### 1. Start the Server
+
+```bash
+./start_sse_dev_server.sh
+```
+
+Make sure you've already authenticated using the `auth` command.
+
+#### 2. Run the Client
+
+```bash
+python tests/clients/RemoteMCPTestClient.py --endpoint=http://localhost:8000/sharepoint/local
+```
+
+---
+
+### 📌 Notes on SharePoint API Usage
+
+- When using `site_url` parameters, provide the full URL to your SharePoint site (e.g., `https://<domain>.sharepoint.com/sites/<site_name>`)
+- Most tools can use either `site_id` or `site_url` for identifying the SharePoint site
