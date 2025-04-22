@@ -914,13 +914,15 @@ def create_server(user_id, api_key=None):
                     else:
                         mapped_params[param_key] = param_value
                 params = mapped_params
-                
+
             # Apply param_mapping to data for POST/PATCH requests
             if data and "param_mapping" in endpoint_info:
                 mapped_data = {}
                 for param_key, param_value in data.items():
                     if param_key in endpoint_info["param_mapping"]:
-                        mapped_data[endpoint_info["param_mapping"][param_key]] = param_value
+                        mapped_data[endpoint_info["param_mapping"][param_key]] = (
+                            param_value
+                        )
                     else:
                         mapped_data[param_key] = param_value
                 data = mapped_data

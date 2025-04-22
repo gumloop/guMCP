@@ -38,7 +38,6 @@ TOOL_TESTS = [
         "description": "get a list of all custom domains related to a site",
         "depends_on": ["site_id"],
     },
-    
     # Pages related tests
     {
         "name": "list_pages",
@@ -61,12 +60,11 @@ TOOL_TESTS = [
         "args_template": 'with page_id="{page_id}"',
         "expected_keywords": ["page_id"],
         "regex_extractors": {
-            "page_id": r'page_id\s*:\s*([^\s]+)',
+            "page_id": r"page_id\s*:\s*([^\s]+)",
         },
         "description": "get content from a static page and return any one page_id",
         "depends_on": ["page_id"],
     },
-    
     # Forms related tests
     {
         "name": "list_forms",
@@ -81,7 +79,7 @@ TOOL_TESTS = [
         "args_template": 'with form_id="{form_id}"',
         "expected_keywords": ["submission_id"],
         "regex_extractors": {
-            "submission_id": r'submission_id\s*:\s*([^\s]+)',
+            "submission_id": r"submission_id\s*:\s*([^\s]+)",
         },
         "description": "list form submissions for a given form and return any one submission_id if empty return empty list []",
         "depends_on": ["form_id"],
@@ -98,7 +96,7 @@ TOOL_TESTS = [
         "args_template": 'with site_id="{site_id}"',
         "expected_keywords": ["form_submission_id"],
         "regex_extractors": {
-            "form_submission_id": r'form_submission_id\s*:\s*([^\s]+)',
+            "form_submission_id": r"form_submission_id\s*:\s*([^\s]+)",
         },
         "description": "list form submissions for a given site and return any one form_submission_id if empty return empty list []",
         "depends_on": ["site_id"],
@@ -110,14 +108,12 @@ TOOL_TESTS = [
         "description": "delete a form submission and return status_code",
         "depends_on": ["form_submission_id"],
     },
-    
     # Collection related tests
     {
         "name": "list_collections",
         "args_template": 'with site_id="{site_id}"',
         "expected_keywords": ["collection_id"],
-        "regex_extractors": {
-            "collection_id": r'collection_id:\s*([^\s]+)'        },
+        "regex_extractors": {"collection_id": r"collection_id:\s*([^\s]+)"},
         "description": "list all collections within a site and return any one collection_id",
         "depends_on": ["site_id"],
     },
@@ -126,7 +122,7 @@ TOOL_TESTS = [
         "args_template": 'with collection_id="{collection_id}"',
         "expected_keywords": ["collection_schema_id"],
         "regex_extractors": {
-            "collection_schema_id": r'collection_schema_id:\s*([^\s]+)',
+            "collection_schema_id": r"collection_schema_id:\s*([^\s]+)",
         },
         "description": "get the full details of a collection from its ID and return collection_schema_id",
         "depends_on": ["collection_id"],
@@ -136,33 +132,28 @@ TOOL_TESTS = [
         "args_template": 'with site_id="{site_id}" displayName="Test Collection-{random_id}" singularName="Test Item-{random_id}" slug="test-collection-{random_id}"',
         "expected_keywords": ["new_collection_id"],
         "regex_extractors": {
-            "new_collection_id":r'new_collection_id:\s*([^\s]+)',
+            "new_collection_id": r"new_collection_id:\s*([^\s]+)",
         },
         "description": "create a new collection for a site and return new new_collection_id",
         "depends_on": ["site_id"],
         "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
     },
-
-
-    
     # Collection items staging tests
+    {
+        "name": "create_collection_item_staging",
+        "args_template": 'with collection_id="{new_collection_id}" with field_data name="Test Item-{random_id}" slug="test-item-{random_id}"',
+        "expected_keywords": ["new_item_id"],
+        "regex_extractors": {"new_item_id": r"new_item_id\s*:\s*([^\s]+)"},
+        "description": "create a new item in a collection and return id as new_item_id",
+        "depends_on": ["new_collection_id"],
+        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
+    },
     {
         "name": "list_collection_items_staging",
         "args_template": 'with collection_id="{collection_id}"',
         "expected_keywords": ["_status_code"],
         "description": "list all items in a collection",
         "depends_on": ["collection_id"],
-    },
-    {
-        "name": "create_collection_item_staging",
-        "args_template": 'with collection_id="{new_collection_id}" with field_data name="Test Item-{random_id}" slug="test-item-{random_id}"',
-        "expected_keywords": ["new_item_id"],
-        "regex_extractors": {
-            "new_item_id": r'new_item_id\s*:\s*([^\s]+)'
-        },
-        "description": "create a new item in a collection and return id as new_item_id",
-        "depends_on": ["new_collection_id"],
-        "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
     },
     {
         "name": "get_collection_item_staging",
@@ -179,8 +170,6 @@ TOOL_TESTS = [
         "depends_on": ["new_collection_id", "new_item_id"],
         "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
     },
-    
-    
     # Cleanup - deleting items first, then collections
     {
         "name": "delete_collection_item_staging",
@@ -199,7 +188,6 @@ TOOL_TESTS = [
         "description": "delete a collection using its ID and return status_code",
         "depends_on": ["new_collection_id"],
     },
-    
     # User related tests (kept as optional/skipped since they might be sensitive)
     {
         "name": "list_users",
@@ -253,12 +241,15 @@ TOOL_TESTS = [
 # Shared context dictionary at module level
 SHARED_CONTEXT = {}
 
+
 @pytest.fixture(scope="module")
 def context():
     return SHARED_CONTEXT
 
+
 def get_test_id(test_config):
     return f"{test_config['name']}_{hash(test_config['description']) % 1000}"
+
 
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
@@ -315,17 +306,23 @@ async def test_webflow_tool(client, context, test_config):
     print(f"Response: {response}")
 
     # Handle common empty result patterns
-    if ("empty" in response.lower() or "[]" in response or "no items" in response.lower() or 
-        "not found" in response.lower() or "custom domain" in response.lower() and "customdomains: []" in response.lower()):
+    if (
+        "empty" in response.lower()
+        or "[]" in response
+        or "no items" in response.lower()
+        or "not found" in response.lower()
+        or "custom domain" in response.lower()
+        and "customdomains: []" in response.lower()
+    ):
         print(f"Empty result detected for {tool_name}, skipping keyword validation")
-        
+
         # Extract any values using regex or set default placeholders
         if "regex_extractors" in test_config:
             for key, pattern in test_config["regex_extractors"].items():
                 if key not in context:
                     context[key] = "empty_list"
                     print(f"Set placeholder for {key}: empty_list")
-        
+
         pytest.skip(f"Empty result from API for {tool_name}")
         return
 
@@ -339,7 +336,7 @@ async def test_webflow_tool(client, context, test_config):
     for keyword in expected_keywords:
         if keyword != "error_message" and keyword.lower() not in response.lower():
             missing_keywords.append(keyword)
-    
+
     if missing_keywords:
         pytest.skip(f"Keywords not found: {', '.join(missing_keywords)}")
         return
