@@ -72,10 +72,6 @@ async def create_teams_client(access_token: str) -> Any:
     # Get the access token and token type from the credentials
     token_type = "Bearer"
 
-    # Check if token type is in lowercase and convert to proper case
-    if token_type.lower() == "bearer":
-        token_type = "Bearer"
-
     logger.info(f"Using token type: {token_type}")
 
     # Standard headers for API requests
