@@ -174,3 +174,8 @@ local_auth
 local_auth/*
 credentials.json
 oauth.keys.json
+
+
+# Cursor
+.cursor/
+.cursor/**

@@ -154,7 +154,7 @@ def create_server(user_id, api_key=None):
             elif uri_str.startswith("attio:///lists/"):
                 list_id = uri_str.replace("attio:///lists/", "")
                 # Get items from the list
-                response = await client.get(f"/lists/{list_id}/records")
+                response = await client.get(f"/lists/{list_id}/entries")
                 if response.status_code == 200:
                     return [
                         ReadResourceContents(
@@ -653,7 +653,7 @@ def create_server(user_id, api_key=None):
                     raise ValueError("Missing list_id parameter")
 
                 list_id = arguments["list_id"]
-                response = await client.get(f"/lists/{list_id}/records")
+                response = await client.get(f"/lists/{list_id}/entries")
 
                 if response.status_code == 200:
                     list_data = response.json()
@@ -692,7 +692,7 @@ def create_server(user_id, api_key=None):
 
                 payload = {"type": record_type, "id": record_id}
 
-                response = await client.post(f"/lists/{list_id}/records", json=payload)
+                response = await client.post(f"/lists/{list_id}/entries", json=payload)
 
                 if response.status_code in (200, 201):
                     result = response.json()
