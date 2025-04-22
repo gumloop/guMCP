@@ -17,6 +17,7 @@ guMCP server implementation for interacting with Microsoft Teams for team manage
 1. **Log in to the [Azure Portal](https://portal.azure.com/)**
 2. Navigate to **Azure Active Directory** → **App registrations** → **New registration**
 3. Fill out:
+
    - **Name**: e.g., `MCP Teams Integration`
    - **Supported account types**: Choose the appropriate option based on your needs (typically "Accounts in this organizational directory only")
    - **Redirect URI**: Select "Web" and enter your redirect URI, e.g.:
@@ -26,12 +27,14 @@ guMCP server implementation for interacting with Microsoft Teams for team manage
    - Click **"Register"**
 
 4. After the app is created:
+
    - Copy the **Application (client) ID** (this is your `client_id`)
    - Navigate to **Certificates & secrets** → **New client secret**
    - Add a description and choose an expiration period
    - Copy the **Value** of the secret (this is your `client_secret`)
 
 5. Navigate to **API permissions** and add the following permissions:
+
    - Microsoft Graph API permissions (all "Delegated" type):
      - User.Read
      - User.ReadBasic.All
@@ -41,6 +44,7 @@ guMCP server implementation for interacting with Microsoft Teams for team manage
      - Chat.ReadWrite
      - ChatMessage.Read
      - ChatMessage.Send
+     - Channel.Create
      - ChannelMessage.Read.All
      - ChannelMessage.Send
      - TeamMember.Read.All

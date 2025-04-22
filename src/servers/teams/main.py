@@ -32,6 +32,7 @@ SCOPES = [
     "Chat.ReadWrite",
     "ChatMessage.Read",
     "ChatMessage.Send",
+    "Channel.Create",
     "ChannelMessage.Read.All",
     "ChannelMessage.Send",
     "TeamMember.Read.All",
