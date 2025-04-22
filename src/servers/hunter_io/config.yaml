@@ -1,0 +1,49 @@
+name: "Hunter.io guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Hunter.io using the Hunter.io API, including email finding and verification, domain and company email searches, lead management, campaign management, and email and company enrichment."
+documentation_path: "README.md"
+tools:
+  - name: domain_search
+    description: Search for all email addresses associated with a given domain.
+  - name: email_finder
+    description: Find a specific email address using domain and name.
+  - name: email_verifier
+    description: Verify the deliverability and validity of an email address.
+  - name: email_count
+    description: Get the count of email addresses Hunter.io has for a given domain.
+  - name: email_enrichment
+    description: Get detailed information about an email address, including social profiles and company details.
+  - name: company_enrichment
+    description: Get detailed information about a company, including size, industry, and social profiles.
+  - name: account_info
+    description: Get your Hunter.io account information and usage statistics.
+  - name: list_leads
+    description: List all leads in your account with optional filtering options.
+  - name: get_lead
+    description: Get detailed information about a specific lead by ID.
+  - name: create_lead
+    description: Create a new lead with detailed contact and company information.
+  - name: update_lead
+    description: Update an existing lead's information.
+  - name: delete_lead
+    description: Delete a lead from your account.
+  - name: list_leads_lists
+    description: Get all leads lists in your account.
+  - name: get_leads_list
+    description: Get a specific leads list by ID.
+  - name: create_leads_list
+    description: Create a new leads list with a name.
+  - name: update_leads_list
+    description: Update a leads list by ID.
+  - name: delete_leads_list
+    description: Delete a leads list by ID.
+  - name: list_campaigns
+    description: List all campaigns in your account.
+  - name: list_campaign_recipients
+    description: List all recipients of a campaign.
+  - name: add_campaign_recipients
+    description: Add recipients to a campaign using emails or lead IDs.
+  - name: cancel_campaign_recipients
+    description: Cancel scheduled emails to recipients in a campaign.
+  - name: start_campaign
+    description: Start a campaign that is in draft state.
