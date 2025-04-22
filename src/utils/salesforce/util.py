@@ -1,3 +1,4 @@
+import os
 import base64
 import logging
 from typing import Dict, List, Any
@@ -182,8 +183,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         A valid access token string.
     """
     token_url = get_salesforce_url(service_name, "token")
-
-    return await refresh_token_if_needed(
+    salesforce_token_data = await refresh_token_if_needed(
         user_id=user_id,
         service_name=service_name,
         token_url=token_url,
@@ -197,3 +197,14 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         api_key=api_key,
         return_full_credentials=True,
     )
+
+    if os.environ.get("ENVIRONMENT", "local") == "gumloop":
+        # For Gumloop environment, construct the instance URL from the custom subdomain
+        salesforce_token_data["instance_url"] = (
+            "https://"
+            + salesforce_token_data["custom_subdomain"]
+            + ".my.salesforce.com"
+        )
+        return salesforce_token_data
+
+    return salesforce_token_data
