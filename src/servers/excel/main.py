@@ -123,7 +123,7 @@ async def make_graph_api_request(
 
 def create_server(user_id, api_key=None):
     """Create a new server instance for Excel operations"""
-    server = Server("mexcel-server")
+    server = Server(f"{SERVICE_NAME}-server")
     server.user_id = user_id
     server.api_key = api_key
 
