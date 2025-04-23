@@ -51,7 +51,7 @@ async def get_credentials(user_id, api_key=None):
     credentials_data = auth_client.get_user_credentials(SERVICE_NAME, user_id)
 
     def handle_missing():
-        err = f"Notion credentials not found for user {user_id}."
+        err = f"Reddit credentials not found for user {user_id}."
         if os.environ.get("ENVIRONMENT", "local") == "local":
             err += " Please run with 'auth' argument first."
         logger.error(err)
