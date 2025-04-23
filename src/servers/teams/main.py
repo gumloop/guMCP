@@ -4,7 +4,7 @@ import json
 import os
 import requests
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, Iterable
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -20,24 +20,23 @@ from src.utils.microsoft.util import (
     get_credentials,
     authenticate_and_save_credentials,
 )
+from mcp.types import (
+    AnyUrl,
+    Resource,
+)
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
     "User.Read",
-    "User.ReadBasic.All",
     "Team.ReadBasic.All",
     "Group.Read.All",
-    "Directory.Read.All",
     "Chat.ReadWrite",
-    "ChatMessage.Read",
-    "ChatMessage.Send",
-    "Channel.Create",
     "ChannelMessage.Read.All",
     "ChannelMessage.Send",
     "TeamMember.Read.All",
     "TeamMember.ReadWrite.All",
-    "Channel.ReadBasic.All",
     "OnlineMeetings.ReadWrite",
     "offline_access",
 ]
@@ -103,6 +102,138 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
     server = Server("teams-server")
     server.user_id = user_id
     server.api_key = api_key
+
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """List Microsoft Teams channels"""
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        credentials = await get_credentials(
+            server.user_id, SERVICE_NAME, api_key=server.api_key
+        )
+
+        teams_client = await create_teams_client(credentials)
+
+        try:
+            # Get list of teams
+            teams_url = GRAPH_BASE_URL + "me/joinedTeams"
+            teams_response = requests.get(
+                teams_url, headers=teams_client["headers"], timeout=30
+            )
+
+            if teams_response.status_code != 200:
+                logger.error(f"Error getting teams: {teams_response.text}")
+                return []
+
+            teams = teams_response.json().get("value", [])
+            resources = []
+
+            # For each team, get its channels
+            for team in teams:
+                team_id = team.get("id")
+                team_name = team.get("displayName", "Unknown Team")
+
+                # Get channels for this team
+                channels_url = f"{GRAPH_TEAMS_URL}{team_id}/channels"
+                channels_response = requests.get(
+                    channels_url, headers=teams_client["headers"], timeout=30
+                )
+
+                if channels_response.status_code != 200:
+                    logger.error(
+                        f"Error getting channels for team {team_id}: {channels_response.text}"
+                    )
+                    continue
+
+                channels = channels_response.json().get("value", [])
+
+                for channel in channels:
+                    channel_id = channel.get("id")
+                    channel_name = channel.get("displayName", "Unknown Channel")
+                    is_private = channel.get("membershipType", "standard") == "private"
+
+                    prefix = "private" if is_private else "channel"
+                    resource = Resource(
+                        uri=f"teams://{prefix}/{team_id}/{channel_id}",
+                        mimeType="text/plain",
+                        name=f"#{team_name}/{channel_name}",
+                        description=f"{'Private' if is_private else 'Public'} Teams channel: #{team_name}/{channel_name}",
+                    )
+                    resources.append(resource)
+            logger.info(f"Found {len(resources)} {resource} resources")
+            return resources
+
+        except Exception as e:
+            logger.error(f"Error listing Teams channels: {e}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read messages from a Teams channel"""
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        credentials = await get_credentials(
+            server.user_id, SERVICE_NAME, api_key=server.api_key
+        )
+
+        teams_client = await create_teams_client(credentials)
+
+        uri_str = str(uri)
+        if not uri_str.startswith("teams://"):
+            raise ValueError(f"Invalid Teams URI: {uri_str}")
+
+        # Parse the URI to get channel type, team ID and channel ID
+        parts = uri_str.replace("teams://", "").split("/")
+        if len(parts) != 3:
+            raise ValueError(f"Invalid Teams URI format: {uri_str}")
+
+        channel_type, team_id, channel_id = parts
+
+        try:
+            # Get channel messages
+            messages_url = f"{GRAPH_TEAMS_URL}{team_id}/channels/{channel_id}/messages"
+            response = requests.get(
+                messages_url, headers=teams_client["headers"], timeout=30
+            )
+
+            if response.status_code != 200:
+                error_message = f"Error reading channel messages: {response.text}"
+                logger.error(error_message)
+                return [
+                    ReadResourceContents(content=error_message, mime_type="text/plain")
+                ]
+
+            messages = response.json().get("value", [])
+
+            # Format messages
+            formatted_messages = []
+            for message in messages:
+                timestamp = message.get("createdDateTime", "")
+                sender = (
+                    message.get("from", {})
+                    .get("user", {})
+                    .get("displayName", "Unknown")
+                )
+                content = message.get("body", {}).get("content", "")
+
+                formatted_message = f"[{timestamp}] {sender}: {content}"
+                formatted_messages.append(formatted_message)
+
+            # Reverse to get chronological order
+            formatted_messages.reverse()
+            content = "\n".join(formatted_messages)
+
+            return [ReadResourceContents(content=content, mime_type="text/plain")]
+
+        except Exception as e:
+            logger.error(f"Error reading Teams channel: {e}")
+            return [
+                ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
