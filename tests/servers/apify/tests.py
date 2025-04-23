@@ -6,7 +6,8 @@ created_actor_id = None
 created_task_id = None
 
 # Add a dataset ID for testing delete_dataset
-dataset_id = "nyHeRjgWwzqgDTPRU"
+# You can create a dataset and find the dataset ID in the apify UI
+dataset_id = ""
 
 
 @pytest.mark.asyncio
