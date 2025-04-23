@@ -37,19 +37,13 @@ guMCP server implementation for interacting with Microsoft Teams for team manage
 
    - Microsoft Graph API permissions (all "Delegated" type):
      - User.Read
-     - User.ReadBasic.All
      - Team.ReadBasic.All
      - Group.Read.All
-     - Directory.Read.All
      - Chat.ReadWrite
-     - ChatMessage.Read
-     - ChatMessage.Send
-     - Channel.Create
      - ChannelMessage.Read.All
      - ChannelMessage.Send
      - TeamMember.Read.All
      - TeamMember.ReadWrite.All
-     - Channel.ReadBasic.All
      - OnlineMeetings.ReadWrite
      - offline_access
 
@@ -102,6 +96,7 @@ This server exposes tools grouped into the following categories:
 
 #### Channel Management
 
+- `create_team` – Create a new Microsoft Teams team
 - `get_channels` – Get the list of channels in a team
 - `create_channel` – Create a new channel in a team
 

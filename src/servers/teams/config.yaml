@@ -4,6 +4,8 @@ description: "Interact with Microsoft Teams for team management, channels, chats
 documentation_path: "README.md"
 tools:
   # TEAM MANAGEMENT TOOLS
+  - name: "create_team"
+    description: "Create a new Microsoft Teams team"
   - name: "get_teams"
     description: "Get the list of teams the user is a member of"
   - name: "get_team_details"
