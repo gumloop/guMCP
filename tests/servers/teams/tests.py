@@ -13,7 +13,7 @@ chat_id = ""  # Hardcoded chat ID for testing
 test_user_email = ""  # Hardcoded test user email for testing
 
 
-# ===== RESOURCE Operations =====
+# ===== LIST RESOURCE Operations =====
 
 
 @pytest.mark.asyncio
@@ -29,17 +29,6 @@ async def test_list_resources(client):
         print(f"  - {i}: {resource.name} ({resource.uri}) {resource.description}")
 
     print("✅ Successfully listed channels")
-
-
-@pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading a resource from Teams"""
-    list_response = await client.list_resources()
-    channel_url = list_response.resources[0].uri
-    response = await client.read_resource(channel_url)
-    assert response, "No response returned from read_resource"
-    print(f"Response: {response}")
-    print("✅ read_resource passed.")
 
 
 # ===== CREATE Operations =====
@@ -510,3 +499,17 @@ async def test_remove_team_member(client):
 
     print(f"Response: {response}")
     print("✅ remove_team_member passed.")
+
+
+# ===== READ RESOURCE Operations =====
+
+
+@pytest.mark.asyncio
+async def test_read_resource(client):
+    """Test reading a resource from Teams"""
+    list_response = await client.list_resources()
+    channel_url = list_response.resources[0].uri
+    response = await client.read_resource(channel_url)
+    assert response, "No response returned from read_resource"
+    print(f"Response: {response}")
+    print("✅ read_resource passed.")
