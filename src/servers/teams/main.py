@@ -110,6 +110,24 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
         tools = [
             # TEAM MANAGEMENT TOOLS
             types.Tool(
+                name="create_team",
+                description="Create a new Microsoft Teams team",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the team to create (required)",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Optional description for the team",
+                        },
+                    },
+                    "required": ["name"],
+                },
+            ),
+            types.Tool(
                 name="get_teams",
                 description="Get the list of teams the user is a member of",
                 inputSchema={
@@ -142,7 +160,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             ),
             # CHANNEL MANAGEMENT TOOLS
             types.Tool(
-                name="get_channels",
+                name="get_team_channels",
                 description="Get the list of channels in a team",
                 inputSchema={
                     "type": "object",
@@ -156,7 +174,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 },
             ),
             types.Tool(
-                name="create_channel",
+                name="create_team_channel",
                 description="Create a new channel in a team",
                 inputSchema={
                     "type": "object",
@@ -233,7 +251,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 },
             ),
             types.Tool(
-                name="get_channel_messages",
+                name="get_team_channel_messages",
                 description="Get messages from a channel",
                 inputSchema={
                     "type": "object",
@@ -255,7 +273,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 },
             ),
             types.Tool(
-                name="send_channel_message",
+                name="send_team_channel_message",
                 description="Send a message to a channel",
                 inputSchema={
                     "type": "object",
@@ -333,7 +351,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "user_id": {
                             "type": "string",
-                            "description": "The ID of the user to add to the team",
+                            "description": "The ID of the user to add to the team or email of the user to add",
                         },
                         "roles": {
                             "type": "array",
@@ -356,7 +374,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "user_id": {
                             "type": "string",
-                            "description": "The ID of the user to remove from the team",
+                            "description": "The ID or email of the user to remove from the team",
                         },
                     },
                     "required": ["team_id", "user_id"],
@@ -416,7 +434,85 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             arguments = {}
 
         try:
-            if name == "get_teams":
+            if name == "create_team":
+                # Extract parameters
+                name = arguments.get("name")
+                description = arguments.get("description", "Team created via Graph API")
+
+                # Validate required parameters
+                if not name:
+                    return [
+                        types.TextContent(type="text", text="Error: name is required")
+                    ]
+
+                # Step 1: Create a Microsoft 365 Group
+                group_url = GRAPH_GROUPS_URL
+                group_data = {
+                    "displayName": name,
+                    "description": description,
+                    "groupTypes": ["Unified"],
+                    "mailEnabled": True,
+                    "mailNickname": name.lower().replace(" ", ""),
+                    "securityEnabled": False,
+                }
+
+                # Create the group
+                group_response = requests.post(
+                    group_url,
+                    headers=teams_client["headers"],
+                    json=group_data,
+                    timeout=30,
+                )
+                logger.info(f"Group creation response: {group_response.text}")
+
+                if group_response.status_code not in [200, 201]:
+                    error_message = f"Error creating group: {group_response.status_code} - {group_response.text}"
+                    logger.error(error_message)
+                    return [types.TextContent(type="text", text=error_message)]
+
+                group_id = group_response.json().get("id")
+
+                # Step 2: Convert the Group to a Team
+                team_url = f"{GRAPH_GROUPS_URL}{group_id}/team"
+                team_data = {
+                    "memberSettings": {"allowCreateUpdateChannels": True},
+                    "messagingSettings": {
+                        "allowUserEditMessages": True,
+                        "allowUserDeleteMessages": True,
+                    },
+                    "funSettings": {
+                        "allowGiphy": True,
+                        "giphyContentRating": "moderate",
+                    },
+                }
+
+                # Convert group to team
+                team_response = requests.put(
+                    team_url,
+                    headers=teams_client["headers"],
+                    json=team_data,
+                    timeout=30,
+                )
+                logger.info(f"Team creation response: {team_response.text}")
+
+                if team_response.status_code in [200, 201, 202]:
+                    result = {
+                        "groupId": group_id,
+                        "teamName": name,
+                        "status": "Team creation initiated successfully",
+                    }
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Successfully created team '{name}' with group ID {group_id}:\n{json.dumps(result, indent=2)}",
+                        )
+                    ]
+                else:
+                    error_message = f"Error converting group to team: {team_response.status_code} - {team_response.text}"
+                    logger.error(error_message)
+                    return [types.TextContent(type="text", text=error_message)]
+
+            elif name == "get_teams":
                 # Extract parameters for getting teams
                 filter_query = arguments.get("filter")
                 select = arguments.get("select")
@@ -502,7 +598,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     logger.error(error_message)
                     return [types.TextContent(type="text", text=error_message)]
 
-            elif name == "get_channels":
+            elif name == "get_team_channels":
                 # Extract team ID
                 team_id = arguments.get("team_id")
 
@@ -546,7 +642,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     logger.error(error_message)
                     return [types.TextContent(type="text", text=error_message)]
 
-            elif name == "create_channel":
+            elif name == "create_team_channel":
                 # Extract parameters
                 team_id = arguments.get("team_id")
                 display_name = arguments.get("display_name")
@@ -733,7 +829,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     logger.error(error_message)
                     return [types.TextContent(type="text", text=error_message)]
 
-            elif name == "get_channel_messages":
+            elif name == "get_team_channel_messages":
                 # Extract parameters
                 team_id = arguments.get("team_id")
                 channel_id = arguments.get("channel_id")
@@ -793,7 +889,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     logger.error(error_message)
                     return [types.TextContent(type="text", text=error_message)]
 
-            elif name == "send_channel_message":
+            elif name == "send_team_channel_message":
                 # Extract parameters
                 team_id = arguments.get("team_id")
                 channel_id = arguments.get("channel_id")
@@ -1043,12 +1139,16 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [types.TextContent(type="text", text=error_message)]
 
                 members_data = members_response.json()
+                logger.info(f"Members data: {members_data}")
                 members = members_data.get("value", [])
 
                 # Find the member with the matching user ID
                 member_id = None
                 for member in members:
                     if member.get("userId") == user_id:
+                        member_id = member.get("id")
+                        break
+                    elif member.get("email") == user_id:
                         member_id = member.get("id")
                         break
 

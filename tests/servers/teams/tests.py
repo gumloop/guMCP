@@ -3,18 +3,50 @@ import uuid
 from datetime import datetime, timedelta
 
 # Global variables to store created resources
+created_team_id = None
 created_channel_id = None
-chat_id = None
 created_meeting_id = None
 
 
 # Add the below variables to the tests.py file before running the tests
-team_id = ""  # Hardcoded team ID for testing
 chat_id = ""  # Hardcoded chat ID for testing
-test_user_id = ""  # Hardcoded test user ID for testing
+test_user_email = ""  # Hardcoded test user email for testing
 
 
 # ===== READ Operations =====
+
+
+@pytest.mark.asyncio
+async def test_create_team(client):
+    """Create a new Microsoft Teams team.
+
+    Verifies that the team is created successfully.
+
+    Args:
+        client: The test client fixture for the MCP server.
+    """
+    team_name = f"Test Team {uuid.uuid4()}"
+
+    response = await client.process_query(
+        f"""Use the create_team tool to create a new team with name "{team_name}".
+        If successful, start your response with 'Team created successfully' and then include the team ID.
+        Your format for ID will be ID: <created_team_id>"""
+    )
+
+    assert (
+        "team created successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from create_team"
+
+    try:
+        global created_team_id
+        created_team_id = response.split("ID: ")[1].split()[0]
+        print(f"Created team ID: {created_team_id}")
+    except IndexError:
+        pytest.fail("Could not extract team ID from response")
+
+    print(f"Response: {response}")
+    print("✅ create_team passed.")
 
 
 @pytest.mark.asyncio
@@ -49,13 +81,11 @@ async def test_get_team_details(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id:
-        pytest.skip(
-            "No team ID available - team_id needs to be set at the top of the file"
-        )
+    if not created_team_id:
+        pytest.skip("No team ID available - run create_team test first")
 
     response = await client.process_query(
-        f"""Use the get_team_details tool to fetch details for team ID {team_id}.
+        f"""Use the get_team_details tool to fetch details for team ID {created_team_id}.
         If successful, start your response with 'Here are the team details' and then list them."""
     )
 
@@ -77,13 +107,11 @@ async def test_get_team_members(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id:
-        pytest.skip(
-            "No team ID available - team_id needs to be set at the top of the file"
-        )
+    if not created_team_id:
+        pytest.skip("No team ID available - run create_team test first")
 
     response = await client.process_query(
-        f"""Use the get_team_members tool to fetch members from team ID {team_id}.
+        f"""Use the get_team_members tool to fetch members from team ID {created_team_id}.
         If successful, start your response with 'Here are the team members' and then list them."""
     )
 
@@ -105,13 +133,11 @@ async def test_get_channels(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id:
-        pytest.skip(
-            "No team ID available - team_id needs to be set at the top of the file"
-        )
+    if not created_team_id:
+        pytest.skip("No team ID available - run create_team test first")
 
     response = await client.process_query(
-        f"""Use the get_channels tool to list channels for team ID {team_id}.
+        f"""Use the get_channels tool to list channels for team ID {created_team_id}.
         If successful, start your response with 'Here are the channels' and then list them."""
     )
 
@@ -185,10 +211,8 @@ async def test_create_channel(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id:
-        pytest.skip(
-            "No team ID available - team_id needs to be set at the top of the file"
-        )
+    if not created_team_id:
+        pytest.skip("No team ID available - run create_team test first")
 
     # Set channel details
     display_name = f"Test Channel {uuid.uuid4()}"
@@ -196,7 +220,7 @@ async def test_create_channel(client):
     membership_type = "standard"
 
     response = await client.process_query(
-        f"""Use the create_channel tool to create a new channel in team ID {team_id}
+        f"""Use the create_channel tool to create a new channel in team ID {created_team_id}
         with display name "{display_name}", description "{description}", and membership type "{membership_type}".
         If successful, start your response with 'Created channel successfully' and then include the channel ID.
         Your format for ID will be ID: <channel_id>"""
@@ -271,13 +295,13 @@ async def test_get_channel_messages(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id or not created_channel_id:
+    if not created_team_id or not created_channel_id:
         pytest.skip(
-            "No team ID or channel ID available - team_id needs to be set at the top of the file and create_channel test needs to be run first"
+            "No team ID or channel ID available - created_team_id needs to be set at the top of the file and create_channel test needs to be run first"
         )
 
     response = await client.process_query(
-        f"""Use the get_channel_messages tool to fetch messages from team ID {team_id}
+        f"""Use the get_channel_messages tool to fetch messages from team ID {created_team_id}
         and channel ID {created_channel_id}.
         If successful, start your response with 'Here are the channel messages' and then list them."""
     )
@@ -300,16 +324,14 @@ async def test_add_team_member(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id:
-        pytest.skip(
-            "No team ID available - team_id needs to be set at the top of the file"
-        )
+    if not created_team_id:
+        pytest.skip("No team ID available - run create_team test first")
 
     # Get a user ID to add (this would typically be a test user)
 
     response = await client.process_query(
-        f"""Use the add_team_member tool to add user ID {test_user_id}
-        to team ID {team_id} with roles ["member"].
+        f"""Use the add_team_member tool to add user {test_user_email}
+        to team ID {created_team_id} with roles ["member"].
         If successful, start your response with 'Member added successfully'."""
     )
 
@@ -334,15 +356,15 @@ async def test_send_channel_message(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id or not created_channel_id:
+    if not created_team_id or not created_channel_id:
         pytest.skip(
-            "No team ID or channel ID available - team_id needs to be set at the top of the file and create_channel test needs to be run first"
+            "No team ID or channel ID available - created_team_id needs to be set at the top of the file and create_channel test needs to be run first"
         )
 
     message_content = f"Test message {uuid.uuid4()}"
 
     response = await client.process_query(
-        f"""Use the send_channel_message tool to send a message to team ID {team_id}
+        f"""Use the send_channel_message tool to send a message to team ID {created_team_id}
         and channel ID {created_channel_id} with content "{message_content}".
         If successful, start your response with 'Message sent successfully'."""
     )
@@ -391,14 +413,14 @@ async def test_post_message_reply(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id or not created_channel_id:
+    if not created_team_id or not created_channel_id:
         pytest.skip(
-            "No team ID or channel ID available - team_id needs to be set at the top of the file and create_channel test needs to be run first"
+            "No team ID or channel ID available - created_team_id needs to be set at the top of the file and create_channel test needs to be run first"
         )
 
     # First get a message ID to reply to
     response = await client.process_query(
-        f"""Use the get_channel_messages tool to fetch messages from team ID {team_id}
+        f"""Use the get_channel_messages tool to fetch messages from team ID {created_team_id}
         and channel ID {created_channel_id}.
         If successful, start your response with 'Here are the channel messages' and then list them.
         Your format for ID will be ID: <message_id>"""
@@ -414,7 +436,7 @@ async def test_post_message_reply(client):
 
     response = await client.process_query(
         f"""Use the post_message_reply tool to post a reply to message ID {message_id}
-        in team ID {team_id} and channel ID {created_channel_id}
+        in team ID {created_team_id} and channel ID {created_channel_id}
         with content "{reply_content}".
         If successful, start your response with 'Reply posted successfully'."""
     )
@@ -440,14 +462,12 @@ async def test_remove_team_member(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-    if not team_id:
-        pytest.skip(
-            "No team ID available - team_id needs to be set at the top of the file"
-        )
+    if not created_team_id:
+        pytest.skip("No team ID available - run create_team test first")
 
     response = await client.process_query(
-        f"""Use the remove_team_member tool to remove user ID {test_user_id}
-        from team ID {team_id}.
+        f"""Use the remove_team_member tool to remove user {test_user_email}
+        from team ID {created_team_id}.
         If successful, start your response with 'Member removed successfully'."""
     )
 
