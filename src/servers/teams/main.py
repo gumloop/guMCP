@@ -214,9 +214,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             for message in messages:
                 timestamp = message.get("createdDateTime", "")
                 sender = (
-                    message.get("from", {})
-                    .get("user", {})
-                    .get("displayName", "Unknown")
+                    (
+                        message.get("from", {})
+                        .get("user", {})
+                        .get("displayName", "Unknown")
+                    )
+                    if message.get("from")
+                    else "Unknown"
                 )
                 content = message.get("body", {}).get("content", "")
 
@@ -230,7 +234,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             return [ReadResourceContents(content=content, mime_type="text/plain")]
 
         except Exception as e:
-            logger.error(f"Error reading Teams channel: {e}")
+            logger.error(
+                f"Error reading Teams channel: {e} {e.__traceback__.tb_lineno}"
+            )
             return [
                 ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
             ]
