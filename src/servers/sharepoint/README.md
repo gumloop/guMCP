@@ -32,6 +32,7 @@ guMCP server implementation for interacting with Microsoft SharePoint for list m
    - Copy the **Value** of the secret (this is your `client_secret`)
 
 5. Navigate to **API permissions** and add the following Microsoft Graph API permissions (all "Delegated" type):
+   - Sites.Manage.All
    - Sites.Read.All
    - Sites.ReadWrite.All
    - User.Read.All

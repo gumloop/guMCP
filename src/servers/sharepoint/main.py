@@ -22,6 +22,7 @@ from src.utils.microsoft.util import get_credentials, authenticate_and_save_cred
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
+    "Sites.Manage.All",  # For creating/updating sites, lists, items, pages
     "Sites.Read.All",  # For reading site data, lists, pages
     "Sites.ReadWrite.All",  # For creating/updating lists, items, pages
     "User.Read.All",  # For listing users
