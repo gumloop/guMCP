@@ -32,31 +32,25 @@ SCOPES = [
     # User and Authentication
     "User.Read",
     "offline_access",
-    
     # Team Management
-    "Team.Create",                    # For creating new teams
-    "Team.ReadBasic.All",             # For reading basic team info
-    "TeamSettings.ReadWrite.All",     # For managing team settings
-    
+    "Team.Create",  # For creating new teams
+    "Team.ReadBasic.All",  # For reading basic team info
+    "TeamSettings.ReadWrite.All",  # For managing team settings
     # Channel Management
-    "Channel.Create",                 # For creating new channels
+    "Channel.Create",  # For creating new channels
     "ChannelSettings.ReadWrite.All",  # For managing channel settings
-    "ChannelMember.ReadWrite.All",    # For managing channel members
-    
+    "ChannelMember.ReadWrite.All",  # For managing channel members
     # Messaging
-    "ChannelMessage.Read.All",        # For reading channel messages
-    "ChannelMessage.Send",            # For sending messages to channels
-    "Chat.ReadWrite",                 # For chat operations
-    
+    "ChannelMessage.Read.All",  # For reading channel messages
+    "ChannelMessage.Send",  # For sending messages to channels
+    "Chat.ReadWrite",  # For chat operations
     # Group Management
-    "Group.Read.All",                 # For reading group information
-    
+    "Group.Read.All",  # For reading group information
     # Team Member Management
-    "TeamMember.Read.All",            # For reading team members
-    "TeamMember.ReadWrite.All",       # For managing team members
-    
+    "TeamMember.Read.All",  # For reading team members
+    "TeamMember.ReadWrite.All",  # For managing team members
     # Meetings
-    "OnlineMeetings.ReadWrite"        # For managing online meetings
+    "OnlineMeetings.ReadWrite",  # For managing online meetings
 ]
 
 TEAMS_OAUTH_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
