@@ -1,6 +1,6 @@
 # Lemlist Server
 
-guMCP server implementation for interacting with the Lemlist API, supporting campaign management, lead enrichment, scheduling, and outreach automation.
+guMCP server implementation for interacting with the Lemlist API, supporting campaign management, scheduling, and outreach automation.
 
 ---
 
@@ -91,7 +91,7 @@ This server exposes the following tools for interacting with Lemlist:
 - `add_unsubscribe` – Add an email address or domain to Lemlist's unsubscribed list.
 - `delete_unsubscribe` – Delete an email address or domain from Lemlist's unsubscribed list.
 
-#### Enrichment & Database
+#### Database
 
 - `get_database_filters` – Retrieve all available Lemlist database filters for constructing advanced queries.
 
