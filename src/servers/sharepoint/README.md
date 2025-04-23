@@ -1,6 +1,6 @@
 # SharePoint Server
 
-guMCP server implementation for interacting with Microsoft SharePoint for list management, document libraries, and user administration.
+guMCP server implementation for interacting with Microsoft SharePoint for list management, document libraries, user administration, file management, and site page management.
 
 ---
 
@@ -31,18 +31,13 @@ guMCP server implementation for interacting with Microsoft SharePoint for list m
    - Add a description and choose an expiration period
    - Copy the **Value** of the secret (this is your `client_secret`)
 
-5. Navigate to **API permissions** and add the following permissions:
-   - Microsoft Graph API permissions (all "Delegated" type):
-     - Sites.Read.All
-     - Sites.ReadWrite.All
-     - User.Read.All
-     - User.ReadWrite.All
-     - Directory.Read.All
-     - Sites.Manage.All
-     - Directory.ReadWrite.All
-     - Directory.AccessAsUser.All
-     - User.Read
-     - offline_access
+5. Navigate to **API permissions** and add the following Microsoft Graph API permissions (all "Delegated" type):
+   - Sites.Read.All
+   - Sites.ReadWrite.All
+   - User.Read.All
+   - Files.Read.All
+   - Files.ReadWrite.All
+   - offline_access
 
 6. Click **"Add permissions"**
 7. Save all values securely.
@@ -57,7 +52,7 @@ Create a file named `oauth.json` in your directory (local_auth/oauth_configs/sha
 {
   "client_id": "your-client-id",
   "client_secret": "your-client-secret",
-  "redirect_uri": "your-redirect-uri",
+  "redirect_uri": "your-redirect-uri"
 }
 ```
 
@@ -86,20 +81,33 @@ local_auth/credentials/sharepoint/local_credentials.json
 This server exposes tools grouped into the following categories:
 
 #### 👥 User Management
-
 - `get_users` – Get all users from Microsoft 365 with filtering and pagination options
 
 #### 📊 List Management
-
+- `list_site_lists` – List all lists in a SharePoint site
 - `create_list` – Create a new list in SharePoint
 - `get_list` – Get details of a SharePoint list by ID or title
 
 #### 📝 List-Item Management
-
 - `create_list_item` – Create a new item in a SharePoint list
 - `get_list_item` – Get details of a specific item in a SharePoint list
 - `get_list_items` – Get all items from a SharePoint list with filtering and sorting options
 - `delete_list_item` – Delete a specific item from a SharePoint list
+- `update_list_item` – Update fields of an existing item in a SharePoint list
+
+#### 📁 File Management
+- `download_file` – Download a file from the current user's OneDrive
+- `create_folder` – Create a new folder in the current user's OneDrive
+- `upload_file` – Upload a file to the current user's OneDrive
+
+#### 📰 Site Page Management
+- `create_site_page` – Create a new SharePoint site page
+- `get_site_page` – Get details of a specific page in a SharePoint site
+- `list_site_pages` – List all pages in a SharePoint site
+
+#### 🌐 Site Information
+- `get_site_info` – Get metadata and information about a SharePoint site
+- `search_sites` – Search for SharePoint sites by keyword
 
 ---
 
