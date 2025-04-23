@@ -37,16 +37,20 @@ guMCP server implementation for interacting with Microsoft Teams for team manage
 
    - Microsoft Graph API permissions (all "Delegated" type):
      - User.Read
+     - offline_access
+     - Team.Create
      - Team.ReadBasic.All
-     - Group.Read.All
-     - Chat.ReadWrite
+     - TeamSettings.ReadWrite.All
+     - Channel.Create
+     - ChannelSettings.ReadWrite.All
+     - ChannelMember.ReadWrite.All
      - ChannelMessage.Read.All
      - ChannelMessage.Send
+     - Chat.ReadWrite
+     - Group.Read.All
      - TeamMember.Read.All
      - TeamMember.ReadWrite.All
      - OnlineMeetings.ReadWrite
-     - offline_access
-
 6. Click **"Add permissions"** and then **"Grant admin consent"** for your organization
 7. Save all values securely.
 

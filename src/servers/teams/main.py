@@ -29,16 +29,34 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 SERVICE_NAME = Path(__file__).parent.name
 SCOPES = [
+    # User and Authentication
     "User.Read",
-    "Team.ReadBasic.All",
-    "Group.Read.All",
-    "Chat.ReadWrite",
-    "ChannelMessage.Read.All",
-    "ChannelMessage.Send",
-    "TeamMember.Read.All",
-    "TeamMember.ReadWrite.All",
-    "OnlineMeetings.ReadWrite",
     "offline_access",
+    
+    # Team Management
+    "Team.Create",                    # For creating new teams
+    "Team.ReadBasic.All",             # For reading basic team info
+    "TeamSettings.ReadWrite.All",     # For managing team settings
+    
+    # Channel Management
+    "Channel.Create",                 # For creating new channels
+    "ChannelSettings.ReadWrite.All",  # For managing channel settings
+    "ChannelMember.ReadWrite.All",    # For managing channel members
+    
+    # Messaging
+    "ChannelMessage.Read.All",        # For reading channel messages
+    "ChannelMessage.Send",            # For sending messages to channels
+    "Chat.ReadWrite",                 # For chat operations
+    
+    # Group Management
+    "Group.Read.All",                 # For reading group information
+    
+    # Team Member Management
+    "TeamMember.Read.All",            # For reading team members
+    "TeamMember.ReadWrite.All",       # For managing team members
+    
+    # Meetings
+    "OnlineMeetings.ReadWrite"        # For managing online meetings
 ]
 
 TEAMS_OAUTH_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
