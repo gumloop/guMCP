@@ -369,27 +369,6 @@ class PayPalClient:
         response = requests.patch(url, headers=headers, data=data)
         response.raise_for_status()
 
-    def list_balances(
-        self, as_of_time: Optional[str] = None, currency_code: Optional[str] = None
-    ) -> Dict:
-        """
-        List all balances.
-
-        Args:
-            as_of_time (str, optional): List balances at the specified date time
-            currency_code (str, optional): Filter by currency code
-
-        Returns:
-            Dict: Balance information
-        """
-        params = {}
-        if as_of_time:
-            params["as_of_time"] = as_of_time
-        if currency_code:
-            params["currency_code"] = currency_code
-
-        return self._make_request("GET", "reporting/balances", params=params)
-
     def search_invoices(
         self,
         page: int = 1,
@@ -868,18 +847,6 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 },
             ),
             types.Tool(
-                name="list_balances",
-                description="List all balances",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "as_of_time": {"type": "string"},
-                        "currency_code": {"type": "string"},
-                    },
-                    "required": ["currency_code"],
-                },
-            ),
-            types.Tool(
                 name="search_invoices",
                 description="Search for invoices based on specified criteria",
                 inputSchema={
@@ -1078,11 +1045,6 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     value=arguments["value"],
                 )
                 result = {"success": True, "message": "Product updated successfully"}
-            elif name == "list_balances":
-                result = paypal.list_balances(
-                    as_of_time=arguments.get("as_of_time"),
-                    currency_code=arguments.get("currency_code"),
-                )
             elif name == "search_invoices":
                 result = paypal.search_invoices(
                     page=arguments.get("page", 1),

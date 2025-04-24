@@ -449,29 +449,6 @@ async def test_list_products(client):
 
 
 @pytest.mark.asyncio
-async def test_list_balances(client):
-    """List PayPal balances.
-
-    Verifies that balances can be listed successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    response = await client.process_query(
-        "Use the list_balances tool to fetch account balances. Use the currency_code parameter to specify the currency code "
-        "as USD. If successful, start your response with 'Here are the PayPal balances' and then list them."
-    )
-
-    assert (
-        "here are the paypal balances" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from list_balances"
-
-    print(f"Response: {response}")
-    print("✅ list_balances passed.")
-
-
-@pytest.mark.asyncio
 async def test_search_invoices(client):
     """Search PayPal invoices.
 

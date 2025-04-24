@@ -29,8 +29,6 @@ tools:
     description: "Get detailed information for a specific product"
   - name: "update_product"
     description: "Update a product's properties using JSON patch operations"
-  - name: "list_balances"
-    description: "List account balances with optional time and currency filtering"
   - name: "search_invoices"
     description: "Search for invoices based on various criteria including recipient info, invoice details, date ranges, and status"
   - name: "create_subscription"

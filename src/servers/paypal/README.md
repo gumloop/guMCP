@@ -164,9 +164,6 @@ This server exposes the following tools for interacting with PayPal:
 - `get_product` – Get product details
 - `update_product` – Update product properties
 
-#### Balance Management
-- `list_balances` – List account balances
-
 #### Invoice Management
 - `search_invoices` – Search for invoices based on various criteria including recipient info, invoice details, date ranges, and status
 
