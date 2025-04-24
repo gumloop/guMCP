@@ -883,7 +883,7 @@ def create_server(user_id, api_key=None):
                 )
 
                 data = response.json()
-                url = data["status"]["url"]
+                url = data.get("status", {}).get("url", "URL not available")
                 if response.status_code == 200:
                     result = {
                         "status": "success",
