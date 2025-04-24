@@ -6,7 +6,7 @@ created_contact_email = None
 created_contact_user_id = str(uuid.uuid4())[:4]
 
 # Replace with your transactional ID
-test_transactional_id = "cm9vo6he1192jimrje3vnuc1o"
+test_transactional_id = ""
 
 
 @pytest.mark.asyncio
