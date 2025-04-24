@@ -97,7 +97,7 @@ async def test_build_actor(client):
         pytest.skip("No actor ID available - run create_actor test first")
 
     response = await client.process_query(
-        f"Use the build_actor tool to build actor {created_actor_id}"
+        f"Use the build_actor tool to build actor {created_actor_id} "
         "If successful, start your response with 'Actor build started successfully'."
     )
 
