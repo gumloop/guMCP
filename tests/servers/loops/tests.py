@@ -172,7 +172,7 @@ async def test_update_contact_by_user_id(client):
 
     response = await client.process_query(
         f"""Use the update_contact_by_user_id tool to update contact with:
-        created_contact_user_id: {created_contact_user_id}
+        user_id: {created_contact_user_id}
         body: {{"first_name": "{new_first_name}", "last_name": "{new_last_name}"}}
         If successful, start your response with 'Contact updated successfully'."""
     )
