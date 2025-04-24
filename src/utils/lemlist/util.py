@@ -60,7 +60,7 @@ def get_lemlist_credentials(user_id, api_key=None):
         "token": token,
     }
 
-    if not credentials_data:
+    if not api_key or not public_host or not token:
         raise ValueError(
             f"Lemlist credentials not found for user {user_id}. Run 'auth' first."
         )
