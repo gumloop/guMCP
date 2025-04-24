@@ -488,11 +488,6 @@ class PayPalClient:
         Returns:
             Dict: Subscription details
         """
-        # headers = {
-        #     "Prefer": prefer
-        # }
-        # if paypal_request_id:
-        #     headers["PayPal-Request-Id"] = paypal_request_id
 
         data = {"plan_id": plan_id, "auto_renewal": auto_renewal}
 
