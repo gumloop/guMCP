@@ -136,7 +136,9 @@ isodate==0.7.2
 jiter==0.9.0
     # via anthropic
 lxml==5.3.2
-    # via zeep
+    # via
+    #   python-docx
+    #   zeep
 mcp==1.4.1
     # via -r requirements.in
 more-itertools==10.6.0
@@ -209,6 +211,8 @@ pyparsing==3.2.3
     # via httplib2
 python-dateutil==2.9.0.post0
     # via python-quickbooks
+python-docx==1.1.2
+    # via -r requirements.in
 python-dotenv==1.1.0
     # via
     #   -r requirements.in
@@ -294,6 +298,7 @@ typing-extensions==4.13.0
     #   pyee
     #   pygithub
     #   pyopenssl
+    #   python-docx
     #   simple-salesforce
     #   snowflake-connector-python
     #   stripe
