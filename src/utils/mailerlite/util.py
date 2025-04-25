@@ -13,7 +13,7 @@ def get_credentials(user_id, api_key=None, service_name=None):
         "client_key": api_key,
     }
 
-    if not credentials_data:
+    if not credentials_data["client_key"]:
         raise ValueError(
             f"MailerLite credentials not found for user {user_id}. Run 'auth' first."
         )

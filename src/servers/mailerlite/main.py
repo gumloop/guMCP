@@ -929,8 +929,8 @@ def create_server(user_id, api_key=None):
                     ]
                 elif name == "create_field":
                     name = arguments.get("name")
-                    fied_type = arguments.get("type")
-                    response = client.fields.create(name, fied_type)
+                    field_type = arguments.get("type")
+                    response = client.fields.create(name, field_type)
                     return [
                         TextContent(
                             type="text",
