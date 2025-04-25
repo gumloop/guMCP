@@ -42,7 +42,6 @@ def build_mailchimp_token_data(
     Args:
         oauth_config: OAuth configuration dictionary.
         redirect_uri: Redirect URI used in the flow.
-        scopes: List of OAuth scopes (unused for Mailchimp).
         auth_code: The authorization code returned from Mailchimp.
 
     Returns:
