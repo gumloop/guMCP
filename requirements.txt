@@ -144,6 +144,8 @@ lxml==5.3.2
     # via
     #   python-docx
     #   zeep
+mailerlite==0.1.10
+    # via -r requirements.in
 mailchimp-marketing==3.0.80
     # via -r requirements.in
 mcp==1.4.1
@@ -240,6 +242,7 @@ requests==2.32.3
     #   googlemaps
     #   intuit-oauth
     #   mailchimp-marketing
+    #   mailerlite
     #   pygithub
     #   python-quickbooks
     #   requests-file
