@@ -228,7 +228,7 @@ def create_server(user_id, api_key=None):
             for category in category_list:
                 resources.append(
                     Resource(
-                        uri=f"discourse:///category/{category['id']}",
+                        uri=f"discourse://category/{category['id']}",
                         mimeType="application/json",
                         name=f"Category: {category['name']}",
                     )
@@ -245,7 +245,7 @@ def create_server(user_id, api_key=None):
             for topic in topic_list:
                 resources.append(
                     Resource(
-                        uri=f"discourse:///topic/{topic['id']}",
+                        uri=f"discourse://topic/{topic['id']}",
                         mimeType="application/json",
                         name=f"Topic: {topic['title']}",
                     )
@@ -266,9 +266,9 @@ def create_server(user_id, api_key=None):
 
         uri_str = str(uri)
 
-        if uri_str.startswith("discourse:///category/"):
+        if uri_str.startswith("discourse://category/"):
             # Handle category resource
-            category_id = uri_str.replace("discourse:///category/", "")
+            category_id = uri_str.replace("discourse://category/", "")
 
             category_result = await make_discourse_request(
                 "GET", f"c/{category_id}/show.json", credentials
@@ -284,9 +284,9 @@ def create_server(user_id, api_key=None):
                 )
             ]
 
-        elif uri_str.startswith("discourse:///topic/"):
+        elif uri_str.startswith("discourse://topic/"):
             # Handle topic resource
-            topic_id = uri_str.replace("discourse:///topic/", "")
+            topic_id = uri_str.replace("discourse://topic/", "")
 
             topic_result = await make_discourse_request(
                 "GET", f"t/{topic_id}.json", credentials
