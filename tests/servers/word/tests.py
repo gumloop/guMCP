@@ -18,7 +18,7 @@ TOOL_TESTS = [
         "args_template": 'with name="Test Document-{random_id}"',
         "expected_keywords": ["created_file_id"],
         "regex_extractors": {
-            "created_file_id": r'"?created_file_id"?[:\s]+([^,\s\n"]+)'
+            "created_file_id": r'"?created_file_id"?[:\s]+"?([0-9A-Z!]+)"?'
         },
         "description": "create a new Word document and return its file id",
         "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
@@ -27,7 +27,7 @@ TOOL_TESTS = [
         "name": "write_document",
         "args_template": 'with file_id="{created_file_id}" content="Gumloop"',
         "expected_keywords": ["file_id"],
-        "regex_extractors": {"file_id": r'"?file_id"?[:\s]+([^,\s\n"]+)'},
+        "regex_extractors": {"file_id": r'"?file_id"?[:\s]+"?([0-9A-Z!]+)"?'},
         "description": "append new content to an existing Word document and return the file_id",
         "depends_on": ["created_file_id"],
     },
@@ -43,7 +43,7 @@ TOOL_TESTS = [
         "name": "search_documents",
         "args_template": 'with query="Test Document"',
         "expected_keywords": ["file_id"],
-        "regex_extractors": {"file_id": r'"?file_id"?[:\s]+([^,\s\n"]+)'},
+        "regex_extractors": {"file_id": r'"?file_id"?[:\s]+"?([0-9A-Z!]+)"?'},
         "description": "search for Word documents matching a query and return the file_id of any one document",
     },
     {
