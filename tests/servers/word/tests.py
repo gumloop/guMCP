@@ -18,9 +18,10 @@ TOOL_TESTS = [
         "args_template": 'with name="Test Document-{random_id}"',
         "expected_keywords": ["created_file_id"],
         "regex_extractors": {
-            "created_file_id": r'"?created_file_id"?[:\s]+"?([0-9A-Z!]+)"?'
+            "created_file_id": r'"?created_file_id"?[:\s]+"?([0-9A-Z!]+)"?',
+            "is_sharepoint": r'"?is_sharepoint"?[:\s]+"?([^"]+)"?',
         },
-        "description": "create a new Word document and return its file id as created_file_id",
+        "description": "create a new Word document and return its file id as created_file_id and based on url return is_sharepoint as true if there is any mention of sharepoint in the url",
         "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
     },
     {
@@ -38,6 +39,7 @@ TOOL_TESTS = [
         "regex_extractors": {"content": r'"?content"?[:\s]+"([^"]*Gumloop[^"]*)"'},
         "description": "read text content from a Word document and return the content without any formatting or modifications",
         "depends_on": ["created_file_id"],
+        "skip_if_sharepoint": True,
     },
     {
         "name": "search_documents",
@@ -45,6 +47,7 @@ TOOL_TESTS = [
         "expected_keywords": ["file_id"],
         "regex_extractors": {"file_id": r'"?file_id"?[:\s]+"?([0-9A-Z!]+)"?'},
         "description": "search for Word documents matching a query and return the file_id of any one document",
+        "skip_if_sharepoint": True,
     },
     {
         "name": "download_document",
@@ -74,6 +77,11 @@ def context():
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_word_tool(client, context, test_config):
+    # Skip tests that should be skipped for SharePoint documents
+    if test_config.get("skip_if_sharepoint", False) and context.get("is_sharepoint") == "true":
+        pytest.skip(f"Test {test_config['name']} skipped for SharePoint documents")
+        return
+    
     return await run_tool_test(client, context, test_config)
 
 
