@@ -81,7 +81,7 @@ def create_server(user_id, api_key=None):
         # List companies collection
         resources.append(
             Resource(
-                uri="attio:///collections/companies",
+                uri="attio://collection/companies",
                 mimeType="application/json",
                 name="Companies Collection",
             )
@@ -90,7 +90,7 @@ def create_server(user_id, api_key=None):
         # List contacts collection
         resources.append(
             Resource(
-                uri="attio:///collections/people",
+                uri="attio://collection/people",
                 mimeType="application/json",
                 name="People Collection",
             )
@@ -104,7 +104,7 @@ def create_server(user_id, api_key=None):
                 for list_item in lists:
                     resources.append(
                         Resource(
-                            uri=f"attio:///lists/{list_item['id']}",
+                            uri=f"attio://list/{list_item['id']}",
                             mimeType="application/json",
                             name=f"List: {list_item['attributes']['title']}",
                         )
@@ -123,7 +123,7 @@ def create_server(user_id, api_key=None):
         uri_str = str(uri)
 
         try:
-            if uri_str.startswith("attio:///collections/companies"):
+            if uri_str.startswith("attio://collection/companies"):
                 # Get companies with pagination (limit to 50)
                 payload = {"limit": 50, "offset": 0}
                 response = await client.post(
@@ -137,7 +137,7 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-            elif uri_str.startswith("attio:///collections/people"):
+            elif uri_str.startswith("attio://collection/people"):
                 # Get people with pagination (limit to 50)
                 payload = {"limit": 50, "offset": 0}
                 response = await client.post(
@@ -151,8 +151,8 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-            elif uri_str.startswith("attio:///lists/"):
-                list_id = uri_str.replace("attio:///lists/", "")
+            elif uri_str.startswith("attio://list/"):
+                list_id = uri_str.replace("attio://list/", "")
                 # Get items from the list
                 response = await client.get(f"/lists/{list_id}/entries")
                 if response.status_code == 200:
