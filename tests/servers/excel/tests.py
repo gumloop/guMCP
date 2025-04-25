@@ -2,7 +2,7 @@ import pytest
 import re
 import random
 import string
-from tests.common.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test
 
 
 TOOL_TESTS = [
