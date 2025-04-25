@@ -122,7 +122,7 @@ def create_server(user_id, api_key=None):
 
                 resources.append(
                     Resource(
-                        uri=f"typeform:///workspace/{workspace['id']}",
+                        uri=f"typeform://workspace/{workspace['id']}",
                         mimeType="application/json",
                         name=f"Workspace: {workspace['name']}",
                     )
@@ -150,7 +150,7 @@ def create_server(user_id, api_key=None):
                 workspace_id = workspace_info.get("id", "default")
                 resources.append(
                     Resource(
-                        uri=f"typeform:///form/{form['id']}",
+                        uri=f"typeform://form/{form['id']}",
                         mimeType="application/json",
                         name=f"Form: {form['title']} (Workspace: {workspace_id})",
                     )
@@ -176,9 +176,9 @@ def create_server(user_id, api_key=None):
 
             uri_str = str(uri)
 
-            if uri_str.startswith("typeform:///workspace/"):
+            if uri_str.startswith("typeform://workspace/"):
                 # Handle workspace resource
-                workspace_id = uri_str.replace("typeform:///workspace/", "")
+                workspace_id = uri_str.replace("typeform://workspace/", "")
 
                 # Get workspace details
                 workspace_data = await execute_typeform_request(
@@ -204,9 +204,9 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("typeform:///form/"):
+            elif uri_str.startswith("typeform://form/"):
                 # Handle form resource
-                form_id = uri_str.replace("typeform:///form/", "")
+                form_id = uri_str.replace("typeform://form/", "")
 
                 # Get form details
                 form_data = await execute_typeform_request(
