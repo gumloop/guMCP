@@ -106,22 +106,12 @@ def create_server(user_id, api_key=None):
         resources = []
         for calendar in calendar_items:
             resource = Resource(
-                uri=f"gcalendar:///{calendar['id']}",
+                uri=f"gcalendar://calendar/{calendar['id']}",
                 mimeType="application/json",
                 name=calendar["summary"],
                 description=calendar.get("description", ""),
             )
             resources.append(resource)
-
-        # Also add a resource for upcoming events
-        resources.append(
-            Resource(
-                uri=f"gcalendar:///upcoming",
-                mimeType="application/json",
-                name="Upcoming Events",
-                description="Events in the next 7 days",
-            )
-        )
 
         return resources
 
@@ -133,73 +123,67 @@ def create_server(user_id, api_key=None):
         calendar_service = await create_calendar_service(
             server.user_id, api_key=server.api_key
         )
-        path = str(uri).replace("gcalendar:///", "")
 
-        # Handle special case for upcoming events
-        if path == "upcoming":
-            time_min = datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
-            time_max = (datetime.utcnow() + timedelta(days=7)).isoformat() + "Z"
-
-            events_result = (
-                calendar_service.events()
-                .list(
-                    calendarId="primary",
-                    timeMin=time_min,
-                    timeMax=time_max,
-                    maxResults=10,
-                    singleEvents=True,
-                    orderBy="startTime",
+        # Parse the URI to extract resource_type and resource_id
+        uri_parts = str(uri).split("://")
+        if len(uri_parts) != 2:
+            return [
+                ReadResourceContents(
+                    content="Invalid URI format", mime_type="text/plain"
                 )
-                .execute()
-            )
+            ]
 
-            events = events_result.get("items", [])
-            formatted_events = [format_event(event) for event in events]
+        path_parts = uri_parts[1].split("/")
+        if len(path_parts) < 2:
+            return [
+                ReadResourceContents(content="Invalid URI path", mime_type="text/plain")
+            ]
 
-            content = "Upcoming events in the next 7 days:\n\n"
-            for i, event in enumerate(formatted_events, 1):
-                content += f"{i}. {event['summary']}\n"
-                content += f"   When: {event['start']} to {event['end']}\n"
-                if event["location"] != "N/A":
-                    content += f"   Where: {event['location']}\n"
-                if event["attendees"]:
-                    content += f"   Attendees: {', '.join(event['attendees'])}\n"
-                content += "\n"
+        resource_type = path_parts[0]
+        resource_id = path_parts[1]
 
-            return [ReadResourceContents(content=content, mime_type="text/plain")]
-
-        # Otherwise, get events for a specific calendar
+        # Handle calendar resources
         try:
-            events_result = (
-                calendar_service.events()
-                .list(
-                    calendarId=path,
-                    timeMin=datetime.utcnow().isoformat() + "Z",
-                    maxResults=10,
-                    singleEvents=True,
-                    orderBy="startTime",
+            if resource_type == "calendar":
+                events_result = (
+                    calendar_service.events()
+                    .list(
+                        calendarId=resource_id,
+                        timeMin=datetime.utcnow().isoformat() + "Z",
+                        maxResults=10,
+                        singleEvents=True,
+                        orderBy="startTime",
+                    )
+                    .execute()
                 )
-                .execute()
-            )
 
-            events = events_result.get("items", [])
-            formatted_events = [format_event(event) for event in events]
+                events = events_result.get("items", [])
+                formatted_events = [format_event(event) for event in events]
 
-            calendar = calendar_service.calendars().get(calendarId=path).execute()
+                calendar = (
+                    calendar_service.calendars().get(calendarId=resource_id).execute()
+                )
 
-            content = f"Calendar: {calendar.get('summary', 'Unknown')}\n\n"
-            content += "Upcoming events:\n\n"
+                content = f"Calendar: {calendar.get('summary', 'Unknown')}\n\n"
+                content += "Upcoming events:\n\n"
 
-            for i, event in enumerate(formatted_events, 1):
-                content += f"{i}. {event['summary']}\n"
-                content += f"   When: {event['start']} to {event['end']}\n"
-                if event["location"] != "N/A":
-                    content += f"   Where: {event['location']}\n"
-                if event["attendees"]:
-                    content += f"   Attendees: {', '.join(event['attendees'])}\n"
-                content += "\n"
+                for i, event in enumerate(formatted_events, 1):
+                    content += f"{i}. {event['summary']}\n"
+                    content += f"   When: {event['start']} to {event['end']}\n"
+                    if event["location"] != "N/A":
+                        content += f"   Where: {event['location']}\n"
+                    if event["attendees"]:
+                        content += f"   Attendees: {', '.join(event['attendees'])}\n"
+                    content += "\n"
 
-            return [ReadResourceContents(content=content, mime_type="text/plain")]
+                return [ReadResourceContents(content=content, mime_type="text/plain")]
+            else:
+                return [
+                    ReadResourceContents(
+                        content=f"Unsupported resource type: {resource_type}",
+                        mime_type="text/plain",
+                    )
+                ]
         except HttpError as error:
             logger.error(f"Error reading calendar: {error}")
             return [
