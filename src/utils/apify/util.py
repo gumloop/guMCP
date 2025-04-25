@@ -35,6 +35,10 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None):
     # Get credentials for this user
     credentials_data = auth_client.get_user_credentials(service_name, user_id)
 
+    if os.getenv("ENVIRONMENT") == "gumloop":
+        # Handle credential storage from Gumloop as plain token is returned
+        credentials_data = {"token": credentials_data}
+
     def handle_missing_credentials():
         error_str = f"Apify API token not found for user {user_id}."
         if os.environ.get("ENVIRONMENT", "local") == "local":
