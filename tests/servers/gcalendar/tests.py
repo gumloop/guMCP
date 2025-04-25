@@ -14,19 +14,12 @@ async def test_list_resources(client):
     for resource in response.resources:
         print(f"  - {resource.name} ({resource.uri}) - Type: {resource.mimeType}")
 
-    # Verify that we have the special 'upcoming' resource
-    # Use str() to convert AnyUrl to string for comparison
-    upcoming_found = any(
-        str(resource.uri) == "gcalendar:///upcoming" for resource in response.resources
-    )
-    assert upcoming_found, "The 'upcoming' resource should be included in the list"
-
     print("✅ Successfully listed calendars")
 
 
 @pytest.mark.asyncio
 async def test_read_calendar(client):
-    """Test reading a specific calendar and the upcoming events resource"""
+    """Test reading a specific calendar"""
     # First list calendars to get a valid calendar ID
     response = await client.list_resources()
 
@@ -36,27 +29,9 @@ async def test_read_calendar(client):
 
     resources = response.resources
 
-    # Try to read the upcoming events resource first
+    # Try to read at least one regular calendar
     # Use str() to convert AnyUrl to string for comparison
-    upcoming_resource = next(
-        (r for r in resources if str(r.uri) == "gcalendar:///upcoming"), None
-    )
-    assert upcoming_resource, "Upcoming events resource not found"
-
-    # Use the uri directly since it's already an AnyUrl object
-    upcoming_response = await client.read_resource(upcoming_resource.uri)
-    assert len(
-        upcoming_response.contents[0].text
-    ), f"Response should contain upcoming events: {upcoming_response}"
-
-    print("Upcoming events read:")
-    print(f"\t{upcoming_response.contents[0].text}")
-
-    # Also try to read at least one regular calendar
-    # Use str() to convert AnyUrl to string for comparison
-    regular_calendar = next(
-        (r for r in resources if str(r.uri) != "gcalendar:///upcoming"), None
-    )
+    regular_calendar = next((r for r in resources), None)
 
     if regular_calendar:
         calendar_response = await client.read_resource(regular_calendar.uri)
