@@ -64,54 +64,39 @@ def create_server(user_id, api_key=None):
     async def handle_list_resources(
         cursor: Optional[str] = None,
     ) -> list[Resource]:
-        """List emails from Outlook"""
-        logger.info(
-            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
-        )
+        """List email folders from Outlook"""
+        logger.info(f"Listing folders for user: {server.user_id} with cursor: {cursor}")
 
         access_token = await create_outlook_client(
             server.user_id, api_key=server.api_key
         )
 
-        page_size = 10
-        params = {
-            "$select": "id,subject,from,toRecipients,receivedDateTime",
-            "$top": page_size,
-            "$orderby": "receivedDateTime desc",
-        }
-
-        if cursor:
-            params["$skiptoken"] = cursor
-
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(
-            "https://graph.microsoft.com/v1.0/me/messages",
+            "https://graph.microsoft.com/v1.0/me/mailFolders",
             headers=headers,
-            params=params,
         )
 
         if response.status_code != 200:
             logger.error(
-                f"Error listing emails: {response.status_code} {response.text}"
+                f"Error listing folders: {response.status_code} {response.text}"
             )
             return []
 
         data = response.json()
-        emails = data.get("value", [])
+        folders = data.get("value", [])
 
         resources = []
-        for email in emails:
-            email_id = email.get("id")
-            subject = email.get("subject", "No Subject")
-            from_email = (
-                email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
-            )
+        for folder in folders:
+            folder_id = folder.get("id")
+            display_name = folder.get("displayName", "Unknown Folder")
+            total_items = folder.get("totalItemCount", 0)
 
             resource = Resource(
-                uri=f"outlook://email/{email_id}",
-                name=f"{subject} - from: {from_email}",
-                description=f"Email from {from_email}, received on {email.get('receivedDateTime')}",
-                mimeType="text/plain",
+                uri=f"outlook://folder/{folder_id}",
+                name=display_name,
+                description=f"{display_name} folder with {total_items} emails",
+                mimeType="application/outlook.folder",
             )
             resources.append(resource)
 
@@ -119,66 +104,71 @@ def create_server(user_id, api_key=None):
 
     @server.read_resource()
     async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
-        """Read an email from Outlook by URI"""
+        """Read emails from a folder in Outlook by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
         access_token = await create_outlook_client(
             server.user_id, api_key=server.api_key
         )
-        email_id = str(uri).replace("outlook://email/", "")
+        folder_id = str(uri).replace("outlook://folder/", "")
+
+        page_size = 25
+        params = {
+            "$select": "id,subject,from,receivedDateTime,isRead",
+            "$top": page_size,
+            "$orderby": "receivedDateTime desc",
+        }
 
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(
-            f"https://graph.microsoft.com/v1.0/me/messages/{email_id}?$select=subject,body,from,toRecipients,receivedDateTime,hasAttachments",
+            f"https://graph.microsoft.com/v1.0/me/mailFolders/{folder_id}/messages",
             headers=headers,
+            params=params,
         )
 
         if response.status_code != 200:
             logger.error(
-                f"Error fetching email: {response.status_code} {response.text}"
+                f"Error fetching emails in folder: {response.status_code} {response.text}"
             )
             return [
                 ReadResourceContents(
-                    content="Error fetching email", mime_type="text/plain"
+                    content="Error fetching emails in this folder",
+                    mime_type="text/plain",
                 )
             ]
 
-        email_data = response.json()
+        emails_data = response.json()
+        emails = emails_data.get("value", [])
 
-        # Extract and format the email content
-        subject = email_data.get("subject", "No Subject")
-        from_name = email_data.get("from", {}).get("emailAddress", {}).get("name", "")
-        from_email = (
-            email_data.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
-        )
-        received_date = email_data.get("receivedDateTime", "")
-        body_content = email_data.get("body", {}).get("content", "")
-        body_type = email_data.get("body", {}).get("contentType", "html")
+        if not emails:
+            return [
+                ReadResourceContents(
+                    content="No emails found in this folder", mime_type="text/plain"
+                )
+            ]
 
-        # Extract text from HTML if needed
-        if body_type.lower() == "html":
-            body_content = extract_text_from_html(body_content)
+        formatted_emails = []
+        for email in emails:
+            email_id = email.get("id")
+            subject = email.get("subject", "No Subject")
+            from_name = email.get("from", {}).get("emailAddress", {}).get("name", "")
+            from_email = (
+                email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
+            )
+            received_date = email.get("receivedDateTime", "")
+            read_status = "Read" if email.get("isRead", False) else "Unread"
 
-        # Format recipients
-        recipients = []
-        for recipient in email_data.get("toRecipients", []):
-            email_address = recipient.get("emailAddress", {})
-            name = email_address.get("name", "")
-            address = email_address.get("address", "")
-            if name and name != address:
-                recipients.append(f"{name} <{address}>")
-            else:
-                recipients.append(address)
+            email_entry = (
+                f"ID: outlook://email/{email_id}\n"
+                f"Subject: {subject}\n"
+                f"From: {from_name} <{from_email}>\n"
+                f"Date: {received_date}\n"
+                f"Status: {read_status}\n"
+            )
+            formatted_emails.append(email_entry)
 
-        formatted_email = (
-            f"Subject: {subject}\n"
-            f"From: {from_name} <{from_email}>\n"
-            f"To: {', '.join(recipients)}\n"
-            f"Date: {received_date}\n"
-            f"\n{body_content}"
-        )
-
-        return [ReadResourceContents(content=formatted_email, mime_type="text/plain")]
+        all_emails = "\n---\n".join(formatted_emails)
+        return [ReadResourceContents(content=all_emails, mime_type="text/plain")]
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
