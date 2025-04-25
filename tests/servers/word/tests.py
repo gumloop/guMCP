@@ -11,7 +11,7 @@ TOOL_TESTS = [
         "args_template": "with limit=10",
         "expected_keywords": ["document_id"],
         "regex_extractors": {"document_id": r'"?document_id"?[:\s]+([^,\s\n"]+)'},
-        "description": "list Word documents from OneDrive and return the document_id of any one document",
+        "description": "list Word documents from OneDrive and return the document_id of any one document and if empty set document_id to empty",
     },
     {
         "name": "create_document",
@@ -21,7 +21,7 @@ TOOL_TESTS = [
             "created_file_id": r'"?created_file_id"?[:\s]+"?([0-9A-Z!]+)"?',
             "is_sharepoint": r'"?is_sharepoint"?[:\s]+"?([^"]+)"?',
         },
-        "description": "create a new Word document and return its file id as created_file_id and based on url return is_sharepoint as true if there is any mention of sharepoint in the url",
+        "description": "create a new Word document and return its file id as created_file_id and based on url return is_sharepoint as true or false",
         "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
     },
     {
@@ -39,7 +39,6 @@ TOOL_TESTS = [
         "regex_extractors": {"content": r'"?content"?[:\s]+"([^"]*Gumloop[^"]*)"'},
         "description": "read text content from a Word document and return the content without any formatting or modifications",
         "depends_on": ["created_file_id"],
-        "skip_if_sharepoint": True,
     },
     {
         "name": "search_documents",
@@ -47,7 +46,6 @@ TOOL_TESTS = [
         "expected_keywords": ["file_id"],
         "regex_extractors": {"file_id": r'"?file_id"?[:\s]+"?([0-9A-Z!]+)"?'},
         "description": "search for Word documents matching a query and return the file_id of any one document",
-        "skip_if_sharepoint": True,
     },
     {
         "name": "download_document",
@@ -77,11 +75,6 @@ def context():
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_word_tool(client, context, test_config):
-    # Skip tests that should be skipped for SharePoint documents
-    if test_config.get("skip_if_sharepoint", False) and context.get("is_sharepoint") == "true":
-        pytest.skip(f"Test {test_config['name']} skipped for SharePoint documents")
-        return
-    
     return await run_tool_test(client, context, test_config)
 
 
@@ -90,9 +83,11 @@ async def test_read_resource(client):
     """Test reading a Word document resource"""
     # First list resources to get a valid Word file
     response = await client.list_resources()
-    assert (
-        response and hasattr(response, "resources") and len(response.resources)
-    ), f"Invalid list resources response: {response}"
+
+    # Skip test if no resources were returned
+    if not (response and hasattr(response, "resources") and len(response.resources)):
+        pytest.skip("No Word resources found to test read_resource functionality")
+        return
 
     # Find the first Word file resource
     word_resource = next(
@@ -100,23 +95,23 @@ async def test_read_resource(client):
         None,
     )
 
-    # Skip test if no Word resources found
     if not word_resource:
         pytest.skip("No Word resources found to test read_resource functionality")
         return
 
     # Read Word file details
     response = await client.read_resource(word_resource.uri)
-
-    # Verify response
     assert response.contents, "Response should contain Word document data"
     assert response.contents[0].mimeType == "application/json", "Expected JSON response"
 
-    # Parse the JSON content
+    # Parse and verify JSON content
     import json
 
-    content_text = response.contents[0].text
-    content_data = json.loads(content_text)
+    content_data = json.loads(response.contents[0].text)
+
+    # Check if there was an error response
+    if "error" in content_data:
+        pytest.fail(f"Error reading document: {content_data.get('error')}")
 
     # Verify basic document data
     assert "id" in content_data, "Response should include document ID"

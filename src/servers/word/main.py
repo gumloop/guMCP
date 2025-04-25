@@ -128,6 +128,17 @@ async def make_graph_api_request(
         raise ValueError(f"Error communicating with Microsoft Graph API: {str(e)}")
 
 
+async def is_sharepoint_storage(access_token):
+    """Detect if we're using SharePoint or OneDrive storage"""
+    drive_info = await make_graph_api_request(
+        "get", "me/drive", access_token=access_token
+    )
+    return (
+        drive_info.get("driveType") == "business"
+        or "sharepoint" in drive_info.get("webUrl", "").lower()
+    )
+
+
 def create_server(user_id, api_key=None):
     """Create a new server instance for Word operations"""
     server = Server(f"{SERVICE_NAME}-server")
@@ -146,10 +157,14 @@ def create_server(user_id, api_key=None):
         access_token = await get_microsoft_client()
 
         try:
+            # Determine if we're using SharePoint or OneDrive
+            is_sharepoint = await is_sharepoint_storage(access_token)
+
             endpoint = "me/drive/root/search(q='.docx')"
             query_params = {
                 "$top": 50,
-                "$select": "id,name,webUrl,lastModifiedDateTime,size",
+                "$select": "id,name,webUrl,lastModifiedDateTime,size"
+                + (",file" if is_sharepoint else ""),
                 "$orderby": "lastModifiedDateTime desc",
             }
 
@@ -161,14 +176,30 @@ def create_server(user_id, api_key=None):
             )
 
             resources = []
+
             for item in result.get("value", []):
-                resources.append(
-                    Resource(
-                        uri=f"word:///file/{item['id']}",
-                        mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        name=f"{item['name']}",
+                # For SharePoint, filter by MIME type
+                if is_sharepoint:
+                    if (
+                        item.get("file")
+                        and item.get("file", {}).get("mimeType")
+                        == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    ):
+                        resources.append(
+                            Resource(
+                                uri=f"word:///file/{item['id']}",
+                                mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                name=f"{item['name']}",
+                            )
+                        )
+                else:
+                    resources.append(
+                        Resource(
+                            uri=f"word:///file/{item['id']}",
+                            mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            name=f"{item['name']}",
+                        )
                     )
-                )
 
             return resources
 
@@ -212,9 +243,17 @@ def create_server(user_id, api_key=None):
             except Exception as e:
                 error_msg = f"Error reading Word document: {str(e)}"
                 logger.error(error_msg)
+
+                formatted_error = {
+                    "id": file_id,
+                    "error": error_msg,
+                    "status": "error",
+                    "success": False,
+                }
+
                 return [
                     ReadResourceContents(
-                        content=json.dumps({"error": error_msg}),
+                        content=json.dumps(formatted_error),
                         mime_type="application/json",
                     )
                 ]
@@ -378,12 +417,16 @@ def create_server(user_id, api_key=None):
 
         try:
             if name == "list_documents":
+                # Determine if we're using SharePoint or OneDrive
+                is_sharepoint = await is_sharepoint_storage(access_token)
+
                 endpoint = "me/drive/root/search(q='.docx')"
                 params = {
-                    "$top": arguments.get("limit", 50),
-                    "$select": "id,name,webUrl,lastModifiedDateTime,size,createdDateTime",
+                    "$top": arguments.get("limit", 50) if not is_sharepoint else 100,
+                    "$select": "id,name,webUrl,lastModifiedDateTime,size,createdDateTime,file",
                     "$orderby": "lastModifiedDateTime desc",
                 }
+
                 if arguments.get("query"):
                     params["search"] = arguments.get("query")
 
@@ -391,9 +434,21 @@ def create_server(user_id, api_key=None):
                     "get", endpoint, params=params, access_token=access_token
                 )
 
+                documents = []
+                if is_sharepoint:
+                    for item in result.get("value", []):
+                        if (
+                            item.get("file")
+                            and item.get("file", {}).get("mimeType")
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            documents.append(item)
+                else:
+                    documents = result.get("value", [])
+
                 formatted_result = {"documents": []}
-                if result.get("value") and len(result.get("value")) > 0:
-                    first_doc = result.get("value")[0]
+                if documents and len(documents) > 0:
+                    first_doc = documents[0]
                     formatted_result = {
                         "document_id": first_doc.get("id", ""),
                         "documents": [
@@ -405,7 +460,7 @@ def create_server(user_id, api_key=None):
                                 "created": item.get("createdDateTime"),
                                 "size": item.get("size"),
                             }
-                            for item in result.get("value", [])
+                            for item in documents
                         ],
                     }
 
@@ -439,11 +494,15 @@ def create_server(user_id, api_key=None):
                     params={"@microsoft.graph.conflictBehavior": "rename"},
                 )
 
+                # Check if this is SharePoint or OneDrive
+                is_sharepoint = "sharepoint" in result.get("webUrl", "").lower()
+
                 formatted_result = {
                     "created_file_id": result.get("id"),
                     "name": result.get("name"),
                     "web_url": result.get("webUrl"),
                     "content": content,
+                    "is_sharepoint": is_sharepoint,
                 }
 
                 return [
@@ -580,28 +639,46 @@ def create_server(user_id, api_key=None):
                 query = arguments.get("query")
                 limit = arguments.get("limit", 25)
 
+                # Determine if we're using SharePoint or OneDrive
+                is_sharepoint = await is_sharepoint_storage(access_token)
+
                 endpoint = f"me/drive/root/search(q='{query}')"
                 params = {
-                    "$top": limit,
+                    "$top": 100 if is_sharepoint else limit,
                     "$select": "id,name,webUrl,lastModifiedDateTime,size,createdDateTime,file",
-                    "$filter": "file/mimeType eq 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
                     "$orderby": "lastModifiedDateTime desc",
                 }
+
+                if not is_sharepoint:
+                    params["$filter"] = (
+                        "file/mimeType eq 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
+                    )
 
                 result = await make_graph_api_request(
                     "get", endpoint, params=params, access_token=access_token
                 )
 
+                result_items = []
+                if is_sharepoint:
+                    for item in result.get("value", []):
+                        if (
+                            item.get("file")
+                            and item.get("file", {}).get("mimeType")
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            result_items.append(item)
+                            if len(result_items) >= limit:
+                                break
+                else:
+                    result_items = result.get("value", [])
+
                 formatted_result = {
                     "documents": [],
-                    "file_id": (
-                        result.get("value")[0].get("id")
-                        if result.get("value") and len(result.get("value")) > 0
-                        else ""
-                    ),
+                    "file_id": result_items[0].get("id") if result_items else "",
+                    "is_sharepoint": is_sharepoint,
                 }
 
-                if result.get("value"):
+                if result_items:
                     formatted_result["documents"] = [
                         {
                             "id": item.get("id"),
@@ -611,7 +688,7 @@ def create_server(user_id, api_key=None):
                             "created": item.get("createdDateTime"),
                             "size": item.get("size"),
                         }
-                        for item in result.get("value", [])
+                        for item in result_items
                     ]
 
                 return [
