@@ -166,7 +166,7 @@ def create_server(user_id, api_key=None):
                 display_name = customer.get("DisplayName", "Unnamed Customer")
                 resources.append(
                     Resource(
-                        uri=f"quickbooks:///customer/{customer_id}",
+                        uri=f"quickbooks://customer/{customer_id}",
                         mimeType="application/json",
                         name=f"Customer: {display_name}",
                         description=f"QuickBooks Customer: {display_name}",
@@ -179,7 +179,7 @@ def create_server(user_id, api_key=None):
                 doc_number = invoice.get("DocNumber", "Unknown")
                 resources.append(
                     Resource(
-                        uri=f"quickbooks:///invoice/{invoice_id}",
+                        uri=f"quickbooks://invoice/{invoice_id}",
                         mimeType="application/json",
                         name=f"Invoice: {doc_number}",
                         description=f"QuickBooks Invoice: {doc_number}",
@@ -193,7 +193,7 @@ def create_server(user_id, api_key=None):
                 account_type = account.get("AccountType", "")
                 resources.append(
                     Resource(
-                        uri=f"quickbooks:///account/{account_id}",
+                        uri=f"quickbooks://account/{account_id}",
                         mimeType="application/json",
                         name=f"Account: {name} ({account_type})",
                         description=f"QuickBooks Account: {name} ({account_type})",
@@ -216,9 +216,9 @@ def create_server(user_id, api_key=None):
         uri_str = str(uri)
 
         try:
-            if uri_str.startswith("quickbooks:///customer/"):
+            if uri_str.startswith("quickbooks://customer/"):
                 # Handle customer resource
-                customer_id = uri_str.replace("quickbooks:///customer/", "")
+                customer_id = uri_str.replace("quickbooks://customer/", "")
                 customer_data = await call_quickbooks_api(
                     f"customer/{customer_id}",
                     credentials,
@@ -232,9 +232,9 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("quickbooks:///invoice/"):
+            elif uri_str.startswith("quickbooks://invoice/"):
                 # Handle invoice resource
-                invoice_id = uri_str.replace("quickbooks:///invoice/", "")
+                invoice_id = uri_str.replace("quickbooks://invoice/", "")
                 invoice_data = await call_quickbooks_api(
                     f"invoice/{invoice_id}",
                     credentials,
@@ -248,9 +248,9 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("quickbooks:///account/"):
+            elif uri_str.startswith("quickbooks://account/"):
                 # Handle account resource
-                account_id = uri_str.replace("quickbooks:///account/", "")
+                account_id = uri_str.replace("quickbooks://account/", "")
                 account_data = await call_quickbooks_api(
                     f"account/{account_id}",
                     credentials,
