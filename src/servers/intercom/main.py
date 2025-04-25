@@ -107,7 +107,7 @@ def create_server(user_id, api_key=None):
             for tag in tags:
                 tag_resources.append(
                     Resource(
-                        uri=f"intercom:///tag/{tag['id']}",
+                        uri=f"intercom://tag/{tag['id']}",
                         mimeType="application/json",
                         name=f"Tag: {tag['name']}",
                     )
@@ -125,7 +125,7 @@ def create_server(user_id, api_key=None):
 
                 conversation_resources.append(
                     Resource(
-                        uri=f"intercom:///conversation/{conversation['id']}",
+                        uri=f"intercom://conversation/{conversation['id']}",
                         mimeType="application/json",
                         name=title,
                     )
@@ -145,7 +145,7 @@ def create_server(user_id, api_key=None):
 
                 contact_resources.append(
                     Resource(
-                        uri=f"intercom:///contact/{contact['id']}",
+                        uri=f"intercom://contact/{contact['id']}",
                         mimeType="application/json",
                         name=f"{contact_type}: {name} ({email})",
                     )
@@ -166,8 +166,8 @@ def create_server(user_id, api_key=None):
         access_token = await get_intercom_client()
         uri_str = str(uri)
 
-        if uri_str.startswith("intercom:///tag/"):
-            tag_id = uri_str.replace("intercom:///tag/", "")
+        if uri_str.startswith("intercom://tag/"):
+            tag_id = uri_str.replace("intercom://tag/", "")
 
             tag_result = await execute_intercom_request(
                 "get", f"tags/{tag_id}", access_token=access_token
@@ -183,8 +183,8 @@ def create_server(user_id, api_key=None):
                 )
             ]
 
-        elif uri_str.startswith("intercom:///conversation/"):
-            conversation_id = uri_str.replace("intercom:///conversation/", "")
+        elif uri_str.startswith("intercom://conversation/"):
+            conversation_id = uri_str.replace("intercom://conversation/", "")
 
             conversation_result = await execute_intercom_request(
                 "get", f"conversations/{conversation_id}", access_token=access_token
@@ -200,8 +200,8 @@ def create_server(user_id, api_key=None):
                 )
             ]
 
-        elif uri_str.startswith("intercom:///contact/"):
-            contact_id = uri_str.replace("intercom:///contact/", "")
+        elif uri_str.startswith("intercom://contact/"):
+            contact_id = uri_str.replace("intercom://contact/", "")
 
             contact_result = await execute_intercom_request(
                 "get", f"contacts/{contact_id}", access_token=access_token
