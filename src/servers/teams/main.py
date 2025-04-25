@@ -168,15 +168,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     channel_name = channel.get("displayName", "Unknown Channel")
                     is_private = channel.get("membershipType", "standard") == "private"
 
-                    prefix = "private" if is_private else "channel"
                     resource = Resource(
-                        uri=f"teams://{prefix}/{team_id}/{channel_id}",
+                        uri=f"teams://channel/{team_id}_{channel_id}",
                         mimeType="text/plain",
                         name=f"#{team_name}/{channel_name}",
                         description=f"{'Private' if is_private else 'Public'} Teams channel: #{team_name}/{channel_name}",
                     )
                     resources.append(resource)
-            logger.info(f"Found {len(resources)} {resource} resources")
+            logger.info(f"Found {len(resources)} resources")
             return resources
 
         except Exception as e:
@@ -198,12 +197,19 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
         if not uri_str.startswith("teams://"):
             raise ValueError(f"Invalid Teams URI: {uri_str}")
 
-        # Parse the URI to get channel type, team ID and channel ID
+        # Parse the URI to get resource type and resource ID
         parts = uri_str.replace("teams://", "").split("/")
-        if len(parts) != 3:
+        if len(parts) != 2:
             raise ValueError(f"Invalid Teams URI format: {uri_str}")
 
-        channel_type, team_id, channel_id = parts
+        resource_type, resource_id = parts
+
+        # Split resource_id to get team_id and channel_id
+        id_parts = resource_id.split("_")
+        if len(id_parts) != 2:
+            raise ValueError(f"Invalid resource ID format: {resource_id}")
+
+        team_id, channel_id = id_parts
 
         try:
             # Get channel messages
