@@ -182,7 +182,7 @@ async def test_read_resource(client):
 
     # Find the first Excel file resource
     excel_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("excel:///file/")),
+        (r for r in response.resources if str(r.uri).startswith("excel://file/")),
         None,
     )
 
