@@ -165,7 +165,7 @@ def create_server(user_id, api_key=None):
                         table_name = table.get("name")
 
                         resource = Resource(
-                            uri=f"airtable:///{base_id}/{table_id}",
+                            uri=f"airtable://table/{base_id}/{table_id}",
                             name=f"{base_name} - {table_name}",
                             description=f"Airtable table: {table_name} in base: {base_name}",
                         )
@@ -181,9 +181,17 @@ def create_server(user_id, api_key=None):
         """Read records from an Airtable table by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
-        parts = str(uri).replace("airtable:///", "").split("/")
+        uri_str = str(uri)
+        if not uri_str.startswith("airtable://table/"):
+            raise ValueError(f"Invalid Airtable URI format: {uri}")
+
+        # Remove the prefix and split the remaining path
+        path = uri_str.replace("airtable://table/", "")
+        parts = path.split("/")
         if len(parts) != 2:
-            raise ValueError(f"Invalid Airtable URI: {uri}")
+            raise ValueError(
+                f"Invalid Airtable URI: {uri}, expected format: airtable://table/base_id/table_id"
+            )
 
         base_id, table_id = parts
 
