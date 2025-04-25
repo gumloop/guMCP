@@ -21,13 +21,13 @@ async def test_list_resources(client):
 async def test_read_collections(client):
     """Test reading collections from Attio"""
     # Test reading companies collection
-    companies_response = await client.read_resource("attio:///collections/companies")
+    companies_response = await client.read_resource("attio://collection/companies")
     assert len(
         companies_response.contents[0].text
     ), f"Response should contain companies data: {companies_response}"
 
     # Test reading people collection
-    people_response = await client.read_resource("attio:///collections/people")
+    people_response = await client.read_resource("attio://collection/people")
     assert len(
         people_response.contents[0].text
     ), f"Response should contain people data: {people_response}"
