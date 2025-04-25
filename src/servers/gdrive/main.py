@@ -80,8 +80,21 @@ def create_server(user_id, api_key=None):
 
         resources = []
         for file in files:
+            # Map Google Drive mime types to resource_type
+            mime_type = file["mimeType"]
+            if mime_type.startswith("application/vnd.google-apps.folder"):
+                resource_type = "folder"
+            elif mime_type.startswith("application/vnd.google-apps.document"):
+                resource_type = "document"
+            elif mime_type.startswith("application/vnd.google-apps.spreadsheet"):
+                resource_type = "spreadsheet"
+            elif mime_type.startswith("application/vnd.google-apps.presentation"):
+                resource_type = "presentation"
+            else:
+                resource_type = "file"
+
             resource = Resource(
-                uri=f"gdrive:///{file['id']}",
+                uri=f"gdrive://{resource_type}/{file['id']}",
                 mimeType=file["mimeType"],
                 name=file["name"],
             )
@@ -98,7 +111,18 @@ def create_server(user_id, api_key=None):
         drive_service = await create_drive_service(
             server.user_id, api_key=server.api_key
         )
-        file_id = str(uri).replace("gdrive:///", "")
+
+        # Extract file_id from the new URI format
+        uri_parts = str(uri).split("://")
+        if len(uri_parts) > 1:
+            path_parts = uri_parts[1].split("/", 1)
+            if len(path_parts) > 1:
+                file_id = path_parts[1]
+            else:
+                raise ValueError(f"Invalid URI format: {uri}")
+        else:
+            # Handle legacy format for backward compatibility
+            file_id = str(uri).replace("gdrive:///", "")
 
         # First get file metadata to check mime type
         file_metadata = (
