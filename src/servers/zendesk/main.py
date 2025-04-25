@@ -124,29 +124,10 @@ def create_server(user_id, api_key=None):
         for view in views_data.get("views", []):
             resources.append(
                 Resource(
-                    uri=f"zendesk:///view/{view['id']}",
+                    uri=f"zendesk://view/{view['id']}",
                     mimeType="application/json",
                     name=f"View: {view['title']}",
                     description=f"Zendesk ticket view: {view['title']}",
-                )
-            )
-
-        # Add recent tickets as resources
-        tickets_params = {"sort_by": "created_at", "sort_order": "desc", "per_page": 10}
-        if cursor:
-            tickets_params["page"] = cursor
-
-        tickets_data = await make_zendesk_request(
-            "get", "tickets.json", access_token, subdomain, params=tickets_params
-        )
-
-        for ticket in tickets_data.get("tickets", []):
-            resources.append(
-                Resource(
-                    uri=f"zendesk:///ticket/{ticket['id']}",
-                    mimeType="application/json",
-                    name=f"Ticket #{ticket['id']}: {ticket['subject']}",
-                    description=f"Zendesk ticket: {ticket['subject']}",
                 )
             )
 
@@ -161,9 +142,9 @@ def create_server(user_id, api_key=None):
 
         uri_str = str(uri)
 
-        if uri_str.startswith("zendesk:///view/"):
+        if uri_str.startswith("zendesk://view/"):
             # Handle view resource
-            view_id = uri_str.replace("zendesk:///view/", "")
+            view_id = uri_str.replace("zendesk://view/", "")
 
             view_data = await make_zendesk_request(
                 "get", f"views/{view_id}.json", access_token, subdomain
@@ -178,38 +159,6 @@ def create_server(user_id, api_key=None):
             combined_data = {
                 "view": view_data.get("view", {}),
                 "tickets": view_tickets.get("tickets", []),
-            }
-
-            formatted_content = json.dumps(combined_data, indent=2)
-            return [
-                ReadResourceContents(
-                    content=formatted_content, mime_type="application/json"
-                )
-            ]
-
-        elif uri_str.startswith("zendesk:///ticket/"):
-            # Handle ticket resource
-            ticket_id = uri_str.replace("zendesk:///ticket/", "")
-
-            # Get ticket with side loading of users, groups and comments
-            ticket_data = await make_zendesk_request(
-                "get",
-                f"tickets/{ticket_id}.json?include=users,groups,comment_count",
-                access_token,
-                subdomain,
-            )
-
-            # Get comments for this ticket
-            comments_data = await make_zendesk_request(
-                "get", f"tickets/{ticket_id}/comments.json", access_token, subdomain
-            )
-
-            # Combine ticket data with comments
-            combined_data = {
-                "ticket": ticket_data.get("ticket", {}),
-                "comments": comments_data.get("comments", []),
-                "users": ticket_data.get("users", []),
-                "groups": ticket_data.get("groups", []),
             }
 
             formatted_content = json.dumps(combined_data, indent=2)
