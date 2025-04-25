@@ -29,7 +29,7 @@ async def test_read_event_type(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("calendly:///event_type/")
+            if str(r.uri).startswith("calendly://event_type/")
         ),
         None,
     )
@@ -55,7 +55,7 @@ async def test_read_event(client):
     ), f"Invalid list resources response: {response}"
 
     event_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("calendly:///event/")),
+        (r for r in response.resources if str(r.uri).startswith("calendly://event/")),
         None,
     )
 
@@ -142,7 +142,7 @@ async def test_get_availability_tool(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("calendly:///event_type/")
+            if str(r.uri).startswith("calendly://event_type/")
         ),
         None,
     )
@@ -150,7 +150,7 @@ async def test_get_availability_tool(client):
     if not event_type_resource:
         pytest.skip("No event type resources found - skipping test")
 
-    event_type_id = str(event_type_resource.uri).replace("calendly:///event_type/", "")
+    event_type_id = str(event_type_resource.uri).replace("calendly://event_type/", "")
 
     today = datetime.now().date().isoformat()
     week_from_now = (datetime.now() + timedelta(days=7)).date().isoformat()
@@ -252,7 +252,7 @@ async def test_create_scheduling_link_tool(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("calendly:///event_type/")
+            if str(r.uri).startswith("calendly://event_type/")
         ),
         None,
     )
@@ -260,7 +260,7 @@ async def test_create_scheduling_link_tool(client):
     if not event_type_resource:
         pytest.skip("No event type resources found - skipping test")
 
-    event_type_id = str(event_type_resource.uri).replace("calendly:///event_type/", "")
+    event_type_id = str(event_type_resource.uri).replace("calendly://event_type/", "")
 
     response = await client.process_query(
         f"Use the create_scheduling_link tool to create a single-use link for event type ID '{event_type_id}'. "

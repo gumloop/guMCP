@@ -90,7 +90,7 @@ def format_event_type(event_type):
         "description": event_type.get("description", ""),
         "duration_minutes": duration_mins,
         "scheduling_url": scheduling_url,
-        "uri": f"calendly:///event_type/{event_type.get('uri', '').split('/')[-1]}",
+        "uri": f"calendly://event_type/{event_type.get('uri', '').split('/')[-1]}",
         "active": event_type.get("active", False),
     }
 
@@ -116,7 +116,7 @@ def format_event(event):
         "start_time": start_time,
         "end_time": end_time,
         "location": event.get("location", {}).get("type", "Not specified"),
-        "uri": f"calendly:///event/{event.get('uri', '').split('/')[-1]}",
+        "uri": f"calendly://event/{event.get('uri', '').split('/')[-1]}",
         "cancellation_url": event.get("cancellation", {}).get("cancellation_url", ""),
         "rescheduling_url": event.get("rescheduling", {}).get("reschedule_url", ""),
     }
@@ -163,7 +163,7 @@ def create_server(user_id, api_key=None):
                 event_type_id = event_type.get("uri", "").split("/")[-1]
                 resources.append(
                     Resource(
-                        uri=f"calendly:///event_type/{event_type_id}",
+                        uri=f"calendly://event_type/{event_type_id}",
                         mimeType="application/json",
                         name=f"Event Type: {event_type.get('name', 'Unnamed')} ({event_type.get('duration') // 60}min)",
                         description=event_type.get("description", ""),
@@ -203,7 +203,7 @@ def create_server(user_id, api_key=None):
 
                 resources.append(
                     Resource(
-                        uri=f"calendly:///event/{event_id}",
+                        uri=f"calendly://event/{event_id}",
                         mimeType="application/json",
                         name=f"Meeting: {event.get('name', 'Unnamed')} ({formatted_time})",
                     )
@@ -225,9 +225,9 @@ def create_server(user_id, api_key=None):
         uri_str = str(uri)
 
         try:
-            if uri_str.startswith("calendly:///event_type/"):
+            if uri_str.startswith("calendly://event_type/"):
                 # Handle event type resource
-                event_type_id = uri_str.replace("calendly:///event_type/", "")
+                event_type_id = uri_str.replace("calendly://event_type/", "")
 
                 event_type_data = await make_calendly_request(
                     "GET", f"/event_types/{event_type_id}", access_token
@@ -245,9 +245,9 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("calendly:///event/"):
+            elif uri_str.startswith("calendly://event/"):
                 # Handle event resource
-                event_id = uri_str.replace("calendly:///event/", "")
+                event_id = uri_str.replace("calendly://event/", "")
 
                 event_data = await make_calendly_request(
                     "GET", f"/scheduled_events/{event_id}", access_token
@@ -431,7 +431,7 @@ def create_server(user_id, api_key=None):
                         result_text += f"  Description: {et['description']}\n"
                     result_text += f"  Scheduling URL: {et['scheduling_url']}\n"
                     result_text += (
-                        f"  ID: {et['uri'].replace('calendly:///event_type/', '')}\n\n"
+                        f"  ID: {et['uri'].replace('calendly://event_type/', '')}\n\n"
                     )
 
                 return [TextContent(type="text", text=result_text)]
@@ -583,7 +583,7 @@ def create_server(user_id, api_key=None):
                     )
                     result_text += f"  Location: {event['location']}\n"
                     result_text += (
-                        f"  ID: {event['uri'].replace('calendly:///event/', '')}\n\n"
+                        f"  ID: {event['uri'].replace('calendly://event/', '')}\n\n"
                     )
 
                 return [TextContent(type="text", text=result_text)]
