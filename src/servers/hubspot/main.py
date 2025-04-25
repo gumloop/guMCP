@@ -148,7 +148,7 @@ def create_server(user_id, api_key=None):
                 name = email if email else f"Contact {contact_id}"
 
             resource = Resource(
-                uri=f"hubspot:///contacts/{contact_id}",
+                uri=f"hubspot://contact/{contact_id}",
                 mimeType="application/json",
                 name=name,
             )
@@ -169,10 +169,10 @@ def create_server(user_id, api_key=None):
 
         # Parse contact ID from URI
         uri_str = str(uri)
-        if not uri_str.startswith("hubspot:///contacts/"):
+        if not uri_str.startswith("hubspot://contact/"):
             return []
 
-        contact_id = uri_str.replace("hubspot:///contacts/", "")
+        contact_id = uri_str.replace("hubspot://contact/", "")
 
         # Get access token
         access_token = await get_hubspot_access_token(
