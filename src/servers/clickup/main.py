@@ -124,7 +124,7 @@ def create_server(user_id, api_key=None):
 
                 resources.append(
                     Resource(
-                        uri=f"clickup:///workspace/{workspace_id}",
+                        uri=f"clickup://workspace/{workspace_id}",
                         mimeType="application/json",
                         name=f"Workspace: {workspace_name}",
                     )
@@ -142,7 +142,7 @@ def create_server(user_id, api_key=None):
 
                     resources.append(
                         Resource(
-                            uri=f"clickup:///space/{space_id}",
+                            uri=f"clickup://space/{space_id}",
                             mimeType="application/json",
                             name=f"Space: {space_name} (in {workspace_name})",
                         )
@@ -160,7 +160,7 @@ def create_server(user_id, api_key=None):
 
                         resources.append(
                             Resource(
-                                uri=f"clickup:///list/{list_id}",
+                                uri=f"clickup://list/{list_id}",
                                 mimeType="application/json",
                                 name=f"List: {list_name} (in {space_name})",
                             )
@@ -181,9 +181,9 @@ def create_server(user_id, api_key=None):
         uri_str = str(uri)
 
         try:
-            if uri_str.startswith("clickup:///workspace/"):
+            if uri_str.startswith("clickup://workspace/"):
                 # Handle workspace resource
-                workspace_id = uri_str.replace("clickup:///workspace/", "")
+                workspace_id = uri_str.replace("clickup://workspace/", "")
 
                 workspace_result = await make_clickup_request(
                     f"team/{workspace_id}", access_token=access_token
@@ -196,9 +196,9 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("clickup:///space/"):
+            elif uri_str.startswith("clickup://space/"):
                 # Handle space resource
-                space_id = uri_str.replace("clickup:///space/", "")
+                space_id = uri_str.replace("clickup://space/", "")
 
                 space_result = await make_clickup_request(
                     f"space/{space_id}", access_token=access_token
@@ -211,9 +211,9 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("clickup:///list/"):
+            elif uri_str.startswith("clickup://list/"):
                 # Handle list resource
-                list_id = uri_str.replace("clickup:///list/", "")
+                list_id = uri_str.replace("clickup://list/", "")
 
                 list_result = await make_clickup_request(
                     f"list/{list_id}", access_token=access_token
