@@ -108,7 +108,7 @@ def create_server(user_id, api_key=None):
             )
 
             resource = Resource(
-                uri=f"outlook:///{email_id}",
+                uri=f"outlook://email/{email_id}",
                 name=f"{subject} - from: {from_email}",
                 description=f"Email from {from_email}, received on {email.get('receivedDateTime')}",
                 mimeType="text/plain",
@@ -125,7 +125,7 @@ def create_server(user_id, api_key=None):
         access_token = await create_outlook_client(
             server.user_id, api_key=server.api_key
         )
-        email_id = str(uri).replace("outlook:///", "")
+        email_id = str(uri).replace("outlook://email/", "")
 
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(
