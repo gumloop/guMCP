@@ -20,7 +20,7 @@ TOOL_TESTS = [
         "regex_extractors": {
             "created_file_id": r'"?created_file_id"?[:\s]+"?([0-9A-Z!]+)"?'
         },
-        "description": "create a new Word document and return its file id",
+        "description": "create a new Word document and return its file id as created_file_id",
         "setup": lambda context: {"random_id": str(random.randint(10000, 99999))},
     },
     {
