@@ -60,31 +60,99 @@ def create_server(user_id, api_key=None):
     async def handle_list_resources(
         cursor: Optional[str] = None,
     ) -> list[Resource]:
-        """List emails from Gmail"""
+        """List Gmail labels as resources"""
         logger.info(
-            f"Listing email resources for user: {server.user_id} with cursor: {cursor}"
+            f"Listing label resources for user: {server.user_id} with cursor: {cursor}"
         )
 
         gmail_service = await create_gmail_service(
             server.user_id, api_key=server.api_key
         )
 
-        page_size = 10
-        params = {
-            "maxResults": page_size,
-            "q": "is:unread",  # Default to unread messages
-            "labelIds": ["INBOX"],
-        }
+        try:
+            # Get all labels
+            results = gmail_service.users().labels().list(userId="me").execute()
+            labels = results.get("labels", [])
 
-        if cursor:
-            params["pageToken"] = cursor
+            resources = []
+            for label in labels:
+                # Skip system labels that aren't useful to show
+                if label.get("type") == "system" and label.get("id") in [
+                    "CHAT",
+                    "SENT",
+                    "SPAM",
+                    "TRASH",
+                    "DRAFT",
+                ]:
+                    continue
 
-        results = gmail_service.users().messages().list(userId="me", **params).execute()
+                label_id = label.get("id")
+                label_name = label.get("name", "Unknown Label")
+
+                # Get message count for this label
+                label_data = (
+                    gmail_service.users()
+                    .labels()
+                    .get(userId="me", id=label_id)
+                    .execute()
+                )
+                total_messages = label_data.get("messagesTotal", 0)
+                unread_messages = label_data.get("messagesUnread", 0)
+
+                description = (
+                    f"{label_name} ({unread_messages} unread of {total_messages} total)"
+                )
+
+                resource = Resource(
+                    uri=f"gmail://label/{label_id}",
+                    mimeType="application/gmail.label",
+                    name=label_name,
+                    description=description,
+                )
+                resources.append(resource)
+
+            return resources
+        except Exception as e:
+            logger.error(f"Error listing Gmail labels: {str(e)}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read emails from a Gmail label"""
+        logger.info(f"Reading label resource: {uri} for user: {server.user_id}")
+
+        gmail_service = await create_gmail_service(
+            server.user_id, api_key=server.api_key
+        )
+
+        uri_str = str(uri)
+        if not uri_str.startswith("gmail://label/"):
+            raise ValueError(f"Invalid Gmail label URI: {uri_str}")
+
+        label_id = uri_str.replace("gmail://label/", "")
+
+        # Get messages in this label
+        results = (
+            gmail_service.users()
+            .messages()
+            .list(userId="me", labelIds=[label_id], maxResults=10)
+            .execute()
+        )
+
         messages = results.get("messages", [])
 
-        resources = []
+        if not messages:
+            return [
+                ReadResourceContents(
+                    content="No messages in this label", mime_type="text/plain"
+                )
+            ]
+
+        # Format messages
+        formatted_messages = []
+
         for message in messages:
-            # Get minimal message data (headers only)
+            # Get message data
             msg_data = (
                 gmail_service.users()
                 .messages()
@@ -97,80 +165,27 @@ def create_server(user_id, api_key=None):
                 .execute()
             )
 
-            # Extract subject from headers
-            subject = "No Subject"
-            sender = "Unknown"
+            # Extract headers
+            headers = {}
             for header in msg_data.get("payload", {}).get("headers", []):
-                if header["name"] == "Subject":
-                    subject = header["value"]
-                elif header["name"] == "From":
-                    sender = header["value"]
+                headers[header["name"]] = header["value"]
 
-            resource = Resource(
-                uri=f"gmail://message/{message['id']}",
-                mimeType="message/rfc822",
-                name=f"{subject} - from {sender}",
+            subject = headers.get("Subject", "No Subject")
+            sender = headers.get("From", "Unknown")
+            date = headers.get("Date", "Unknown date")
+
+            # Format message summary
+            message_summary = (
+                f"ID: gmail://message/{message['id']}\n"
+                f"Subject: {subject}\n"
+                f"From: {sender}\n"
+                f"Date: {date}\n"
+                f"---\n"
             )
-            resources.append(resource)
+            formatted_messages.append(message_summary)
 
-        return resources
-
-    @server.read_resource()
-    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
-        """Read an email from Gmail by URI"""
-        logger.info(f"Reading email resource: {uri} for user: {server.user_id}")
-
-        gmail_service = await create_gmail_service(
-            server.user_id, api_key=server.api_key
-        )
-        message_id = str(uri).replace("gmail://message/", "")
-
-        # Get full message data
-        message = (
-            gmail_service.users()
-            .messages()
-            .get(userId="me", id=message_id, format="full")
-            .execute()
-        )
-
-        # Extract headers and parts
-        headers = {}
-        for header in message.get("payload", {}).get("headers", []):
-            headers[header["name"]] = header["value"]
-
-        # Extract the message body
-        parts = []
-        parts.append(f"From: {headers.get('From', 'Unknown')}")
-        parts.append(f"To: {headers.get('To', 'Unknown')}")
-        parts.append(f"Date: {headers.get('Date', 'Unknown')}")
-        parts.append(f"Subject: {headers.get('Subject', 'No Subject')}")
-        parts.append("")
-
-        # Extract body content (simplified - assumes plain text for demo)
-        def extract_body(payload):
-            if (
-                "body" in payload
-                and "data" in payload["body"]
-                and payload["body"]["data"]
-            ):
-                import base64
-
-                return base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8")
-            elif "parts" in payload:
-                for part in payload["parts"]:
-                    if part.get("mimeType") == "text/plain":
-                        body_data = part.get("body", {}).get("data", "")
-                        if body_data:
-                            import base64
-
-                            return base64.urlsafe_b64decode(body_data).decode("utf-8")
-            return "No text content available"
-
-        body = extract_body(message.get("payload", {}))
-        parts.append(body)
-
-        email_content = "\n".join(parts)
-        return [ReadResourceContents(content=email_content, mime_type="text/plain")]
+        content = "\n".join(formatted_messages)
+        return [ReadResourceContents(content=content, mime_type="text/plain")]
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
