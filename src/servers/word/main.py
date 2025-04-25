@@ -187,7 +187,7 @@ def create_server(user_id, api_key=None):
                     ):
                         resources.append(
                             Resource(
-                                uri=f"word:///file/{item['id']}",
+                                uri=f"word://file/{item['id']}",
                                 mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                 name=f"{item['name']}",
                             )
@@ -195,7 +195,7 @@ def create_server(user_id, api_key=None):
                 else:
                     resources.append(
                         Resource(
-                            uri=f"word:///file/{item['id']}",
+                            uri=f"word://file/{item['id']}",
                             mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                             name=f"{item['name']}",
                         )
@@ -213,8 +213,8 @@ def create_server(user_id, api_key=None):
         access_token = await get_microsoft_client()
         uri_str = str(uri)
 
-        if uri_str.startswith("word:///file/"):
-            file_id = uri_str.replace("word:///file/", "")
+        if uri_str.startswith("word://file/"):
+            file_id = uri_str.replace("word://file/", "")
 
             try:
                 endpoint = f"me/drive/items/{file_id}"
