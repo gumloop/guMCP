@@ -142,7 +142,7 @@ def authenticate_and_save_credentials(
     )
 
 
-async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
+async def get_credentials(user_id: str, service_name: str) -> str:
     """
     Retrieve (or refresh if needed) the access token for Mailchimp.
 
@@ -160,5 +160,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
     # Get the existing credentials
     credentials = auth_client.get_user_credentials(service_name, user_id)
 
-    # Return the access token
-    return credentials.get("access_token")
+    if not credentials:
+        raise ValueError("No credentials found for Mailchimp")
+
+    return credentials

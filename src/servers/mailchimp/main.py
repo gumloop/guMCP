@@ -27,31 +27,6 @@ logging.basicConfig(
 logger = logging.getLogger(SERVICE_NAME)
 
 
-async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
-    """
-    Retrieve (or refresh if needed) the access token for Mailchimp.
-
-    Args:
-        user_id: ID of the user.
-        service_name: Name of the service (Mailchimp).
-        api_key: Optional API key (used by auth client abstraction).
-
-    Returns:
-        A valid access token string.
-    """
-    from src.auth.factory import create_auth_client
-
-    auth_client = create_auth_client()
-    credentials = auth_client.get_user_credentials(service_name, user_id)
-
-    if not credentials:
-        raise ValueError(
-            f"No credentials found for user {user_id} and service {service_name}"
-        )
-
-    return credentials
-
-
 def create_server(user_id, api_key=None):
     """
     Initializes and configures a Mailchimp MCP server instance.
@@ -76,7 +51,7 @@ def create_server(user_id, api_key=None):
         return [
             types.Tool(
                 name="get_audience_list",
-                description="List all available audiencesp",
+                description="List all available audiences",
                 inputSchema={"type": "object", "properties": {}},
             ),
             types.Tool(

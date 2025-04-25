@@ -33,7 +33,7 @@ async def test_get_audience_list(client):
     assert response, "No response returned from get_audience_list"
 
     try:
-        list_id = response.split("ID:")[1].strip()
+        list_id = response.split("ID: ")[1].split()[0]
     except Exception as e:
         pytest.fail(f"Failed to extract list ID from response: {e} {response}")
 
@@ -87,7 +87,7 @@ async def test_list_all_campaigns(client):
     assert response, "No response returned from list_all_campaigns"
 
     try:
-        campaign_id = response.split("ID:")[1].strip()
+        campaign_id = response.split("ID: ")[1].split()[0]
     except Exception as e:
         pytest.fail(f"Failed to extract campaign ID from response: {e} {response}")
 
