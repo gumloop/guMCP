@@ -1,0 +1,19 @@
+name: "Mailchimp guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Mailchimp using the Mailchimp API, including audience management, campaign operations, subscriber management, and email marketing automation."
+documentation_path: "README.md"
+tools:
+  - name: get_audience_list
+    description: List all available audiences.
+  - name: get_all_list
+    description: Get all lists available in account.
+  - name: list_all_campaigns
+    description: Get a list of all the campaigns.
+  - name: campaign_info
+    description: Get information about a particular campaign for campaign id.
+  - name: recent_activity
+    description: Get up to the previous 180 days of recent activities in a list.
+  - name: add_update_subscriber
+    description: Add or update a subscriber in a Mailchimp audience.
+  - name: add_subscriber_tags
+    description: Add tags to a Mailchimp list subscriber.
