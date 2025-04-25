@@ -96,7 +96,7 @@ def create_server(user_id, api_key=None):
         resources = []
         for file in files:
             resource = Resource(
-                uri=f"gdocs:///{file['id']}",
+                uri=f"gdocs://document/{file['id']}",
                 mimeType="application/vnd.google-apps.document",
                 name=file["name"],
             )
@@ -109,7 +109,9 @@ def create_server(user_id, api_key=None):
         """Read a Google Doc by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
-        doc_id = str(uri).replace("gdocs:///", "")
+        # New URI format: gdocs://document/{doc_id}
+        uri_str = str(uri)
+        doc_id = uri_str.split("/")[-1]
 
         docs_service = await create_docs_service(server.user_id, api_key=server.api_key)
 
@@ -235,7 +237,7 @@ def create_server(user_id, api_key=None):
             files = results.get("files", [])
             file_list = "\n".join(
                 [
-                    f"{file['name']} (ID: {file['id']}, Modified: {file['modifiedTime']})"
+                    f"{file['name']} (URI: gdocs://document/{file['id']}, Modified: {file['modifiedTime']})"
                     for file in files
                 ]
             )
@@ -291,7 +293,7 @@ def create_server(user_id, api_key=None):
             return [
                 TextContent(
                     type="text",
-                    text=f"Created new Google Doc '{title}' with ID: {doc_id}\nDocument link: https://docs.google.com/document/d/{doc_id}/edit",
+                    text=f"Created new Google Doc '{title}'\nResource URI: gdocs://document/{doc_id}\nDocument link: https://docs.google.com/document/d/{doc_id}/edit",
                 )
             ]
 
@@ -337,7 +339,7 @@ def create_server(user_id, api_key=None):
             return [
                 TextContent(
                     type="text",
-                    text=f"Successfully appended content to Google Doc (ID: {doc_id})\nDocument link: https://docs.google.com/document/d/{doc_id}/edit",
+                    text=f"Successfully appended content to Google Doc\nResource URI: gdocs://document/{doc_id}\nDocument link: https://docs.google.com/document/d/{doc_id}/edit",
                 )
             ]
 
@@ -387,7 +389,7 @@ def create_server(user_id, api_key=None):
             return [
                 TextContent(
                     type="text",
-                    text=f"Successfully updated Google Doc (ID: {doc_id})\nDocument link: https://docs.google.com/document/d/{doc_id}/edit",
+                    text=f"Successfully updated Google Doc\nResource URI: gdocs://document/{doc_id}\nDocument link: https://docs.google.com/document/d/{doc_id}/edit",
                 )
             ]
 
