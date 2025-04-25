@@ -107,7 +107,7 @@ def create_server(user_id, api_key=None):
                     sender = header["value"]
 
             resource = Resource(
-                uri=f"gmail:///{message['id']}",
+                uri=f"gmail://message/{message['id']}",
                 mimeType="message/rfc822",
                 name=f"{subject} - from {sender}",
             )
@@ -123,7 +123,7 @@ def create_server(user_id, api_key=None):
         gmail_service = await create_gmail_service(
             server.user_id, api_key=server.api_key
         )
-        message_id = str(uri).replace("gmail:///", "")
+        message_id = str(uri).replace("gmail://message/", "")
 
         # Get full message data
         message = (
