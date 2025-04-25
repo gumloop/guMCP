@@ -41,7 +41,7 @@ Create a file named `oauth_configs/mailchimp/oauth.json` with the following stru
 To authenticate and save credentials for local testing, run:
 
 ```bash
-python -m src/servers/mailchimp/main auth
+python src/servers/mailchimp/main.py auth
 ```
 
 After successful authentication, your credentials will be stored securely for reuse.
