@@ -158,7 +158,7 @@ def create_server(user_id, api_key=None):
             for item in result.get("value", []):
                 resources.append(
                     Resource(
-                        uri=f"excel:///file/{item['id']}",
+                        uri=f"excel://file/{item['id']}",
                         mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         name=f"{item['name']}",
                     )
@@ -176,8 +176,8 @@ def create_server(user_id, api_key=None):
         access_token = await get_microsoft_client()
         uri_str = str(uri)
 
-        if uri_str.startswith("excel:///file/"):
-            file_id = uri_str.replace("excel:///file/", "")
+        if uri_str.startswith("excel://file/"):
+            file_id = uri_str.replace("excel://file/", "")
 
             try:
                 # Get workbook information
