@@ -3,40 +3,46 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_list_resources(client):
-    """Test listing emails from Gmail"""
+    """Test listing Gmail labels"""
     response = await client.list_resources()
     assert (
         response and hasattr(response, "resources") and len(response.resources)
     ), f"Invalid list resources response: {response}"
 
-    print("Emails found:")
+    print("Gmail labels found:")
     for resource in response.resources:
-        print(f"  - {resource.name} ({resource.uri})")
+        print(f"  - {resource.name} ({resource.uri}) - Type: {resource.mimeType}")
 
-    print("✅ Successfully listed emails")
+    print("✅ Successfully listed Gmail labels")
 
 
 @pytest.mark.asyncio
-async def test_read_email(client):
-    """Test reading an email"""
-    # First list emails to get a valid email ID
+async def test_read_label(client):
+    """Test reading emails from a label"""
+    # First list labels to get a valid label ID
     response = await client.list_resources()
     assert (
         response and hasattr(response, "resources") and len(response.resources)
     ), f"Invalid list resources response: {response}"
 
-    # Try to read the first email
-    email = response.resources[0]
-    read_response = await client.read_resource(email.uri)
+    # Skip test if no labels found
+    if not response.resources:
+        print("⚠️ No Gmail labels found to test reading")
+        pytest.skip("No Gmail labels available for testing")
+        return
+
+    # Try to read the first label
+    label = response.resources[0]
+    read_response = await client.read_resource(label.uri)
 
     assert len(
         read_response.contents[0].text
-    ), f"Response should contain email contents: {read_response}"
+    ), f"Response should contain emails from label: {read_response}"
 
-    print("Email content:")
+    print("Label emails:")
     print(f"\t{read_response.contents[0].text}")
 
-    print("✅ Successfully read email")
+    print("✅ Successfully read emails from label")
 
 
 @pytest.mark.asyncio
