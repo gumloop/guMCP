@@ -113,7 +113,7 @@ def create_server(user_id, api_key=None):
             for team in teams:
                 resources.append(
                     Resource(
-                        uri=f"linear:///team/{team['id']}",
+                        uri=f"linear://team/{team['id']}",
                         mimeType="application/json",
                         name=f"Team: {team['name']} ({team['key']})",
                     )
@@ -162,7 +162,7 @@ def create_server(user_id, api_key=None):
                 for issue in issues:
                     resources.append(
                         Resource(
-                            uri=f"linear:///issue/{issue['id']}",
+                            uri=f"linear://issue/{issue['id']}",
                             mimeType="application/json",
                             name=f"Issue: {issue['title']} ({issue['state']['name']})",
                         )
@@ -186,9 +186,9 @@ def create_server(user_id, api_key=None):
 
         uri_str = str(uri)
 
-        if uri_str.startswith("linear:///team/"):
+        if uri_str.startswith("linear://team/"):
             # Handle team resource
-            team_id = uri_str.replace("linear:///team/", "")
+            team_id = uri_str.replace("linear://team/", "")
 
             team_query = """
             query($teamId: String!) {
@@ -231,9 +231,9 @@ def create_server(user_id, api_key=None):
                 )
             ]
 
-        elif uri_str.startswith("linear:///issue/"):
+        elif uri_str.startswith("linear://issue/"):
             # Handle issue resource
-            issue_id = uri_str.replace("linear:///issue/", "")
+            issue_id = uri_str.replace("linear://issue/", "")
 
             issue_query = """
             query($issueId: String!) {
