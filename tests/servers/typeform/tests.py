@@ -255,7 +255,7 @@ async def test_get_form_responses_with_fields(client):
         pytest.skip("ANTHROPIC_API_KEY not set, skipping tool test")
 
     # Get form details to find field IDs
-    form_uri = f"typeform:///form/{form_id}"
+    form_uri = f"typeform://form/{form_id}"
     form_response = await client.read_resource(form_uri)
 
     import json
