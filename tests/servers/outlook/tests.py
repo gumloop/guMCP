@@ -4,23 +4,23 @@ import uuid
 
 @pytest.mark.asyncio
 async def test_list_resources(client):
-    """Test listing emails from Outlook"""
+    """Test listing folders from Outlook"""
     response = await client.list_resources()
     assert response and hasattr(
         response, "resources"
     ), f"Invalid list resources response: {response}"
 
-    print("Emails found:")
+    print("Folders found:")
     for resource in response.resources:
         print(f"  - {resource.name} ({resource.uri})")
 
-    print("✅ Successfully listed emails from Outlook")
+    print("✅ Successfully listed folders from Outlook")
 
 
 @pytest.mark.asyncio
-async def test_read_email(client):
-    """Test reading an email from Outlook"""
-    # First list emails to get a valid email ID
+async def test_read_folder(client):
+    """Test reading emails from a folder in Outlook"""
+    # First list folders to get a valid folder ID
     response = await client.list_resources()
 
     assert response and hasattr(
@@ -29,25 +29,25 @@ async def test_read_email(client):
 
     resources = response.resources
 
-    # Skip test if no emails found
+    # Skip test if no folders found
     if not resources:
-        print("⚠️ No emails found to test reading")
-        pytest.skip("No emails available for testing")
+        print("⚠️ No folders found to test reading")
+        pytest.skip("No folders available for testing")
         return
 
-    # Test with the first email
-    email_resource = resources[0]
-    response = await client.read_resource(email_resource.uri)
+    # Test with the first folder
+    folder_resource = resources[0]
+    response = await client.read_resource(folder_resource.uri)
 
     assert (
         response and response.contents
-    ), f"Response should contain email contents: {response}"
-    assert len(response.contents[0].text) >= 0, "Email content should be available"
+    ), f"Response should contain folder contents: {response}"
+    assert len(response.contents[0].text) >= 0, "Folder content should be available"
 
-    print("Email read:")
-    print(f"  - {email_resource.name}: {response.contents[0].text[:100]}...")
+    print("Folder read:")
+    print(f"  - {folder_resource.name}: {response.contents[0].text[:100]}...")
 
-    print("✅ Successfully read email from Outlook")
+    print("✅ Successfully read emails from folder in Outlook")
 
 
 @pytest.mark.asyncio
