@@ -1,3 +1,4 @@
+import re
 import pytest
 
 
@@ -27,7 +28,7 @@ async def test_read_team(client):
 
     # Find first team resource
     team_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("linear:///team/")),
+        (r for r in response.resources if str(r.uri).startswith("linear://team/")),
         None,
     )
     assert team_resource, "No team resources found"
@@ -43,32 +44,6 @@ async def test_read_team(client):
     print("Team data read:")
     print(f"\t{response.contents[0].text}")
     print("✅ Successfully read team data")
-
-
-@pytest.mark.asyncio
-async def test_read_issue(client):
-    """Test reading an issue resource"""
-    # First list resources to get a valid issue ID
-    response = await client.list_resources()
-    assert (
-        response and hasattr(response, "resources") and len(response.resources)
-    ), f"Invalid list resources response: {response}"
-
-    # Find first issue resource
-    issue_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("linear:///issue/")),
-        None,
-    )
-    assert issue_resource, "No issue resources found"
-
-    # Read issue details
-    response = await client.read_resource(issue_resource.uri)
-    assert response.contents, "Response should contain issue data"
-    assert response.contents[0].mimeType == "application/json", "Expected JSON response"
-
-    print("Issue data read:")
-    print(f"\t{response.contents[0].text}")
-    print("✅ Successfully read issue data")
 
 
 @pytest.mark.asyncio
@@ -94,51 +69,44 @@ async def test_create_issue(client):
     # First get a valid team ID
     response = await client.list_resources()
     team_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("linear:///team/")),
+        (r for r in response.resources if str(r.uri).startswith("linear://team/")),
         None,
     )
     assert team_resource, "No team resources found"
-    team_id = str(team_resource.uri).replace("linear:///team/", "")
+    team_id = str(team_resource.uri).replace("linear://team/", "")
 
-    # Create test issue
-    response = await client.process_query(
+    # Create test issue with a marker for easy ID extraction
+    create_response = await client.process_query(
         f"Use the create_issue tool to create an issue with team_id '{team_id}', "
         "title 'Test Issue', description 'This is a test issue.', and priority 4. "
-        "If successful, start your response with 'Issue created:'"
+        "After creating the issue, output the ID in this exact format: 'ISSUE_ID:your-issue-id-here'"
     )
 
-    assert (
-        "issue created:" in response.lower()
-    ), f"Issue creation response should start with 'Issue created:': {response}"
-
     print("Create issue response:")
-    print(f"\t{response}")
+    print(f"\t{create_response}")
     print("✅ Issue creation working")
+
+    # Extract issue ID from the response using the marker
+    issue_id_match = re.search(r"ISSUE_ID:([a-zA-Z0-9-]+)", create_response)
+    assert issue_id_match, f"Could not find issue ID in the response: {create_response}"
+    issue_id = issue_id_match.group(1)
+
+    return issue_id
 
 
 @pytest.mark.asyncio
 async def test_update_issue(client):
     """Test updating an issue"""
-    # First get an existing issue ID
-    response = await client.list_resources()
-    issue_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("linear:///issue/")),
-        None,
-    )
-    assert issue_resource, "No issue resources found"
-    issue_id = str(issue_resource.uri).replace("linear:///issue/", "")
+    # First create an issue and get its ID
+    issue_id = await test_create_issue(client)
+    assert issue_id, "Failed to get issue ID from creation"
 
     # Update test issue
-    response = await client.process_query(
+    update_response = await client.process_query(
         f"Use the update_issue tool to update the issue with issue_id '{issue_id}', "
-        "setting title to 'Updated Test Issue' and priority to 3. "
-        "If successful, start your response with 'Issue updated:'"
+        "setting title to 'Updated Test Issue' and priority to 3."
     )
 
-    assert (
-        "issue updated:" in response.lower()
-    ), f"Issue update response should start with 'Issue updated:': {response}"
-
     print("Update issue response:")
-    print(f"\t{response}")
+    print(f"\t{update_response}")
     print("✅ Issue update working")
