@@ -155,6 +155,47 @@ See [Perplexity](src/servers/perplexity/main.py) for a clear example
 
 If implementing your own AuthClient to host and run guMCP servers remotely, please note that the assumption made in [BaseAuthClient](src/auth/clients/BaseAuthClient.py) is that `get_user_credentials()` returns a _refreshed and ready-to-use_ version of the credential. That is, refreshing should be taken care of on the side of the `AuthClient`.
 
+## Implementation
+
+### Tools
+
+When implementing tools for a server, please follow these guidelines:
+
+1. **Focus on Utility**: Implement tools that are actually useful and widely used by the service's users. Avoid niche functionality that few people would need.
+
+2. **Completeness**: Ensure your tools cover the core functionality of the service. For example, if implementing a messaging service, include tools for sending messages, reading messages, listing messaging channels, etc.
+
+3. **Arguments**: The arguments for the tool should be generally understandable to humans if possible. For example, with an `add_member` tool, having it require a `member_email` instead of `member_id` is preferred
+
+4. **Documentation**: Each tool should have clear documentation in its docstring explaining what it does, required parameters, and expected output.
+
+5. **Error Handling**: Implement proper error handling with informative error messages to help users understand what went wrong.
+
+### Resources
+
+Resources in guMCP follow a consistent URI format:
+
+```
+{server_id}://{resource_type}/{resource_id}
+```
+
+When implementing resources, follow these guidelines:
+
+1. **URI Structure**: Use the format `{server_id}://{resource_type}/{resource_id}` for all resource URIs.
+
+   - `server_id`: The unique identifier for your server (e.g., `slack`, `gdrive`)
+   - `resource_type`: The type of resource (e.g., `channel`, `file`, `folder`)
+   - `resource_id`: The unique identifier for the specific resource instance
+   - Example: `slack://channel/C05AD7ZD41L`
+
+2. **Name Format**: Use clear, user-friendly names that reflect the resource in the source system.
+
+   - For example, a Slack channel's `uri` would include the `channel_id`, but the name would just be the human readable channel name
+
+3. **Complete Implementation**: Implement both `list_resources()` and `read_resource()` handlers for your server.
+
+4. **Resource Description**: Include helpful descriptions that convey the nature and purpose of the resource.
+
 ## Testing
 
 ### Running Tests
