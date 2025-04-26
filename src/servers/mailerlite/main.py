@@ -791,7 +791,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved the subscribers.Found {len(response)} {filter_status} subscribers with theri following data: {response}",
+                            text=str(response),
                         )
                     ]
 
@@ -802,7 +802,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully created subscriber with email: {email}. Subscriber data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "update_subscriber":
@@ -812,7 +812,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully updated subscriber with email: {email}. Subscriber data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "get_subscriber":
@@ -821,7 +821,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved subscriber with email: {email}. Subscriber data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "delete_subscriber":
@@ -830,7 +830,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully deleted subscriber with ID: {subscriber_id}",
+                            text=str(response),
                         )
                     ]
                 elif name == "list_groups":
@@ -843,7 +843,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved groups. Found {len(response)} groups with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "create_group":
@@ -852,7 +852,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully created group: {group_name}. Group data: {response} along with the id: {response['data']['id']}",
+                            text=str(response),
                         )
                     ]
                 elif name == "update_group":
@@ -862,7 +862,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully updated group with ID: {group_id}. New name: {group_name}. Group data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "delete_group":
@@ -871,7 +871,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully deleted group with ID: {group_id}",
+                            text=str(response),
                         )
                     ]
                 elif name == "get_group_subscribers":
@@ -884,7 +884,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved subscribers for group {group_id}. Found {len(response)} {filter_status} subscribers with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "assign_subscriber_to_group":
@@ -896,7 +896,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully assigned subscriber {subscriber_id} to group {group_id}",
+                            text=str(response),
                         )
                     ]
                 elif name == "unassign_subscriber_from_group":
@@ -908,7 +908,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully unassigned subscriber {subscriber_id} from group {group_id}",
+                            text=str(response),
                         )
                     ]
                 elif name == "list_fields":
@@ -924,7 +924,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved fields. Found {len(response)} fields with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "create_field":
@@ -934,7 +934,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully created field with name: {name}. Field data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "update_field":
@@ -944,7 +944,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully updated field with ID: {field_id}. New name: {name}. Field data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "delete_field":
@@ -953,7 +953,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully deleted field with ID: {field_id}",
+                            text=str(response),
                         )
                     ]
                 elif name == "list_campaigns":
@@ -965,7 +965,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved campaigns. Found {len(response)} campaigns with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "get_campaign":
@@ -974,7 +974,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved campaign with ID: {campaign_id}. Campaign data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "create_campaign":
@@ -988,7 +988,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully created campaign with name: {params['name']}. Campaign data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "update_campaign":
@@ -1002,7 +1002,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully updated campaign with ID: {campaign_id}. New name: {params['name']}. Campaign data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "schedule_campaign":
@@ -1016,7 +1016,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully scheduled campaign with ID: {campaign_id}. Campaign data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "cancel_campaign":
@@ -1025,7 +1025,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully canceled campaign with ID: {campaign_id}. Campaign data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "delete_campaign":
@@ -1034,7 +1034,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully deleted campaign with ID: {campaign_id}",
+                            text=str(response),
                         )
                     ]
 
@@ -1054,7 +1054,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved {form_type} forms. Found {len(response)} forms with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "get_form":
@@ -1063,7 +1063,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved form with ID: {form_id}. Form data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "update_form":
@@ -1073,7 +1073,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully updated form with ID: {form_id}. New name: {name}. Form data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "delete_form":
@@ -1082,7 +1082,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully deleted form with ID: {form_id}",
+                            text=str(response),
                         )
                     ]
                 elif name == "list_campaign_languages":
@@ -1090,7 +1090,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved campaign languages. Found {len(response)} languages with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "list_webhooks":
@@ -1098,7 +1098,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved webhooks. Found {len(response)} webhooks with following data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "get_webhook":
@@ -1107,7 +1107,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully retrieved webhook with ID: {webhook_id}. Webhook data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "create_webhook":
@@ -1118,7 +1118,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully created webhook: {name}. Webhook data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "update_webhook":
@@ -1133,7 +1133,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully updated webhook with ID: {webhook_id}. New name: {name}. Webhook data: {response}",
+                            text=str(response),
                         )
                     ]
                 elif name == "delete_webhook":
@@ -1142,7 +1142,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Successfully deleted webhook with ID: {webhook_id}",
+                            text=str(response),
                         )
                     ]
 
