@@ -91,7 +91,7 @@ async def test_read_resource(client):
 
     # Find the first Word file resource
     word_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("word:///file/")),
+        (r for r in response.resources if str(r.uri).startswith("word://file/")),
         None,
     )
 
