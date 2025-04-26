@@ -7,7 +7,7 @@ created_group_id = None
 created_field_id = None
 created_campaign_id = None
 created_webhook_id = None
-subscriber_email = f"test_{uuid.uuid4()}@example.com"
+subscriber_email = f"test_{uuid.uuid4()}@gmail.com"
 
 
 created_form_id = ""  # Pre-existing form ID for testing form operations
@@ -92,7 +92,7 @@ async def test_update_subscriber(client):
     fields = {
         "name": "Updated Test User",
         "last_name": "Updated Test Last Name",
-        "email": "updated@example.com",
+        "email": "updated@gmail.com",
     }
 
     response = await client.process_query(
