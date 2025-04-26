@@ -27,11 +27,7 @@ async def test_read_contact(client):
     ), f"Invalid list resources response: {response}"
 
     contact_resource = next(
-        (
-            r
-            for r in response.resources
-            if str(r.uri).startswith("intercom:///contact/")
-        ),
+        (r for r in response.resources if str(r.uri).startswith("intercom://contact/")),
         None,
     )
 
@@ -63,7 +59,7 @@ async def test_read_conversation(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("intercom:///conversation/")
+            if str(r.uri).startswith("intercom://conversation/")
         ),
         None,
     )
