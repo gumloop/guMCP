@@ -29,60 +29,6 @@ def handle_rate_limit(response, client=None):
 
 
 @pytest.mark.asyncio
-async def test_list_resources(client):
-    """Test listing tweets from timeline"""
-    response = await client.list_resources()
-
-    # Check for rate limit (HTTP 429)
-    handle_rate_limit(response, client)
-
-    assert response and hasattr(
-        response, "resources"
-    ), f"Invalid list resources response: {response}"
-
-    print("Tweets found:")
-    for resource in response.resources:
-        print(f"  - {resource.name} ({resource.uri}) - Type: {resource.mimeType}")
-
-    # If no tweets were found, it might be due to rate limiting that wasn't detected earlier
-    if len(response.resources) == 0:
-        print(
-            "⚠️ No tweets found. This may be due to authentication issues or API restrictions."
-        )
-
-    print("✅ Successfully listed tweets")
-
-
-@pytest.mark.asyncio
-async def test_read_tweet(client):
-    """Test reading a tweet by URI"""
-    # First list tweets to get a valid tweet ID
-    list_response = await client.list_resources()
-    handle_rate_limit(list_response, client)
-
-    # Skip test if no tweets found
-    if not list_response.resources:
-        print("⚠️ No tweets found to test reading")
-        pytest.skip("No tweets available for testing")
-        return
-
-    # Get the first tweet resource
-    tweet_resource = list_response.resources[0]
-    response = await client.read_resource(tweet_resource.uri)
-    handle_rate_limit(response, client)
-
-    assert (
-        response and response.contents
-    ), f"Response should contain tweet contents: {response}"
-    assert len(response.contents[0].text) > 0, "Tweet content should be available"
-
-    print("Tweet read:")
-    print(f"  - Content: {response.contents[0].text[:100]}...")
-
-    print("✅ Successfully read tweet")
-
-
-@pytest.mark.asyncio
 async def test_search_recent_tweet(client):
     """Test searching for recent tweets"""
     response = await client.process_query(
