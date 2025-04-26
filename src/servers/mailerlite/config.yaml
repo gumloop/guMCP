@@ -1,4 +1,4 @@
-name: "MailerLite GuMCP Server"
+name: "MailerLite guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with MailerLite for email marketing automation, including subscriber management, campaign creation, and webhook integration."
 documentation_path: "README.md"
