@@ -100,7 +100,7 @@ def create_server(user_id, api_key=None):
     async def handle_list_resources(
         cursor: Optional[str] = None,
     ) -> list[Resource]:
-        """List HubSpot contacts as resources"""
+        """List HubSpot contact and company lists as resources"""
         logger.info(
             f"Listing resources for user: {server.user_id} with cursor: {cursor}"
         )
@@ -110,52 +110,56 @@ def create_server(user_id, api_key=None):
             server.user_id, api_key=server.api_key
         )
 
-        # API endpoint for listing contacts
-        url = "https://api.hubapi.com/crm/v3/objects/contacts"
+        resources = []
 
-        params = {
-            "limit": 20,
-            "properties": ["firstname", "lastname", "email"],
+        # API endpoint for listing contact lists
+        contact_lists_url = "https://api.hubapi.com/contacts/v1/lists"
+
+        contact_params = {
+            "count": 10,  # Reduced to accommodate both types
         }
 
-        if cursor:
-            params["after"] = cursor
+        if cursor and cursor.startswith("contact_"):
+            contact_params["offset"] = cursor.replace("contact_", "")
 
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
         }
 
-        response = requests.get(url, headers=headers, params=params)
+        contact_response = requests.get(
+            contact_lists_url, headers=headers, params=contact_params
+        )
 
-        if response.status_code != 200:
-            logger.error(f"Error fetching contacts: {response.text}")
-            return []
+        if contact_response.status_code == 200:
+            contact_data = contact_response.json()
+            contact_lists = contact_data.get("lists", [])
 
-        data = response.json()
-        contacts = data.get("results", [])
+            for list_item in contact_lists:
+                list_id = list_item.get("listId")
+                name = list_item.get("name", f"Contact List {list_id}")
+                dynamic = list_item.get("dynamic", False)
+                list_type = "Dynamic" if dynamic else "Static"
 
-        resources = []
-        for contact in contacts:
-            contact_id = contact.get("id")
-            properties = contact.get("properties", {})
-            first_name = properties.get("firstname", "")
-            last_name = properties.get("lastname", "")
-            email = properties.get("email", "")
+                resource = Resource(
+                    uri=f"hubspot://contact_list/{list_id}",
+                    mimeType="application/json",
+                    name=f"Contact: {name} ({list_type})",
+                )
+                resources.append(resource)
 
-            name = f"{first_name} {last_name}".strip()
-            if not name:
-                name = email if email else f"Contact {contact_id}"
+            contact_next_cursor = contact_data.get("offset")
+        else:
+            logger.error(f"Error fetching contact lists: {contact_response.text}")
+            contact_next_cursor = None
 
-            resource = Resource(
-                uri=f"hubspot://contact/{contact_id}",
-                mimeType="application/json",
-                name=name,
-            )
-            resources.append(resource)
+        # Determine next cursor for pagination
+        if contact_next_cursor:
+            # Prioritize contact lists pagination
+            next_cursor = f"contact_{contact_next_cursor}"
+        else:
+            next_cursor = None
 
-        # Return paging cursor for next page if available
-        next_cursor = data.get("paging", {}).get("next", {}).get("after")
         if next_cursor:
             # The next function call would include this cursor
             pass
@@ -164,48 +168,65 @@ def create_server(user_id, api_key=None):
 
     @server.read_resource()
     async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
-        """Read a HubSpot contact by URI"""
+        """Read a HubSpot list by URI"""
         logger.info(f"Reading resource: {uri} for user: {server.user_id}")
 
-        # Parse contact ID from URI
+        # Parse list ID and type from URI
         uri_str = str(uri)
-        if not uri_str.startswith("hubspot://contact/"):
-            return []
 
-        contact_id = uri_str.replace("hubspot://contact/", "")
+        # Handle contact lists
+        if uri_str.startswith("hubspot://contact_list/"):
+            list_id = uri_str.replace("hubspot://contact_list/", "")
+            list_type = "contact"
+        else:
+            return []
 
         # Get access token
         access_token = await get_hubspot_access_token(
             server.user_id, api_key=server.api_key
         )
 
-        # Get all available properties
-        properties = await get_contact_properties(access_token)
-
-        # API endpoint for getting a contact
-        url = f"https://api.hubapi.com/crm/v3/objects/contacts/{contact_id}"
-
-        params = {
-            "properties": properties,
-        }
-
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
         }
 
-        response = requests.get(url, headers=headers, params=params)
+        if list_type == "contact":
+            # API endpoint for getting a contact list
+            list_url = f"https://api.hubapi.com/contacts/v1/lists/{list_id}"
+            members_url = (
+                f"https://api.hubapi.com/contacts/v1/lists/{list_id}/contacts/all"
+            )
+
+            params = {
+                "count": 20,
+            }
+
+        # Get list details
+        response = requests.get(list_url, headers=headers)
 
         if response.status_code != 200:
-            logger.error(f"Error fetching contact: {response.text}")
+            logger.error(f"Error fetching {list_type} list: {response.text}")
             return []
 
-        contact_data = response.json()
+        list_data = response.json()
+
+        # Get members in the list
+        members_response = requests.get(members_url, headers=headers, params=params)
+
+        if members_response.status_code == 200:
+            members_data = members_response.json()
+            if list_type == "contact":
+                list_data["contacts"] = members_data.get("contacts", [])
+        else:
+            if list_type == "contact":
+                list_data["contacts"] = []
+            logger.error(
+                f"Error fetching {list_type} list members: {members_response.text}"
+            )
 
         return [
-            ReadResourceContents(
-                content=str(contact_data), mime_type="application/json"
-            )
+            ReadResourceContents(content=str(list_data), mime_type="application/json")
         ]
 
     @server.list_tools()

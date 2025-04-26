@@ -11,7 +11,7 @@ async def test_list_resources(client):
         response, "resources"
     ), f"Invalid list resources response: {response}"
 
-    print("HubSpot contacts found:")
+    print("HubSpot contact lists found:")
     for resource in response.resources:
         print(f"  - {resource.name} ({resource.uri}) - Type: {resource.mimeType}")
 
@@ -40,13 +40,22 @@ async def test_read_contact(client):
     contact_resource = resources[0]
     response = await client.read_resource(contact_resource.uri)
 
+    assert response is not None, f"Response should not be None: {response}"
+    assert hasattr(
+        response, "contents"
+    ), f"Response should have contents attribute: {response}"
     assert (
-        response and response.contents
-    ), f"Response should contain contact data: {response}"
-    assert len(response.contents[0].text) >= 0, "Contact data should be available"
+        len(response.contents) > 0
+    ), "Response should contain at least one content item"
+
+    content_item = response.contents[0]
+    assert hasattr(
+        content_item, "text"
+    ), f"Content item should have text attribute: {content_item}"
+    assert content_item.text, "Text content should not be empty"
 
     print("Contact read:")
-    print(f"  - {contact_resource.name}: {response.contents[0].text[:100]}...")
+    print(f"  - {contact_resource.name}: {content_item.text[:100]}...")
 
     print("✅ Successfully read HubSpot contact")
 

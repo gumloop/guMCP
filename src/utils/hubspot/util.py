@@ -41,7 +41,7 @@ def build_hubspot_token_data(
 
 
 def build_hubspot_refresh_data(
-    oauth_config: Dict[str, Any], refresh_token: str
+    oauth_config: Dict[str, Any], refresh_token: str, credentials_data
 ) -> Dict[str, str]:
     """Build the refresh token request data for HubSpot OAuth."""
     return {
