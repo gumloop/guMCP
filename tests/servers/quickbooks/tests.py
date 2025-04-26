@@ -30,7 +30,7 @@ async def test_read_customer(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("quickbooks:///customer/")
+            if str(r.uri).startswith("quickbooks://customer/")
         ),
         None,
     )
@@ -63,7 +63,7 @@ async def test_read_invoice(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("quickbooks:///invoice/")
+            if str(r.uri).startswith("quickbooks://invoice/")
         ),
         None,
     )
@@ -96,7 +96,7 @@ async def test_read_account(client):
         (
             r
             for r in response.resources
-            if str(r.uri).startswith("quickbooks:///account/")
+            if str(r.uri).startswith("quickbooks://account/")
         ),
         None,
     )
