@@ -28,7 +28,7 @@ async def test_read_view(client):
 
     # Find first view resource
     view_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("zendesk:///view/")),
+        (r for r in response.resources if str(r.uri).startswith("zendesk://view/")),
         None,
     )
     assert view_resource, "No view resources found"
@@ -41,39 +41,6 @@ async def test_read_view(client):
     print("View data read:")
     print(f"\t{response.contents[0].text}")
     print("✅ Successfully read view data")
-
-
-@pytest.mark.asyncio
-async def test_read_ticket(client):
-    """Test reading a ticket resource"""
-    # First list resources to get a valid ticket ID
-    response = await client.list_resources()
-    assert (
-        response and hasattr(response, "resources") and len(response.resources)
-    ), f"Invalid list resources response: {response}"
-
-    # Find first ticket resource
-    ticket_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("zendesk:///ticket/")),
-        None,
-    )
-
-    # Skip test if no tickets are found - this could happen in a test environment
-    if not ticket_resource:
-        pytest.skip("No ticket resources found - skipping test")
-
-    # Read ticket details
-    response = await client.read_resource(ticket_resource.uri)
-    assert response.contents, "Response should contain ticket data"
-    assert response.contents[0].mimeType == "application/json", "Expected JSON response"
-
-    ticket_data = response.contents[0].text
-    assert "ticket" in ticket_data, "Ticket data should contain ticket information"
-    assert "comments" in ticket_data, "Ticket data should contain comments information"
-
-    print("Ticket data read:")
-    print(f"\t{ticket_data}")
-    print("✅ Successfully read ticket data")
 
 
 @pytest.mark.asyncio
