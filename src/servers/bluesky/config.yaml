@@ -1,4 +1,4 @@
-name: "Bluesky MCP Server"
+name: "Bluesky guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Bluesky for social media management, including posting, following, blocking, and profile management."
 documentation_path: "README.md"

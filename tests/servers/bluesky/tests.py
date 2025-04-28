@@ -6,6 +6,96 @@ test_post_uri = None
 # Replace with your handle
 test_handle = "<handle>.bsky.social"
 
+# ================================
+# Test list and read resources
+# ================================
+
+
+@pytest.mark.asyncio
+async def test_list_resources(client):
+    """Test listing channels from Teams"""
+    response = await client.list_resources()
+    assert (
+        response and hasattr(response, "resources") and len(response.resources)
+    ), f"Invalid list resources response: {response}"
+
+    print("Channels found:")
+    for i, resource in enumerate(response.resources):
+        print(f"  - {i}: {resource.name} ({resource.uri}) {resource.description}")
+
+    print("✅ Successfully listed channels")
+
+
+@pytest.mark.asyncio
+async def test_read_resource(client):
+    """Test reading a resource from Bluesky"""
+    list_response = await client.list_resources()
+
+    profile_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("bluesky://profile/")
+    ]
+
+    if len(profile_resource_uri) > 0:
+        profile_resource_uri = profile_resource_uri[0]
+        response = await client.read_resource(profile_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for profile passed.")
+
+    posts_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("bluesky://posts/")
+    ]
+
+    if len(posts_resource_uri) > 0:
+        posts_resource_uri = posts_resource_uri[0]
+        response = await client.read_resource(posts_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for posts passed.")
+
+    likes_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("bluesky://likes/")
+    ]
+
+    if len(likes_resource_uri) > 0:
+        likes_resource_uri = likes_resource_uri[0]
+        response = await client.read_resource(likes_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for likes passed.")
+
+    follows_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("bluesky://follows/")
+    ]
+
+    if len(follows_resource_uri) > 0:
+        follows_resource_uri = follows_resource_uri[0]
+        response = await client.read_resource(follows_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for follows passed.")
+
+    followers_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("bluesky://followers/")
+    ]
+
+    if len(followers_resource_uri) > 0:
+        followers_resource_uri = followers_resource_uri[0]
+        response = await client.read_resource(followers_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for followers passed.")
+
 
 @pytest.mark.asyncio
 async def test_get_my_profile(client):

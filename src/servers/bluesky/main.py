@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 import logging
-from typing import List
+from typing import List, Optional, Iterable
 from atproto import Client, AtUri, SessionEvent, Session
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
@@ -20,10 +20,15 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 
 from mcp.types import (
     TextContent,
+    AnyUrl,
     Tool,
     ImageContent,
     EmbeddedResource,
+    Resource,
 )
+
+from mcp.server.lowlevel.helper_types import ReadResourceContents
+
 
 from src.utils.bluesky.util import (
     get_credentials,
@@ -43,6 +48,219 @@ def create_server(user_id, api_key=None):
     server = Server("bluesky-server")
     server.user_id = user_id
     server.api_key = api_key
+
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """List Bluesky resources for the user"""
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        credentials = get_credentials(server.user_id, server.api_key, SERVICE_NAME)
+        client = Client()
+        client._set_session(
+            SessionEvent.CREATE,
+            Session(
+                access_jwt=credentials["accessJwt"],
+                refresh_jwt=credentials["refreshJwt"],
+                handle=credentials["handle"],
+                did=credentials["did"],
+            ),
+        )
+
+        resources = []
+
+        try:
+            # Add user's profile as a resource
+            resources.append(
+                Resource(
+                    uri=f"bluesky://profile/{credentials['handle']}",
+                    mimeType="application/json",
+                    name="My Profile",
+                    description="Your Bluesky profile information",
+                )
+            )
+
+            # Add user's posts as a resource
+            resources.append(
+                Resource(
+                    uri=f"bluesky://posts/{credentials['handle']}",
+                    mimeType="application/json",
+                    name="My Posts",
+                    description="Your recent Bluesky posts",
+                )
+            )
+
+            # Add user's likes as a resource
+            resources.append(
+                Resource(
+                    uri=f"bluesky://likes/{credentials['handle']}",
+                    mimeType="application/json",
+                    name="My Likes",
+                    description="Posts you've liked on Bluesky",
+                )
+            )
+
+            # Add user's follows as a resource
+            resources.append(
+                Resource(
+                    uri=f"bluesky://follows/{credentials['handle']}",
+                    mimeType="application/json",
+                    name="My Follows",
+                    description="Accounts you follow on Bluesky",
+                )
+            )
+
+            # Add user's followers as a resource
+            resources.append(
+                Resource(
+                    uri=f"bluesky://followers/{credentials['handle']}",
+                    mimeType="application/json",
+                    name="My Followers",
+                    description="Accounts following you on Bluesky",
+                )
+            )
+
+            return resources
+
+        except Exception as e:
+            logger.error(f"Error listing Bluesky resources: {str(e)}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read a Bluesky resource by URI"""
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        credentials = get_credentials(server.user_id, server.api_key, SERVICE_NAME)
+        client = Client()
+        client._set_session(
+            SessionEvent.CREATE,
+            Session(
+                access_jwt=credentials["accessJwt"],
+                refresh_jwt=credentials["refreshJwt"],
+                handle=credentials["handle"],
+                did=credentials["did"],
+            ),
+        )
+
+        uri_str = str(uri)
+        if not uri_str.startswith("bluesky://"):
+            raise ValueError(f"Invalid Bluesky URI: {uri_str}")
+
+        try:
+            # Parse the URI to get resource type and handle
+            parts = uri_str.replace("bluesky://", "").split("/")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid Bluesky URI format: {uri_str}")
+
+            resource_type, handle = parts
+
+            if resource_type == "profile":
+                # Get profile information
+                response = await asyncio.to_thread(
+                    client.app.bsky.actor.get_profile, {"actor": handle}
+                )
+                if hasattr(response, "error") and response.error:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error: {response.error}", mime_type="text/plain"
+                        )
+                    ]
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response.model_dump(), indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+
+            elif resource_type == "posts":
+                # Get user's posts
+                response = await asyncio.to_thread(
+                    client.app.bsky.feed.get_author_feed, {"actor": handle, "limit": 20}
+                )
+                if hasattr(response, "error") and response.error:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error: {response.error}", mime_type="text/plain"
+                        )
+                    ]
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response.model_dump(), indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+
+            elif resource_type == "likes":
+                # Get user's liked posts
+                response = await asyncio.to_thread(
+                    client.app.bsky.feed.get_actor_likes, {"actor": handle, "limit": 20}
+                )
+                if hasattr(response, "error") and response.error:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error: {response.error}", mime_type="text/plain"
+                        )
+                    ]
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response.model_dump(), indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+
+            elif resource_type == "follows":
+                # Get user's follows
+                response = await asyncio.to_thread(
+                    client.app.bsky.graph.get_follows, {"actor": handle, "limit": 20}
+                )
+                if hasattr(response, "error") and response.error:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error: {response.error}", mime_type="text/plain"
+                        )
+                    ]
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response.model_dump(), indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+
+            elif resource_type == "followers":
+                # Get user's followers
+                response = await asyncio.to_thread(
+                    client.app.bsky.graph.get_followers, {"actor": handle, "limit": 20}
+                )
+                if hasattr(response, "error") and response.error:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error: {response.error}", mime_type="text/plain"
+                        )
+                    ]
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response.model_dump(), indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+
+            else:
+                return [
+                    ReadResourceContents(
+                        content=f"Unsupported resource type: {resource_type}",
+                        mime_type="text/plain",
+                    )
+                ]
+
+        except Exception as e:
+            logger.error(f"Error reading Bluesky resource: {str(e)}")
+            return [
+                ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
