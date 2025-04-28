@@ -2,11 +2,12 @@ import os
 import sys
 from pathlib import Path
 import logging
-from typing import List
+from typing import List, Optional, Iterable
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 import mailerlite
+import json
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -20,7 +21,10 @@ from mcp.types import (
     Tool,
     ImageContent,
     EmbeddedResource,
+    Resource,
+    AnyUrl,
 )
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 from src.utils.mailerlite.util import (
     get_credentials,
@@ -55,6 +59,175 @@ def create_server(user_id, api_key=None):
                 if not self.client:
                     raise ValueError("Failed to authenticate with MailerLite")
             return self.client
+
+        @server.list_resources()
+        async def handle_list_resources(
+            cursor: Optional[str] = None,
+        ) -> list[Resource]:
+            """List MailerLite resources (lists, campaigns, subscribers)"""
+            logger.info(
+                f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+            )
+
+            mailer = MailerLiteClient()
+            try:
+                client = await mailer.ensure_client()
+                resources = []
+
+                # List all webhooks
+                webhooks_response = client.webhooks.list()
+                logger.info(f"Webhooks response: {webhooks_response}")
+                for webhook in webhooks_response.get("data", []):
+                    resources.append(
+                        Resource(
+                            uri=f"mailerlite://webhook/{webhook['id']}",
+                            mimeType="application/json",
+                            name=f"Webhook: {webhook['name']}",
+                            description=f"MailerLite webhook ({webhook.get('status', 'unknown')})",
+                        )
+                    )
+
+                # List all forms
+                popup_forms_response = client.forms.list(
+                    type="popup",
+                    sort="name",
+                )
+                embedded_forms_response = client.forms.list(
+                    type="embedded",
+                    sort="name",
+                )
+                promotion_forms_response = client.forms.list(
+                    type="promotion",
+                    sort="name",
+                )
+                forms_response = [
+                    *popup_forms_response.get("data", []),
+                    *embedded_forms_response.get("data", []),
+                    *promotion_forms_response.get("data", []),
+                ]
+                for form in forms_response:
+                    resources.append(
+                        Resource(
+                            uri=f"mailerlite://form/{form['id']}",
+                            mimeType="application/json",
+                            name=f"Form: {form['name']}",
+                            description=f"MailerLite form ({form.get('type', 'unknown')})",
+                        )
+                    )
+
+                # List all campaigns
+                draft_campaigns_response = client.campaigns.list(
+                    filter={"status": "draft"}
+                )
+                ready_campaigns_response = client.campaigns.list(
+                    filter={"status": "ready"}
+                )
+                sent_campaigns_response = client.campaigns.list(
+                    filter={"status": "sent"}
+                )
+                campaigns_response = [
+                    *draft_campaigns_response.get("data", []),
+                    *ready_campaigns_response.get("data", []),
+                    *sent_campaigns_response.get("data", []),
+                ]
+                for campaign in campaigns_response:
+                    resources.append(
+                        Resource(
+                            uri=f"mailerlite://campaign/{campaign['id']}",
+                            mimeType="application/json",
+                            name=f"Campaign: {campaign['name']}",
+                            description=f"MailerLite campaign ({campaign.get('status', 'unknown')})",
+                        )
+                    )
+
+                # List all groups
+                groups_response = client.groups.list()
+                for group in groups_response.get("data", []):
+                    resources.append(
+                        Resource(
+                            uri=f"mailerlite://group/{group['id']}",
+                            mimeType="application/json",
+                            name=f"Group: {group['name']}",
+                            description=f"MailerLite group with {group.get('total', 0)} subscribers",
+                        )
+                    )
+
+                return resources
+
+            except Exception as e:
+                logger.error(
+                    f"Error listing MailerLite resources: {e} {e.__traceback__.tb_lineno}"
+                )
+                return []
+
+        @server.read_resource()
+        async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+            """Read a resource from MailerLite by URI"""
+            logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+            mailer = MailerLiteClient()
+            try:
+                client = await mailer.ensure_client()
+                uri_str = str(uri)
+
+                if uri_str.startswith("mailerlite://webhook/"):
+                    # Handle webhook resource
+                    webhook_id = uri_str.replace("mailerlite://webhook/", "")
+                    webhook_data = client.webhooks.get(int(webhook_id))
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(webhook_data, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+
+                elif uri_str.startswith("mailerlite://form/"):
+                    # Handle form resource
+                    form_id = uri_str.replace("mailerlite://form/", "")
+                    form_data = client.forms.get(int(form_id))
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(form_data, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+
+                elif uri_str.startswith("mailerlite://campaign/"):
+                    # Handle campaign resource
+                    campaign_id = uri_str.replace("mailerlite://campaign/", "")
+                    campaign_data = client.campaigns.get(int(campaign_id))
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(campaign_data, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+
+                elif uri_str.startswith("mailerlite://group/"):
+                    # Handle group resource
+                    group_id = uri_str.replace("mailerlite://group/", "")
+                    subscribers = client.groups.get_group_subscribers(int(group_id))
+
+                    combined_data = {"group_id": group_id, "subscribers": subscribers}
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(combined_data, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+
+                raise ValueError(f"Unsupported resource URI: {uri_str}")
+
+            except Exception as e:
+                logger.error(
+                    f"Error reading MailerLite resource: {e} {e.__traceback__.tb_lineno}"
+                )
+                return [
+                    ReadResourceContents(
+                        content=json.dumps({"error": str(e)}),
+                        mime_type="application/json",
+                    )
+                ]
 
         @server.list_tools()
         async def handle_list_tools() -> list[Tool]:

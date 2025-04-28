@@ -14,6 +14,77 @@ created_form_id = ""  # Pre-existing form ID for testing form operations
 from_email = ""  # Email address of the API key owner, used for campaign testing
 
 
+@pytest.mark.asyncio
+async def test_list_resources(client):
+    """Test listing resources from MailerLite"""
+    response = await client.list_resources()
+    print(f"Response: {response}")
+    assert response, "No response returned from list_resources"
+
+    for i, resource in enumerate(response.resources):
+        print(f"  - {i}: {resource.name} ({resource.uri}) {resource.description}")
+
+    print("✅ Successfully listed resources")
+
+
+@pytest.mark.asyncio
+async def test_read_resource(client):
+    """Test reading a resource from Teams"""
+    list_response = await client.list_resources()
+
+    form_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("mailerlite://form/")
+    ]
+
+    if len(form_resource_uri) > 0:
+        form_resource_uri = form_resource_uri[0]
+        response = await client.read_resource(form_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for form passed.")
+
+    campaign_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("mailerlite://campaign/")
+    ]
+
+    if len(campaign_resource_uri) > 0:
+        campaign_resource_uri = campaign_resource_uri[0]
+        response = await client.read_resource(campaign_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for campaign passed.")
+
+    group_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("mailerlite://group/")
+    ]
+
+    if len(group_resource_uri) > 0:
+        group_resource_uri = group_resource_uri[0]
+        response = await client.read_resource(group_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for group passed.")
+
+    webhook_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("mailerlite://webhook/")
+    ]
+
+    if len(webhook_resource_uri) > 0:
+        webhook_resource_uri = webhook_resource_uri[0]
+        response = await client.read_resource(webhook_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for webhook passed.")
+
+
 # Subscriber CRUD tests
 @pytest.mark.asyncio
 async def test_create_subscriber(client):
