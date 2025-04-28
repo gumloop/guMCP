@@ -8,11 +8,11 @@ logger = logging.getLogger(__name__)
 def get_credentials(user_id, api_key=None, service_name=None):
     auth_client = create_auth_client(api_key=api_key)
     credentials = auth_client.get_user_credentials(service_name, user_id)
-    
+
     # Gumloop environment
     if os.getenv("ENVIRONMENT") == "gumloop":
         credentials = {"client_key": credentials}
-    
+
     # Get the API key from credentials dictionary
     api_key = credentials.get("client_key") if credentials else None
 
