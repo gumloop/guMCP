@@ -160,14 +160,18 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 timeout=30,
             )
 
-            campaign_responses = email_campaigns_response.json().get("data", []) + sms_campaigns_response.json().get("data", [])
+            campaign_responses = email_campaigns_response.json().get(
+                "data", []
+            ) + sms_campaigns_response.json().get("data", [])
 
             for campaign_response in campaign_responses:
                 campaign_id = campaign_response.get("id")
                 campaign_name = campaign_response.get("attributes", {}).get(
                     "name", "Unknown Campaign"
                 )
-                status = campaign_response.get("attributes", {}).get("status", "unknown")
+                status = campaign_response.get("attributes", {}).get(
+                    "status", "unknown"
+                )
                 created_at = campaign_response.get("attributes", {}).get(
                     "created_at", "Unknown date"
                 )
@@ -535,65 +539,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                     "required": ["profile_id"],
-                },
-            ),
-            Tool(
-                name="create_campaign",
-                description="Creates a new campaign in Klaviyo.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the campaign (required)",
-                        },
-                        "channel": {
-                            "type": "string",
-                            "description": "The channel type to use for the campaign (required)",
-                            "enum": ["email", "sms", "mobile_push"],
-                        },
-                        "included_audiences": {
-                            "type": "array",
-                            "description": "List of audience IDs to include",
-                            "items": {"type": "string"},
-                        },
-                        "excluded_audiences": {
-                            "type": "array",
-                            "description": "List of audience IDs to exclude",
-                            "items": {"type": "string"},
-                        },
-                        "send_strategy": {
-                            "type": "string",
-                            "description": "The send strategy (Immediate, Static, Throttled, or SmartSendTime)",
-                            "enum": [
-                                "Immediate",
-                                "Static",
-                                "Throttled",
-                                "SmartSendTime",
-                            ],
-                        },
-                        "smart_send_time": {
-                            "type": "string",
-                            "description": "Date to send (required for SmartSendTime strategy, format: YYYY-MM-DD)",
-                        },
-                        "use_smart_sending": {
-                            "type": "boolean",
-                            "description": "Whether to use smart sending",
-                        },
-                        "message_content": {
-                            "type": "string",
-                            "description": "The email content for the campaign message",
-                        },
-                        "subject_line": {
-                            "type": "string",
-                            "description": "The subject line for the email",
-                        },
-                        "template_id": {
-                            "type": "string",
-                            "description": "The ID of the template to use for the campaign message",
-                        },
-                    },
-                    "required": ["name", "channel"],
                 },
             ),
             Tool(
@@ -983,166 +928,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
             except Exception as e:
                 error_message = f"Error creating profile: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
-
-        elif name == "create_campaign":
-            # Extract parameters
-            campaign_name = arguments.get("name")
-            channel = arguments.get("channel", "email")
-            included_audiences = arguments.get("included_audiences", [])
-            excluded_audiences = arguments.get("excluded_audiences", [])
-            send_strategy = arguments.get("send_strategy", "Immediate")
-            smart_send_time = arguments.get("smart_send_time")
-            use_smart_sending = arguments.get("use_smart_sending", True)
-            message_content = arguments.get("message_content")
-            subject_line = arguments.get("subject_line")
-            template_id = arguments.get("template_id")
-
-            # Validate required parameters
-            if not campaign_name:
-                return [
-                    types.TextContent(
-                        type="text", text="Error: Campaign name is required"
-                    )
-                ]
-            if not included_audiences:
-                return [
-                    types.TextContent(
-                        type="text",
-                        text="Error: At least one included audience is required",
-                    )
-                ]
-            if not message_content:
-                return [
-                    types.TextContent(
-                        type="text", text="Error: Message content is required"
-                    )
-                ]
-            if not subject_line:
-                return [
-                    types.TextContent(
-                        type="text", text="Error: Subject line is required"
-                    )
-                ]
-
-            # Check if SmartSendTime is selected but no date is provided
-            if send_strategy == "SmartSendTime" and not smart_send_time:
-                return [
-                    types.TextContent(
-                        type="text",
-                        text="Error: Smart send time is required when using SmartSendTime strategy",
-                    )
-                ]
-
-            # Prepare campaign-message structure with relationships
-            campaign_message = {
-                "type": "campaign-message",
-                "attributes": {"definition": {"channel": "email"}},
-            }
-
-            # Add relationships section if needed
-            if template_id:
-                if "relationships" not in campaign_message:
-                    campaign_message["relationships"] = {}
-                campaign_message["relationships"]["template"] = {
-                    "data": {"type": "template", "id": template_id}
-                }
-
-            # Prepare request payload with updated structure based on Klaviyo API docs
-            campaign_data = {
-                "data": {
-                    "type": "campaign",
-                    "attributes": {
-                        "name": campaign_name,
-                        "audiences": {"included": included_audiences},
-                        "send_options": {"use_smart_sending": use_smart_sending},
-                        "tracking_options": {},
-                        "campaign-messages": {"data": [campaign_message]},
-                    },
-                }
-            }
-
-            # Add subject line and message content
-            if subject_line:
-                if "content" not in campaign_message["attributes"]["definition"]:
-                    campaign_message["attributes"]["definition"]["content"] = {}
-                campaign_message["attributes"]["definition"]["content"][
-                    "subject"
-                ] = subject_line
-
-            if message_content:
-                if "content" not in campaign_message["attributes"]["definition"]:
-                    campaign_message["attributes"]["definition"]["content"] = {}
-                # Use appropriate fields for email content instead of 'html'
-                campaign_message["attributes"]["definition"]["content"][
-                    "from_email"
-                ] = "noreply@example.com"
-                campaign_message["attributes"]["definition"]["content"][
-                    "from_label"
-                ] = "Marketing Team"
-                campaign_message["attributes"]["definition"]["content"][
-                    "preview_text"
-                ] = message_content
-
-            # Add optional parameters if provided
-            if excluded_audiences:
-                campaign_data["data"]["attributes"]["audiences"][
-                    "excluded"
-                ] = excluded_audiences
-
-            # Configure send strategy
-            if send_strategy == "Immediate":
-                campaign_data["data"]["attributes"]["send_strategy"] = {
-                    "method": "immediate"
-                }
-            elif send_strategy == "SmartSendTime":
-                campaign_data["data"]["attributes"]["send_strategy"] = {
-                    "method": "smart-send-time",
-                    "date": smart_send_time,
-                }
-            elif send_strategy == "Static":
-                campaign_data["data"]["attributes"]["send_strategy"] = {
-                    "method": "static",
-                    "options_static": {
-                        "datetime": smart_send_time if smart_send_time else None
-                    },
-                }
-            elif send_strategy == "Throttled":
-                campaign_data["data"]["attributes"]["send_strategy"] = {
-                    "method": "throttled"
-                }
-
-            # Make API request to create campaign
-            campaigns_url = klaviyo_client["base_url"] + "campaigns"
-            headers = klaviyo_client["headers"].copy()
-
-            # Add API key header if available
-            if server.api_key:
-                headers["Klaviyo-API-Key"] = server.api_key
-
-            try:
-                response = requests.post(
-                    campaigns_url, headers=headers, json=campaign_data, timeout=30
-                )
-
-                # Check if request was successful
-                if response.status_code in [200, 201, 202]:
-                    result = response.json()
-                    campaign_id = result.get("data", {}).get("id", "Unknown")
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully created campaign '{campaign_name}' with ID: {campaign_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
-                else:
-                    error_message = f"Error creating campaign: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
-
-            except Exception as e:
-                error_message = f"Error creating campaign: {str(e)}"
                 logger.error(error_message)
                 return [types.TextContent(type="text", text=error_message)]
 
