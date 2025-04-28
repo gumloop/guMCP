@@ -724,7 +724,7 @@ def create_server(user_id, api_key=None):
                 if response is True:
                     return [
                         types.TextContent(
-                            type="text", text=f"User {did_uri} muted successfully."
+                            type="text", text=f"User {did_uri} unmuted successfully."
                         )
                     ]
                 else:
