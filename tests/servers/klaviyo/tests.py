@@ -1,15 +1,15 @@
 import pytest
 import uuid
 
-# ===== SETUP =====
-# You need to create a campaign before running this test
 
 # Global variables to store created resources
 metric_id = None
 created_list_id = None
-campaign_id = None
 created_profile_id = None
 
+# ===== SETUP =====
+# You need to create a campaign before running this test and set the campaign_id variable
+campaign_id = ""
 
 @pytest.mark.asyncio
 async def test_list_resources(client):
@@ -236,19 +236,13 @@ async def test_list_campaigns(client):
     response = await client.process_query(
         """Use the list_campaigns tool to fetch campaigns with channel "email".
         If successful, start your response with 'Here are the campaigns' and then list them.
-        Your format for ID will be ID: <campaign_id>"""
+        Your format will be, Found <number> campaigns"""
     )
 
     assert (
         "here are the campaigns" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from list_campaigns"
-
-    try:
-        campaign_id = response.split("ID: ")[1].split()[0]
-        print(f"Campaign ID: {campaign_id}")
-    except IndexError:
-        pytest.fail("Could not extract campaign ID from response")
 
     print(f"Response: {response}")
     print("✅ list_campaigns passed.")
