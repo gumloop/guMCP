@@ -33,8 +33,6 @@ async-timeout==5.0.1
     # via aiohttp
 atproto==0.0.61
     # via -r requirements.in
-async-timeout==5.0.1
-    # via aiohttp
 attrs==25.3.0
     # via
     #   aiohttp
