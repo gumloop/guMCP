@@ -31,7 +31,7 @@ def get_credentials(user_id: str, api_key: str, service_name: str) -> dict:
         expires_at = 0
 
     # Check if token needs refresh
-    if time.time() > expires_at - 300:  # 5 minutes buffer
+    if not expires_at or time.time() > expires_at - 300:  # 5 minutes buffer
         logger.info("Refreshing Bluesky token for user %s...", user_id)
         refresh_token = credentials.get("refreshJwt")
         if not refresh_token:
