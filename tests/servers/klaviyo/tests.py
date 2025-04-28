@@ -11,6 +11,7 @@ created_profile_id = None
 # You need to create a campaign before running this test and set the campaign_id variable
 campaign_id = ""
 
+
 @pytest.mark.asyncio
 async def test_list_resources(client):
     """Test listing resources from Klaviyo"""
