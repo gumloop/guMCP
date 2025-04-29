@@ -58,32 +58,23 @@ async def create_slack_client(user_id, api_key=None):
     return WebClient(token=token)
 
 
-async def format_message(slack_client, message, channel_id):
-    """Format a Slack message for display"""
-    text = message.get("text", "")
+async def enrich_message_with_user_info(slack_client, message):
+    """Add user info to the message"""
     user_id = message.get("user", "Unknown")
 
-    # Get user name if possible
-    user_name = "Unknown"
     if user_id != "Unknown":
         try:
             user_info = slack_client.users_info(user=user_id)
             if user_info["ok"]:
-                user_name = user_info["user"].get("real_name") or user_info["user"].get(
+                user_data = user_info["user"]
+                message["user_name"] = user_data.get("real_name") or user_data.get(
                     "name", "Unknown"
                 )
+                message["user_profile"] = user_data.get("profile", {})
         except SlackApiError:
-            pass
+            message["user_name"] = "Unknown"
 
-    # If message has attachments, add them to the text
-    if "attachments" in message:
-        for attachment in message["attachments"]:
-            if "text" in attachment:
-                text += f"\n> {attachment['text']}"
-            if "title" in attachment:
-                text += f"\n> *{attachment['title']}*"
-
-    return f"<#{channel_id}> {user_name}: {text}"
+    return message
 
 
 async def get_channel_id(slack_client, server, channel_name):
@@ -234,16 +225,20 @@ def create_server(user_id, api_key=None):
             # Reverse to get chronological order
             messages.reverse()
 
-            # Format messages
-            formatted_messages = []
+            # Enrich messages with user information
+            enriched_messages = []
             for message in messages:
-                formatted_messages.append(
-                    await format_message(slack_client, message, channel_id)
+                enriched_message = await enrich_message_with_user_info(
+                    slack_client, message
                 )
+                enriched_messages.append(enriched_message)
 
-            content = "\n".join(formatted_messages)
-
-            return [ReadResourceContents(content=content, mime_type="text/plain")]
+            return [
+                ReadResourceContents(
+                    content=json.dumps(enriched_messages, indent=2),
+                    mime_type="application/json",
+                )
+            ]
 
         except SlackApiError as e:
             logger.error(f"Error reading Slack channel: {e}")
@@ -275,9 +270,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Chronologically ordered list of channel messages with each line containing the channel ID, sender's username, and message content. Format: '<#channel_id> user_name: message_text'. Messages appear in the order they were sent, from oldest to newest.",
+                    "description": "JSON array of messages with user and message details",
                     "examples": [
-                        "<#channel_id> user1: Hello everyone\n<#channel_id> user2: Welcome to the channel\n<#channel_id> user1: Thanks for the warm welcome!"
+                        '[{"user":"U12345","type":"message","ts":"1234567890.123456","text":"This is a test message","team":"T12345","user_name":"test_user","user_profile":{"real_name":"Test User","display_name":"Test User"}}, {"user":"U67890","type":"message","ts":"1234567891.123456","text":"Hello there","team":"T12345","user_name":"another_user","user_profile":{"real_name":"Another User","display_name":"Another User"}}]'
                     ],
                 },
             ),
@@ -304,9 +299,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Success confirmation for message delivery with the destination channel ID in Slack format (<#channel_id>) and a unique message timestamp that can be used for threading or future message references",
+                    "description": "JSON response containing the result of the message send operation",
                     "examples": [
-                        "Message sent successfully to <#channel_id>\nTimestamp: 1234567890.123456"
+                        '{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"This is a test message","team":"T12345"}}'
                     ],
                 },
             ),
@@ -337,9 +332,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Canvas creation confirmation containing the destination channel ID in Slack format (<#channel_id>) and a unique timestamp identifier that can be used to reference this canvas in future operations",
+                    "description": "JSON response containing the result of the canvas creation",
                     "examples": [
-                        "Canvas created successfully in <#channel_id>\nTimestamp: 1234567890.123456"
+                        '{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"Test Canvas","team":"T12345","blocks":[{"type":"header","text":{"type":"plain_text","text":"Test Canvas"}},{"type":"section","text":{"type":"mrkdwn","text":"This is a test canvas message"}}]}}'
                     ],
                 },
             ),
@@ -374,9 +369,10 @@ def create_server(user_id, api_key=None):
                         slack_client, server, channel_name
                     )
                     if channel_id is None:
+                        error_response = {"error": f"Channel {channel} not found"}
                         return [
                             TextContent(
-                                type="text", text=f"Channel {channel} not found"
+                                type="text", text=json.dumps(error_response, indent=2)
                             )
                         ]
                     channel = channel_id
@@ -389,16 +385,19 @@ def create_server(user_id, api_key=None):
                 messages = response.get("messages", [])
                 messages.reverse()  # Chronological order
 
-                formatted_messages = []
+                # Enrich messages with user information
+                enriched_messages = []
                 for message in messages:
-                    formatted_messages.append(
-                        await format_message(slack_client, message, channel)
+                    enriched_message = await enrich_message_with_user_info(
+                        slack_client, message
                     )
+                    enriched_messages.append(enriched_message)
 
-                result = "\n".join(formatted_messages)
-                logger.info(f"Read messages result: {result}")
-
-                return [TextContent(type="text", text=result)]
+                return [
+                    TextContent(
+                        type="text", text=json.dumps(enriched_messages, indent=2)
+                    )
+                ]
 
             elif name == "send_message":
                 if "channel" not in arguments or "text" not in arguments:
@@ -415,9 +414,10 @@ def create_server(user_id, api_key=None):
                         slack_client, server, channel_name
                     )
                     if channel_id is None:
+                        error_response = {"error": f"Channel {channel} not found"}
                         return [
                             TextContent(
-                                type="text", text=f"Channel {channel} not found"
+                                type="text", text=json.dumps(error_response, indent=2)
                             )
                         ]
                     channel = channel_id
@@ -426,8 +426,11 @@ def create_server(user_id, api_key=None):
                     user_name = channel[1:]
                     user_id = await get_user_id(slack_client, server, user_name)
                     if user_id is None:
+                        error_response = {"error": f"User {channel} not found"}
                         return [
-                            TextContent(type="text", text=f"User {channel} not found")
+                            TextContent(
+                                type="text", text=json.dumps(error_response, indent=2)
+                            )
                         ]
 
                     # Open DM channel
@@ -441,12 +444,14 @@ def create_server(user_id, api_key=None):
                     message_args["thread_ts"] = thread_ts
 
                 response = slack_client.chat_postMessage(**message_args)
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Message sent successfully to <#{channel}>\nTimestamp: {response['ts']}",
-                    )
-                ]
+                result = {
+                    "status": "success",
+                    "channel": channel,
+                    "ts": response["ts"],
+                    "message": response.get("message", {}),
+                }
+
+                return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
             elif name == "create_canvas":
                 if not all(k in arguments for k in ["channel", "title", "blocks"]):
@@ -466,9 +471,10 @@ def create_server(user_id, api_key=None):
                         slack_client, server, channel_name
                     )
                     if channel_id is None:
+                        error_response = {"error": f"Channel {channel} not found"}
                         return [
                             TextContent(
-                                type="text", text=f"Channel {channel} not found"
+                                type="text", text=json.dumps(error_response, indent=2)
                             )
                         ]
                     channel = channel_id
@@ -478,9 +484,10 @@ def create_server(user_id, api_key=None):
                     try:
                         blocks = json.loads(blocks)
                     except json.JSONDecodeError:
+                        error_response = {"error": "Invalid JSON in blocks parameter"}
                         return [
                             TextContent(
-                                type="text", text="Invalid JSON in blocks parameter"
+                                type="text", text=json.dumps(error_response, indent=2)
                             )
                         ]
 
@@ -511,20 +518,25 @@ def create_server(user_id, api_key=None):
                     message_args["thread_ts"] = thread_ts
 
                 response = slack_client.chat_postMessage(**message_args)
+                result = {
+                    "status": "success",
+                    "channel": channel,
+                    "ts": response["ts"],
+                    "message": response.get("message", {}),
+                }
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Canvas created successfully in <#{channel}>\nTimestamp: {response['ts']}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
             else:
-                raise ValueError(f"Unknown tool: {name}")
+                error_response = {"error": f"Unknown tool: {name}"}
+                return [
+                    TextContent(type="text", text=json.dumps(error_response, indent=2))
+                ]
 
         except SlackApiError as e:
             logger.error(f"Slack API error: {e}")
-            return [TextContent(type="text", text=f"Error: {str(e)}")]
+            error_response = {"error": str(e)}
+            return [TextContent(type="text", text=json.dumps(error_response, indent=2))]
 
     return server
 
