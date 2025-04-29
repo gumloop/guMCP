@@ -8,7 +8,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
+async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> dict:
     """
     Get stored credentials for a user or authenticate if needed.
 
@@ -18,7 +18,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         api_key (str, optional): Optional API key override
 
     Returns:
-        str: Access token for the service
+        dict: Token data containing access token and other credentials
     """
     credentials_path = Path(
         f"local_auth/credentials/{service_name}/local_credentials.json"
