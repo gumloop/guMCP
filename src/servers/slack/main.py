@@ -62,14 +62,16 @@ async def format_message(slack_client, message, channel_id):
     """Format a Slack message for display"""
     text = message.get("text", "")
     user_id = message.get("user", "Unknown")
-    
+
     # Get user name if possible
     user_name = "Unknown"
     if user_id != "Unknown":
         try:
             user_info = slack_client.users_info(user=user_id)
             if user_info["ok"]:
-                user_name = user_info["user"].get("real_name") or user_info["user"].get("name", "Unknown")
+                user_name = user_info["user"].get("real_name") or user_info["user"].get(
+                    "name", "Unknown"
+                )
         except SlackApiError:
             pass
 
@@ -235,7 +237,9 @@ def create_server(user_id, api_key=None):
             # Format messages
             formatted_messages = []
             for message in messages:
-                formatted_messages.append(await format_message(slack_client, message, channel_id))
+                formatted_messages.append(
+                    await format_message(slack_client, message, channel_id)
+                )
 
             content = "\n".join(formatted_messages)
 
@@ -271,9 +275,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Chronologically ordered list of messages in the format: '<#channel_id> user_name: message_text'",
+                    "description": "Chronologically ordered list of channel messages with each line containing the channel ID, sender's username, and message content. Format: '<#channel_id> user_name: message_text'. Messages appear in the order they were sent, from oldest to newest.",
                     "examples": [
-                        "<#C08Q6PQQZSQ> testing_mcp: Test Canvas\n<#C08Q6PQQZSQ> testing_mcp: This is a test message from the MCP server!\n<#C08Q6PQQZSQ> gumloop: heyo"
+                        "<#channel_id> user1: Hello everyone\n<#channel_id> user2: Welcome to the channel\n<#channel_id> user1: Thanks for the warm welcome!"
                     ],
                 },
             ),
@@ -300,9 +304,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Confirmation message with channel ID and timestamp of the sent message",
+                    "description": "Success confirmation for message delivery with the destination channel ID in Slack format (<#channel_id>) and a unique message timestamp that can be used for threading or future message references",
                     "examples": [
-                        "Message sent successfully to <#C08Q6PQQZSQ>\nTimestamp: 1745884854.985879"
+                        "Message sent successfully to <#channel_id>\nTimestamp: 1234567890.123456"
                     ],
                 },
             ),
@@ -333,9 +337,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Confirmation message with channel ID and timestamp of the created canvas",
+                    "description": "Canvas creation confirmation containing the destination channel ID in Slack format (<#channel_id>) and a unique timestamp identifier that can be used to reference this canvas in future operations",
                     "examples": [
-                        "Canvas created successfully in <#C08Q6PQQZSQ>\nTimestamp: 1745884854.985879"
+                        "Canvas created successfully in <#channel_id>\nTimestamp: 1234567890.123456"
                     ],
                 },
             ),
@@ -387,7 +391,9 @@ def create_server(user_id, api_key=None):
 
                 formatted_messages = []
                 for message in messages:
-                    formatted_messages.append(await format_message(slack_client, message, channel))
+                    formatted_messages.append(
+                        await format_message(slack_client, message, channel)
+                    )
 
                 result = "\n".join(formatted_messages)
                 logger.info(f"Read messages result: {result}")
