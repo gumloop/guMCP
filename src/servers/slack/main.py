@@ -40,6 +40,9 @@ SCOPES = [
     "chat:write",
     "chat:write.customize",
     "users:read",
+    "groups:read",
+    "groups:write",
+    "groups:history",
 ]
 
 # Configure logging
@@ -259,6 +262,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["channel"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "Chronologically ordered list of messages in the format: [timestamp] user: message_text",
+                    "examples": [
+                        "[2025-04-28 16:17:15] U08L3MC1PPA: <@U08L3MC1PPA> has joined the channel\n[2025-04-28 16:17:33] U08Q6PK8S04: <@U08Q6PK8S04> has joined the channel\n[2025-04-28 16:55:31] U08Q6PK8S04: This is a test message from the MCP server!"
+                    ],
+                },
             ),
             Tool(
                 name="send_message",
@@ -280,6 +290,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["channel", "text"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "Confirmation message with channel ID and timestamp of the sent message",
+                    "examples": [
+                        "Message sent successfully to <#C08Q6PQQZSQ>\nTimestamp: 1745884854.985879"
+                    ],
                 },
             ),
             Tool(
@@ -306,6 +323,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["channel", "title", "blocks"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "Confirmation message with channel ID and timestamp of the created canvas",
+                    "examples": [
+                        "Canvas created successfully in <#C08Q6PQQZSQ>\nTimestamp: 1745884854.985879"
+                    ],
                 },
             ),
         ]
