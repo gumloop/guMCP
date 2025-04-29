@@ -273,7 +273,7 @@ def create_server(user_id, api_key=None):
                     "type": "string",
                     "description": "Chronologically ordered list of messages in the format: '<#channel_id> user_name: message_text'",
                     "examples": [
-                        "<#C08Q6PQQZSQ> testing_mcp: Test Canvas\n<#C08Q6PQQZSQ> testing_mcp: This is a test message from the MCP server!\n<#C08Q6PQQZSQ> Jyoti Swain: heyo"
+                        "<#C08Q6PQQZSQ> testing_mcp: Test Canvas\n<#C08Q6PQQZSQ> testing_mcp: This is a test message from the MCP server!\n<#C08Q6PQQZSQ> gumloop: heyo"
                     ],
                 },
             ),
