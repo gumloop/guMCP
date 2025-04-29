@@ -1574,14 +1574,18 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             try:
                 # Get campaign details first
                 get_response = requests.get(campaign_url, headers=headers, timeout=30)
-                
+
                 if get_response.status_code != 200:
                     error_message = f"Error getting campaign: {get_response.status_code} - {get_response.text}"
                     logger.error(error_message)
                     return [types.TextContent(type="text", text=error_message)]
 
                 campaign_data = get_response.json()
-                campaign_status = campaign_data.get("data", {}).get("attributes", {}).get("status", "")
+                campaign_status = (
+                    campaign_data.get("data", {})
+                    .get("attributes", {})
+                    .get("status", "")
+                )
 
                 # Only update send strategy if campaign is in draft
                 if campaign_status.lower() == "draft":
@@ -1590,11 +1594,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         "data": {
                             "type": "campaign",
                             "id": campaign_id,
-                            "attributes": {
-                                "send_strategy": {
-                                    "method": "immediate"
-                                }
-                            }
+                            "attributes": {"send_strategy": {"method": "immediate"}},
                         }
                     }
 
@@ -1608,9 +1608,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [types.TextContent(type="text", text=error_message)]
 
                 # Now send the campaign
-                send_job_data = {"data": {"type": "campaign-send-job", "id": campaign_id}}
+                send_job_data = {
+                    "data": {"type": "campaign-send-job", "id": campaign_id}
+                }
                 send_job_url = klaviyo_client["base_url"] + "campaign-send-jobs"
-                
+
                 response = requests.post(
                     send_job_url, headers=headers, json=send_job_data, timeout=30
                 )
@@ -1618,7 +1620,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 201, 202]:
                     result = response.json()
-                    status_message = "immediately" if campaign_status.lower() == "draft" else "asynchronously"
+                    status_message = (
+                        "immediately"
+                        if campaign_status.lower() == "draft"
+                        else "asynchronously"
+                    )
                     return [
                         types.TextContent(
                             type="text",
