@@ -187,9 +187,9 @@ When implementing tools for a server, please follow these guidelines:
 
    You can manually create `outputSchema` following our guidelines, but we recommend using:
    
-   - The `scripts/auto_generator.py` script which runs tools and saves their outputs to `./scripts/logs/<server_name>.json`
-   - If using auto_generator.py, ensure your server follows the testing framework structure in [guMCP Test](../tests/README.md) for optimal results
-   - Example command: `python scripts/auto_generator.py <server_name>`
+   - The `scripts/tool_test_executor.py` script which runs tools and saves their outputs to `./scripts/logs/<server_name>.json`
+   - If using tool_test_executor.py, ensure your server follows the testing framework structure in [guMCP Test](../tests/README.md) for optimal results
+   - Example command: `python scripts/tool_test_executor.py <server_name>`
 
    After generating tool outputs, provide both the generated output file (from `./scripts/logs/<server_name>.json`) and your tool definition file to Cursor, ChatGPT or other LLMs along with this prompt to create high-quality outputSchema:
 
