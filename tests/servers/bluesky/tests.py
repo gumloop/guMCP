@@ -106,11 +106,15 @@ async def test_get_my_profile(client):
     """
     response = await client.process_query(
         "Use the get_my_profile tool to fetch your profile information. "
-        "If successful, start your response with 'Profile information' and include your handle."
+        "If successful, start your response with 'Profile information retrieved successfully' and include your handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "profile information" in response.lower()
+        "profile information retrieved successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert "handle" in response.lower(), f"Handle not found in response: {response}"
 
@@ -130,12 +134,16 @@ async def test_create_post(client):
 
     response = await client.process_query(
         f"Use the create_post tool to create a new post with text '{test_text}'. "
-        "If successful, start your response with 'Post created'"
+        "If successful, start your response with 'Post created successfully' "
         "and include the post URI in the response in format 'URI: <post_uri>'"
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "post created" in response.lower()
+        "post created successfully" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
 
     try:
@@ -158,11 +166,15 @@ async def test_get_posts(client):
     """
     response = await client.process_query(
         f"Use the get_posts tool to fetch recent posts from handle '{test_handle}'. "
-        "If successful, start your response with 'Recent posts' and list them."
+        "If successful, start your response with 'Successfully retrieved posts' and list them."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "recent posts" in response.lower()
+        "successfully retrieved posts" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -179,11 +191,15 @@ async def test_get_liked_posts(client):
     """
     response = await client.process_query(
         "Use the get_liked_posts tool to fetch posts you have liked. "
-        "If successful, start your response with 'Liked posts' and list them."
+        "If successful, start your response with 'Successfully retrieved liked posts' and list them."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "liked posts" in response.lower()
+        "successfully retrieved liked posts" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
 
     print(f"Response: {response}")
@@ -201,11 +217,15 @@ async def test_search_posts(client):
 
     response = await client.process_query(
         f"Use the search_posts tool to search for posts containing '{search_query}'. "
-        "If successful, start your response with 'Search results' and list them."
+        "If successful, start your response with 'Successfully found search results' and list them."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "search results" in response.lower()
+        "successfully found search results" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert (
         search_query in response.lower()
@@ -226,11 +246,15 @@ async def test_search_profiles(client):
 
     response = await client.process_query(
         f"Use the search_profiles tool to search for profiles containing '{search_query}'. "
-        "If successful, start your response with 'Profile search results' and list them."
+        "If successful, start your response with 'Successfully found profile search results' and list them."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "profile search results" in response.lower()
+        "successfully found profile search results" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert (
         search_query in response.lower()
@@ -249,11 +273,15 @@ async def test_get_follows(client):
     """
     response = await client.process_query(
         "Use the get_follows tool to fetch accounts you follow. "
-        "If successful, start your response with 'Following' and list the accounts."
+        "If successful, start your response with 'Successfully retrieved following list' and list the accounts."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "following" in response.lower()
+        "successfully retrieved following list" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
 
     print(f"Response: {response}")
@@ -269,11 +297,15 @@ async def test_follow_user(client):
     """
     response = await client.process_query(
         f"Use the follow_user tool to follow the user with handle '{test_handle}'. "
-        "If successful, start your response with 'User followed' and include the handle."
+        "If successful, start your response with 'Successfully followed user' and include the handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "user followed" in response.lower()
+        "successfully followed user" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -290,11 +322,15 @@ async def test_unfollow_user(client):
     """
     response = await client.process_query(
         f"Use the unfollow_user tool to unfollow the user with handle '{test_handle}'. "
-        "If successful, start your response with 'User unfollowed' and include the handle."
+        "If successful, start your response with 'Successfully unfollowed user' and include the handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "user unfollowed" in response.lower()
+        "successfully unfollowed user" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -311,11 +347,15 @@ async def test_mute_user(client):
     """
     response = await client.process_query(
         f"Use the mute_user tool to mute the user with handle '{test_handle}'. "
-        "If successful, start your response with 'User muted' and include the handle."
+        "If successful, start your response with 'Successfully muted user' and include the handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "user muted" in response.lower()
+        "successfully muted user" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -332,11 +372,15 @@ async def test_unmute_user(client):
     """
     response = await client.process_query(
         f"Use the unmute_user tool to unmute the user with handle '{test_handle}'. "
-        "If successful, start your response with 'User unmuted' and include the handle."
+        "If successful, start your response with 'Successfully unmuted user' and include the handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "user unmuted" in response.lower()
+        "successfully unmuted user" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -353,11 +397,15 @@ async def test_block_user(client):
     """
     response = await client.process_query(
         f"Use the block_user tool to block the user with handle '{test_handle}' with reason 'other'. "
-        "If successful, start your response with 'User blocked' and include the handle."
+        "If successful, start your response with 'Successfully blocked user' and include the handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "user blocked" in response.lower()
+        "successfully blocked user" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -374,11 +422,15 @@ async def test_unblock_user(client):
     """
     response = await client.process_query(
         f"Use the unblock_user tool to unblock the user with handle '{test_handle}'. "
-        "If successful, start your response with 'User unblocked' and include the handle."
+        "If successful, start your response with 'Successfully unblocked user' and include the handle."
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in response:
+        pytest.fail(f"HTTP error encountered: {response}")
+
     assert (
-        "user unblocked" in response.lower()
+        "successfully unblocked user" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert test_handle in response, f"Handle not found in response: {response}"
 
@@ -394,11 +446,15 @@ async def test_delete_post(client):
     # Now delete the post
     delete_response = await client.process_query(
         f"Use the delete_post tool to delete the post with URI '{test_post_uri}'"
-        "If successful, start your response with 'Post deleted'"
+        "If successful, start your response with 'Successfully deleted post'"
     )
 
+    # Check for HTTP error codes
+    if "status_code=4" in delete_response:
+        pytest.fail(f"HTTP error encountered: {delete_response}")
+
     assert (
-        "post deleted" in delete_response.lower()
+        "successfully deleted post" in delete_response.lower()
     ), f"Expected success phrase not found in response: {delete_response}"
 
     print(f"Delete Response: {delete_response}")

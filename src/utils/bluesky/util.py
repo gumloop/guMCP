@@ -42,7 +42,7 @@ def get_credentials(user_id: str, api_key: str, service_name: str) -> dict:
             "Content-Type": "application/json",
         }
 
-        response = requests.post(BLUESKY_REFRESH_URL, headers=headers, json={})
+        response = requests.post(BLUESKY_REFRESH_URL, headers=headers)
         if response.status_code != 200:
             raise Exception(
                 f"Token refresh failed: {response.status_code} - {response.text}"
