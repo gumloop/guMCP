@@ -58,13 +58,20 @@ async def create_slack_client(user_id, api_key=None):
     return WebClient(token=token)
 
 
-def format_message(message):
+async def format_message(slack_client, message, channel_id):
     """Format a Slack message for display"""
-    timestamp = datetime.fromtimestamp(float(message.get("ts", 0)))
-    formatted_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-
     text = message.get("text", "")
-    user = message.get("user", "Unknown")
+    user_id = message.get("user", "Unknown")
+    
+    # Get user name if possible
+    user_name = "Unknown"
+    if user_id != "Unknown":
+        try:
+            user_info = slack_client.users_info(user=user_id)
+            if user_info["ok"]:
+                user_name = user_info["user"].get("real_name") or user_info["user"].get("name", "Unknown")
+        except SlackApiError:
+            pass
 
     # If message has attachments, add them to the text
     if "attachments" in message:
@@ -74,7 +81,7 @@ def format_message(message):
             if "title" in attachment:
                 text += f"\n> *{attachment['title']}*"
 
-    return f"[{formatted_time}] {user}: {text}"
+    return f"<#{channel_id}> {user_name}: {text}"
 
 
 async def get_channel_id(slack_client, server, channel_name):
@@ -228,7 +235,7 @@ def create_server(user_id, api_key=None):
             # Format messages
             formatted_messages = []
             for message in messages:
-                formatted_messages.append(format_message(message))
+                formatted_messages.append(await format_message(slack_client, message, channel_id))
 
             content = "\n".join(formatted_messages)
 
@@ -264,9 +271,9 @@ def create_server(user_id, api_key=None):
                 },
                 outputSchema={
                     "type": "string",
-                    "description": "Chronologically ordered list of messages in the format: [timestamp] user: message_text",
+                    "description": "Chronologically ordered list of messages in the format: '<#channel_id> user_name: message_text'",
                     "examples": [
-                        "[2025-04-28 16:17:15] U08L3MC1PPA: <@U08L3MC1PPA> has joined the channel\n[2025-04-28 16:17:33] U08Q6PK8S04: <@U08Q6PK8S04> has joined the channel\n[2025-04-28 16:55:31] U08Q6PK8S04: This is a test message from the MCP server!"
+                        "<#C08Q6PQQZSQ> testing_mcp: Test Canvas\n<#C08Q6PQQZSQ> testing_mcp: This is a test message from the MCP server!\n<#C08Q6PQQZSQ> Jyoti Swain: heyo"
                     ],
                 },
             ),
@@ -380,9 +387,10 @@ def create_server(user_id, api_key=None):
 
                 formatted_messages = []
                 for message in messages:
-                    formatted_messages.append(format_message(message))
+                    formatted_messages.append(await format_message(slack_client, message, channel))
 
                 result = "\n".join(formatted_messages)
+                logger.info(f"Read messages result: {result}")
 
                 return [TextContent(type="text", text=result)]
 
@@ -427,7 +435,6 @@ def create_server(user_id, api_key=None):
                     message_args["thread_ts"] = thread_ts
 
                 response = slack_client.chat_postMessage(**message_args)
-
                 return [
                     TextContent(
                         type="text",
