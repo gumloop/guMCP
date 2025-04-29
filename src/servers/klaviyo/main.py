@@ -1563,11 +1563,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
                 ]
 
-            # Prepare request payload
-            send_job_data = {"data": {"type": "campaign-send-job", "id": campaign_id}}
-
-            # Make API request to send the campaign
-            send_job_url = klaviyo_client["base_url"] + "campaign-send-jobs"
+            # First get the campaign status
+            campaign_url = klaviyo_client["base_url"] + f"campaigns/{campaign_id}"
             headers = klaviyo_client["headers"].copy()
 
             # Add API key header if available
@@ -1575,6 +1572,45 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 headers["Klaviyo-API-Key"] = server.api_key
 
             try:
+                # Get campaign details first
+                get_response = requests.get(campaign_url, headers=headers, timeout=30)
+                
+                if get_response.status_code != 200:
+                    error_message = f"Error getting campaign: {get_response.status_code} - {get_response.text}"
+                    logger.error(error_message)
+                    return [types.TextContent(type="text", text=error_message)]
+
+                campaign_data = get_response.json()
+                campaign_status = campaign_data.get("data", {}).get("attributes", {}).get("status", "")
+
+                # Only update send strategy if campaign is in draft
+                if campaign_status.lower() == "draft":
+                    # Update campaign send strategy
+                    update_data = {
+                        "data": {
+                            "type": "campaign",
+                            "id": campaign_id,
+                            "attributes": {
+                                "send_strategy": {
+                                    "method": "immediate"
+                                }
+                            }
+                        }
+                    }
+
+                    update_response = requests.patch(
+                        campaign_url, headers=headers, json=update_data, timeout=30
+                    )
+
+                    if update_response.status_code not in [200, 202]:
+                        error_message = f"Error updating campaign: {update_response.status_code} - {update_response.text}"
+                        logger.error(error_message)
+                        return [types.TextContent(type="text", text=error_message)]
+
+                # Now send the campaign
+                send_job_data = {"data": {"type": "campaign-send-job", "id": campaign_id}}
+                send_job_url = klaviyo_client["base_url"] + "campaign-send-jobs"
+                
                 response = requests.post(
                     send_job_url, headers=headers, json=send_job_data, timeout=30
                 )
@@ -1582,10 +1618,11 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 201, 202]:
                     result = response.json()
+                    status_message = "immediately" if campaign_status.lower() == "draft" else "asynchronously"
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Successfully triggered campaign with ID: {campaign_id} to send asynchronously.\n\n{json.dumps(result, indent=2)}",
+                            text=f"Successfully triggered campaign with ID: {campaign_id} to send {status_message}.\n\n{json.dumps(result, indent=2)}",
                         )
                     ]
                 elif response.status_code == 404:
