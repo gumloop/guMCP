@@ -4,7 +4,7 @@ import logging
 import json
 import requests
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, Iterable
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -16,7 +16,9 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from mcp.types import TextContent
+from mcp.types import TextContent, Resource
+from mcp.server.lowlevel.helper_types import ReadResourceContents
+from pydantic import AnyUrl
 
 from src.utils.monday.util import authenticate_and_save_credentials, get_credentials
 
@@ -105,6 +107,10 @@ class MondayClient:
                 board_kind
                 workspace_id
                 updated_at
+                groups {
+                    id
+                    title
+                }
                 items_page {
                     cursor
                     items {
@@ -469,6 +475,157 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 server.user_id, server.api_key
             )
         return server._monday_client
+
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """List Monday.com resources (boards, workspaces, items, groups)"""
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        monday = await _get_monday_client()
+        try:
+            resources = []
+
+            # List all workspaces
+            workspaces_response = monday.get_workspaces()
+            for workspace in workspaces_response.get("data", {}).get("workspaces", []):
+                resources.append(
+                    Resource(
+                        uri=f"monday://workspace/{workspace['id']}",
+                        mimeType="application/json",
+                        name=f"Workspace: {workspace['name']}",
+                        description=f"Monday.com workspace ({workspace.get('kind', 'unknown')})",
+                    )
+                )
+
+            # List all boards
+            boards_response = monday.get_boards()
+            for board in boards_response.get("data", {}).get("boards", []):
+                resources.append(
+                    Resource(
+                        uri=f"monday://board/{board['id']}",
+                        mimeType="application/json",
+                        name=f"Board: {board['name']}",
+                        description=f"Monday.com board ({board.get('board_kind', 'unknown')})",
+                    )
+                )
+
+            # For each board, list its items
+            for board in boards_response.get("data", {}).get("boards", []):
+                board_id = board["id"]
+
+                # Get board details to access items
+                board_details = monday.get_board(board_id)
+                board_data = board_details.get("data", {}).get("boards", [{}])[0]
+
+                # List items in the board
+                for item in board_data.get("items_page", {}).get("items", []):
+                    resources.append(
+                        Resource(
+                            uri=f"monday://item/{item['id']}",
+                            mimeType="application/json",
+                            name=f"Item: {item['name']}",
+                            description=f"Item in board {board['name']}",
+                        )
+                    )
+
+                # List groups in the board
+                for group in board_data.get("groups", []):
+                    if group["id"] != "topics":
+                        resources.append(
+                            Resource(
+                                uri=f"monday://board/{board_id}/group/{group['id']}",
+                                mimeType="application/json",
+                                name=f"Group: {group['title']}",
+                                description=f"Group in board {board['name']}",
+                            )
+                        )
+
+            return resources
+
+        except Exception as e:
+            logger.error(f"Error listing Monday.com resources: {e}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read a resource from Monday.com by URI"""
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        monday = await _get_monday_client()
+        try:
+            uri_str = str(uri)
+
+            if uri_str.startswith("monday://workspace/"):
+                # Handle workspace resource
+                workspace_id = uri_str.replace("monday://workspace/", "")
+                workspace_data = monday.get_workspaces()
+                workspace = next(
+                    (
+                        w
+                        for w in workspace_data.get("data", {}).get("workspaces", [])
+                        if str(w["id"]) == workspace_id
+                    ),
+                    None,
+                )
+                if workspace:
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(workspace, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+            elif uri_str.startswith("monday://item/"):
+                item_id = uri_str.replace("monday://item/", "")
+                item_data = monday.get_item(int(item_id))
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(item_data, indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+
+            elif uri_str.startswith("monday://board/"):
+                # Handle board resource
+                parts = uri_str.split("/")
+                logger.info(f"Parts: {parts} {uri_str}")
+                board_id = parts[3]
+
+                if len(parts) == 4:
+                    # Reading board itself
+                    board_data = monday.get_board(int(board_id))
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(board_data, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+                elif len(parts) == 6:
+                    resource_type = parts[4]
+                    resource_id = parts[5]
+                    if resource_type == "group":
+                        # Reading group
+                        group_data = monday.get_group(int(board_id), resource_id)
+                        return [
+                            ReadResourceContents(
+                                content=json.dumps(group_data, indent=2),
+                                mime_type="application/json",
+                            )
+                        ]
+
+            raise ValueError(f"Unsupported resource URI: {uri_str}")
+
+        except Exception as e:
+            logger.error(f"Error reading Monday.com resource: {e}")
+            return [
+                ReadResourceContents(
+                    content=json.dumps({"error": str(e)}),
+                    mime_type="application/json",
+                )
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:

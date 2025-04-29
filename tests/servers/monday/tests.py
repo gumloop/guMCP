@@ -11,6 +11,79 @@ created_subitem_id = None
 
 workspace_id = "1819503"  # Replace with actual workspace ID
 
+
+@pytest.mark.asyncio
+async def test_list_resources(client):
+    """Test listing resources from Monday.com"""
+    response = await client.list_resources()
+    print(f"Response: {response}")
+    assert response, "No response returned from list_resources"
+
+    for i, resource in enumerate(response.resources):
+        print(f"  - {i}: {resource.name} ({resource.uri}) {resource.description}")
+
+    print("✅ Successfully listed resources")
+
+
+@pytest.mark.asyncio
+async def test_read_resource(client):
+    """Test reading a resource from Monday.com"""
+    list_response = await client.list_resources()
+
+    board_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("monday://board/")
+    ]
+
+    if len(board_resource_uri) > 0:
+        board_resource_uri = board_resource_uri[0]
+        response = await client.read_resource(board_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for board passed.")
+
+    workspace_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("monday://workspace/")
+    ]
+
+    if len(workspace_resource_uri) > 0:
+        workspace_resource_uri = workspace_resource_uri[0]
+        response = await client.read_resource(workspace_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for workspace passed.")
+
+    item_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("monday://item/")
+    ]
+
+    if len(item_resource_uri) > 0:
+        item_resource_uri = item_resource_uri[0]
+        response = await client.read_resource(item_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for item passed.")
+
+    group_resource_uri = [
+        resource.uri
+        for resource in list_response.resources
+        if str(resource.uri).startswith("monday://board/")
+        and "group" in str(resource.uri)
+    ]
+
+    if len(group_resource_uri) > 0:
+        group_resource_uri = group_resource_uri[0]
+        response = await client.read_resource(group_resource_uri)
+        assert response, "No response returned from read_resource"
+        print(f"Response: {response}")
+        print("✅ read_resource for group passed.")
+
+
 # CRUD Test Order:
 # 1. Create operations
 # 2. Read operations
