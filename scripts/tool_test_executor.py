@@ -22,8 +22,8 @@ def get_raw_response(result):
     return str(result)
 
 
-def get_test_configs(server_name):
-    """Get test configs for a specific server"""
+def load_test_module(server_name):
+    """Load the test module for a specific server"""
     test_file = project_root / "tests" / "servers" / server_name / "tests.py"
     
     if not test_file.exists():
@@ -38,7 +38,7 @@ def get_test_configs(server_name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     
-    return getattr(module, "TOOL_TESTS", None)
+    return module
 
 
 def format_args(args_template, context):
@@ -48,32 +48,109 @@ def format_args(args_template, context):
         
     args_str = args_template.format(**context)
     args_dict = {}
-    pattern = r'(\w+)=(?:"([^"]*)"|\{([^}]*)\}|([^,\s]*))'
     
-    for match in re.finditer(pattern, args_str):
-        key = match.group(1)
-        value = next((g for g in match.groups()[1:] if g is not None), "")
+    # Handle complex JSON structures in args
+    try:
+        # Extract key-value pairs with proper JSON handling
+        pattern = r'(\w+)=(?:"([^"]*)"|\{([^}]*)\}|\[([^\]]*)\]|([^,\s]*))'
         
-        if value.lower() == "true":
-            args_dict[key] = True
-        elif value.lower() == "false":
-            args_dict[key] = False
-        elif value.isdigit():
-            args_dict[key] = int(value)
-        else:
+        for match in re.finditer(pattern, args_str):
+            key = match.group(1)
+            value = next((g for g in match.groups()[1:] if g is not None), "")
+            
+            # Try to parse JSON for complex structures
+            if value.startswith('{') and value.endswith('}'):
+                try:
+                    value = json.loads(value.replace("'", '"'))
+                except json.JSONDecodeError:
+                    pass
+            elif value.startswith('[') and value.endswith(']'):
+                try:
+                    value = json.loads(value.replace("'", '"'))
+                except json.JSONDecodeError:
+                    pass
+            elif value.lower() == "true":
+                value = True
+            elif value.lower() == "false":
+                value = False
+            elif value.isdigit():
+                value = int(value)
+                
             args_dict[key] = value
+    except Exception as e:
+        print(f"Error parsing args: {e}")
+        return {}
                 
     return args_dict
 
 
+async def run_test_configs(session, configs, context, tools_log, available_tools):
+    """Run a set of test configurations"""
+    if not configs:
+        return
+        
+    # Sort by dependencies
+    sorted_configs = sorted(configs, key=lambda x: len(x.get("depends_on", [])))
+    
+    for test_config in sorted_configs:
+        tool_name = test_config["name"]
+        
+        if tool_name not in available_tools or test_config.get("skip", False):
+            continue
+        
+        # Check dependencies
+        if any(dep not in context for dep in test_config.get("depends_on", [])):
+            continue
+        
+        # Setup context if needed
+        if "setup" in test_config and callable(test_config["setup"]):
+            setup_result = test_config["setup"](context)
+            if isinstance(setup_result, dict):
+                context.update(setup_result)
+        
+        # Get args
+        args = {}
+        if "args" in test_config:
+            args = test_config["args"]
+        elif "args_template" in test_config:
+            try:
+                args = format_args(test_config["args_template"], context)
+            except Exception as e:
+                print(f"Error formatting args for {tool_name}: {e}")
+                continue
+        
+        try:
+            result = await session.call_tool(tool_name, args)
+            raw_response = get_raw_response(result)
+            tools_log.append({tool_name: raw_response})
+            
+            # Extract values using regex extractors
+            if "regex_extractors" in test_config:
+                for key, pattern in test_config["regex_extractors"].items():
+                    match = re.search(pattern, raw_response, re.DOTALL | re.IGNORECASE)
+                    if match and match.groups():
+                        context[key] = match.group(1).strip()
+        except Exception as e:
+            tools_log.append({tool_name: {"error": str(e)}})
+
+
 async def run_server_tools(server_name):
     """Run tools for a single server based on test configurations"""
-    test_configs = get_test_configs(server_name)
-    if not test_configs:
+    module = load_test_module(server_name)
+    if not module:
+        print(f"No test module found for server: {server_name}")
+        return
+    
+    tool_tests = getattr(module, "TOOL_TESTS", [])
+    resource_tests = getattr(module, "RESOURCE_TESTS", [])
+    
+    if not tool_tests and not resource_tests:
+        print(f"No test configurations found for server: {server_name}")
         return
     
     local_script_path = os.path.join(project_root, "src", "servers", "local.py")
     if not os.path.exists(local_script_path):
+        print(f"Local script not found: {local_script_path}")
         return
     
     command = "python"
@@ -83,6 +160,8 @@ async def run_server_tools(server_name):
     tools_log = []
     context = {}
     
+    print(f"Running tests for server: {server_name}")
+    
     async with stdio_client(server_params) as (stdio, write):
         async with ClientSession(stdio, write) as session:
             await session.initialize()
@@ -90,66 +169,33 @@ async def run_server_tools(server_name):
             response = await session.list_tools()
             available_tools = {tool.name: tool for tool in response.tools}
             
-            # Sort by dependencies
-            sorted_configs = sorted(test_configs, 
-                                   key=lambda x: len(x.get("depends_on", [])))
+            # Run resource tests first
+            if resource_tests:
+                print(f"Running {len(resource_tests)} resource tests...")
+                await run_test_configs(session, resource_tests, context, tools_log, available_tools)
             
-            for test_config in sorted_configs:
-                tool_name = test_config["name"]
-                
-                if tool_name not in available_tools or test_config.get("skip", False):
-                    continue
-                
-                # Check dependencies
-                if any(dep not in context for dep in test_config.get("depends_on", [])):
-                    continue
-                
-                # Setup context if needed
-                if "setup" in test_config and callable(test_config["setup"]):
-                    setup_result = test_config["setup"](context)
-                    if isinstance(setup_result, dict):
-                        context.update(setup_result)
-                
-                # Get args
-                if "args" in test_config:
-                    args = test_config["args"]
-                elif "args_template" in test_config:
-                    try:
-                        args = format_args(test_config["args_template"], context)
-                    except Exception:
-                        continue
-                else:
-                    args = {}
-                
-                try:
-                    result = await session.call_tool(tool_name, args)
-                    raw_response = get_raw_response(result)
-                    tools_log.append({tool_name: raw_response})
-                    
-                    # Extract values using regex extractors
-                    if "regex_extractors" in test_config:
-                        for key, pattern in test_config["regex_extractors"].items():
-                            match = re.search(pattern, raw_response, re.DOTALL | re.IGNORECASE)
-                            if match and match.groups():
-                                context[key] = match.group(1).strip()
-                except Exception as e:
-                    tools_log.append({tool_name: {"error": str(e)}})
+            # Then run tool tests
+            if tool_tests:
+                print(f"Running {len(tool_tests)} tool tests...")
+                await run_test_configs(session, tool_tests, context, tools_log, available_tools)
     
     # Save results to file
-    logs_dir = os.path.join(project_root, "./scripts/logs")
+    logs_dir = os.path.join(project_root, "scripts", "logs")
     os.makedirs(logs_dir, exist_ok=True)
     
     output_file = os.path.join(logs_dir, f"{server_name}.json")
     with open(output_file, "w") as f:
         json.dump(tools_log, f, indent=2)
+    
+    print(f"Test results saved to: {output_file}")
 
 
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="MCP Auto Tool Response Generator")
+    parser = argparse.ArgumentParser(description="MCP Tool Test Executor")
     parser.add_argument(
-        "server", help="Server name to test (e.g., word)"
+        "server", help="Server name to test (e.g., word, excel)"
     )
     
     args = parser.parse_args()
