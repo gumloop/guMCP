@@ -7,6 +7,18 @@ def get_test_id(test_config):
     return f"{test_config['name']}_{hash(test_config['description']) % 1000}"
 
 
+def validate_resource_uri(uri):
+    """
+    Validates that a resource URI follows the expected format: {server_id}://{resource_type}/{resource_id}
+    Returns a tuple of (is_valid, components) where components is (server_id, resource_type, resource_id)
+    """
+    pattern = r"^([a-zA-Z0-9_-]+)://([a-zA-Z0-9_-]+)/(.+)$"
+    match = re.match(pattern, uri)
+    if not match:
+        return False, None
+    return True, match.groups()
+
+
 @pytest.mark.asyncio
 async def run_tool_test(client, context, test_config):
     """
@@ -41,7 +53,6 @@ async def run_tool_test(client, context, test_config):
     expected_keywords = test_config["expected_keywords"]
     description = test_config["description"]
 
-    # Use args if available, otherwise try to format args_template
     if "args" in test_config:
         args = test_config["args"]
     elif "args_template" in test_config:
@@ -67,7 +78,6 @@ async def run_tool_test(client, context, test_config):
 
     response = await client.process_query(prompt)
 
-    # Handle common empty result patterns
     if (
         "empty" in response.lower()
         or "[]" in response
@@ -82,12 +92,10 @@ async def run_tool_test(client, context, test_config):
         pytest.skip(f"Empty result from API for {tool_name}")
         return
 
-    # Handle API errors
     if "error_message" in response.lower() and "error_message" not in expected_keywords:
         pytest.fail(f"API error for {tool_name}: {response}")
         return
 
-    # Check for expected keywords
     missing_keywords = []
     for keyword in expected_keywords:
         if keyword != "error_message" and keyword.lower() not in response.lower():
@@ -97,11 +105,23 @@ async def run_tool_test(client, context, test_config):
         pytest.skip(f"Keywords not found: {', '.join(missing_keywords)}")
         return
 
-    # Extract values using regex
     if "regex_extractors" in test_config:
         for key, pattern in test_config["regex_extractors"].items():
             match = re.search(pattern, response, re.DOTALL | re.IGNORECASE)
             if match and len(match.groups()) > 0:
                 context[key] = match.group(1).strip()
+
+    should_validate = test_config.get("validate_resource_uri", False) or (
+        tool_name in ["list_resources", "read_resource"] and "resource_uri" in context
+    )
+
+    if should_validate and "resource_uri" in context:
+        is_valid, components = validate_resource_uri(context["resource_uri"])
+        if is_valid:
+            context["resource_server"] = components[0]
+            context["resource_type"] = components[1]
+            context["resource_id"] = components[2]
+        else:
+            pytest.fail(f"Invalid resource URI format: {context['resource_uri']}")
 
     return context
