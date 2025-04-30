@@ -434,9 +434,7 @@ def create_server(user_id, api_key=None):
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing result of the document deletion operation including confirmation of deletion, the ID of the deleted file, and overall success status",
-                    "examples": [
-                        '[{"deleted":true,"file_id":"12345","success":true}]'
-                    ],
+                    "examples": ['[{"deleted":true,"file_id":"12345","success":true}]'],
                 },
             ),
         ]
