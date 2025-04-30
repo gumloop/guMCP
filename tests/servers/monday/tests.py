@@ -9,7 +9,7 @@ created_column_id = None
 created_subitem_id = None
 
 
-workspace_id = "1819503"  # Replace with actual workspace ID
+workspace_id = ""  # Replace with actual workspace ID
 
 
 @pytest.mark.asyncio
