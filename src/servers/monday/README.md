@@ -40,6 +40,12 @@ GuMCP server implementation for interacting with the Monday.com API using OAuth 
    - Click on "Build" in the left sidebar
    - Select "OAuth Permissions"
    - Add your redirect URI (e.g., `http://localhost:8080`)
+   - Enable the following scopes:
+     - `me:read` - Read current user information
+     - `boards:read` - Read boards and their content
+     - `workspaces:read` - Read workspaces
+     - `boards:write` - Create and modify boards and their content
+     - `workspaces:write` - Create and modify workspaces
    - Save the changes
 
 ---
