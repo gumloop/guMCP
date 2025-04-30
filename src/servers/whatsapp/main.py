@@ -252,21 +252,49 @@ def create_server(user_id, api_key=None):
                     "type": "object",
                     "properties": {},
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "WhatsApp Business Account details including ID, name, timezone, and message template namespace",
+                    "examples": [
+                        '{"id": "0123456789",  "name": "Test WhatsApp Business Account",  "timezone_id": "1", "message_template_namespace": "ahfap-aosjhfeli-32da"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_account_verification_status",
                 description="Get business verification status",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "object",
+                    "description": "Business verification status including verification state and account ID",
+                    "examples": [
+                        '{"business_verification_status": "not_verified", "id": "0123456789"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_phone_numbers",
                 description="List all phone numbers associated with the WABA",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "object",
+                    "description": "List of phone numbers with their verification status, display numbers, quality ratings, and IDs",
+                    "examples": [
+                        '{"data": [{ "verified_name": "Test Number", "code_verification_status": "NOT_VERIFIED", "display_phone_number": "15556447198", "quality_rating": "GREEN", "platform_type": "CLOUD_API", "throughput": { "level": "STANDARD" }, "id": "0123456789" } ], "paging": { "cursors": { "before": "dishagadhgakjdbhgaidhligbhaeiklgb", "after": "ujghdjgklfsdaikgbgdskaibgjkdbg" } }}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_message_templates",
                 description="List all message templates",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "object",
+                    "description": "List of message templates with their names, components, status, and IDs",
+                    "examples": [
+                        '{ "data": [ { "name": "test_template_e8a7", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "Hello from guMCP" } ], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789" } ], "paging": { "cursors": { "before": "MAZDZD", "after": "MjQZD" } }}'
+                    ],
+                },
             ),
             types.Tool(
                 name="create_message_template",
@@ -305,6 +333,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name", "category", "language", "components"],
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Created template details including ID, status, and category",
+                    "examples": [
+                        '{  "id": "0123456789", "status": "PENDING", "category": "MARKETING"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_template_preview",
@@ -323,16 +358,35 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["template_name", "language"],
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Template preview details including template name, components, status, ID and more",
+                    "examples": [
+                        '{ "name": "test_template_830b", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "Hello from guMCP" } ], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_phone_number_details",
                 description="Get detailed information about a WhatsApp business phone number",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "object",
+                    "description": "Phone number details including verification status, display number, quality rating, ID and more",
+                    "examples": [
+                        '{ "verified_name": "Test Number", "code_verification_status": "NOT_VERIFIED", "display_phone_number": "0123456789", "quality_rating": "GREEN", "platform_type": "CLOUD_API", "throughput": { "level": "STANDARD" }, "id": "0123456789"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_business_profile",
                 description="Get WhatsApp Business Profile information",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "object",
+                    "description": "Business profile details including messaging product information",
+                    "examples": ['{"data": [{"messaging_product": "whatsapp"}]}'],
+                },
             ),
             types.Tool(
                 name="get_message_template_details",
@@ -346,6 +400,13 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["template_id"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Template details including name, components, status, ID and more",
+                    "examples": [
+                        '{ "name": "test_template_830b", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "Hello from guMCP" } ], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -392,6 +453,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["template_id"],
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Update status including success flag, template ID, name, and category",
+                    "examples": [
+                        '{"success": true, "id": "0123456789", "name": "test_template_830b", "category": "MARKETING"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_message_template",
@@ -409,6 +477,11 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["template_id", "template_name"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Deletion status including success flag",
+                    "examples": ['{"success": true}'],
                 },
             ),
             types.Tool(
@@ -431,6 +504,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["to", "template_name", "language_code"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Message template details including name, components, status, ID and more",
+                    "examples": [
+                        '{ "data": [ { "name": "sales_announcement", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "SALE SALE SALE" } ], "language": "en_US", "status": "APPROVED", "category": "MARKETING", "id": "0123456789" }, { "name": "hello_world", "parameter_format": "POSITIONAL", "components": [ { "type": "HEADER", "format": "TEXT", "text": "Hello World" }, { "type": "BODY", "text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us." }, { "type": "FOOTER", "text": "WhatsApp Business Platform sample message" } ], "language": "en_US", "status": "APPROVED", "category": "UTILITY", "id": "0123456789" } ], "paging": { "cursors": { "before": "MAZDZD", "after": "MjQZD" } }}'
+                    ],
                 },
             ),
         ]
