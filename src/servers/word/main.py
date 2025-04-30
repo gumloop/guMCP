@@ -282,9 +282,12 @@ def create_server(user_id, api_key=None):
                     },
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Returns an array of Word documents with their metadata including document IDs, names, web URLs, modification dates, and file sizes",
-                    "examples": ['{\n  "documents": []\n}'],
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing Word documents with their metadata including document IDs, names, web URLs, modification dates, and file sizes",
+                    "examples": [
+                        '[{"document_id":"12345","name":"Document1.docx","web_url":"https://example.com/doc1.docx","last_modified":"2023-07-15T10:30:00Z","created":"2023-07-01T09:15:00Z","size":25600},{"document_id":"67890","name":"Document2.docx","web_url":"https://example.com/doc2.docx","last_modified":"2023-07-20T14:45:00Z","created":"2023-07-05T11:30:00Z","size":32768}]'
+                    ],
                 },
             ),
             Tool(
@@ -309,10 +312,11 @@ def create_server(user_id, api_key=None):
                     "required": ["name"],
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Details of the newly created Word document including its ID, name, browser access URL, initial content, and storage location type",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing details of the newly created Word document including its ID, name, browser access URL, initial content, and storage location type",
                     "examples": [
-                        '{\n  "created_file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "web_url": "<web_url>",\n  "content": "",\n  "is_sharepoint": false\n}'
+                        '[{"created_file_id":"12345","name":"Test Document.docx","web_url":"https://example.com/test-document.docx","content":"","is_sharepoint":false}]'
                     ],
                 },
             ),
@@ -330,10 +334,11 @@ def create_server(user_id, api_key=None):
                     "required": ["file_id"],
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Full text content of the document along with metadata including file ID, name, content size in bytes, and last modification timestamp",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing full text content of the document along with metadata including file ID, name, content size in bytes, and last modification timestamp",
                     "examples": [
-                        '{\n  "file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "content": "Example document content",\n  "size": 36582,\n  "last_modified": "2025-04-29T19:30:16Z"\n}'
+                        '[{"file_id":"12345","name":"Test Document.docx","content":"Example document content with multiple paragraphs and formatting","size":36582,"last_modified":"2023-04-29T19:30:16Z"}]'
                     ],
                 },
             ),
@@ -355,10 +360,11 @@ def create_server(user_id, api_key=None):
                     "required": ["file_id", "content"],
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Status of the document update operation including file identifier, document name, append confirmation, updated file size, and preview of the appended content",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing status of the document update operation including file identifier, document name, append confirmation, updated file size, and preview of the appended content",
                     "examples": [
-                        '{\n  "file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "appended": true,\n  "size": 36582,\n  "content_preview": "Example content"\n}'
+                        '[{"file_id":"12345","name":"Test Document.docx","appended":true,"size":38950,"content_preview":"Example content that was appended to the document"}]'
                     ],
                 },
             ),
@@ -381,10 +387,11 @@ def create_server(user_id, api_key=None):
                     "required": ["query"],
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Search query results containing an array of matching documents, the ID of the first result (if any), and whether the documents are stored in SharePoint",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing search query results with matching documents, the ID of the first result (if any), and whether the documents are stored in SharePoint",
                     "examples": [
-                        '{\n  "documents": [],\n  "file_id": "",\n  "is_sharepoint": false\n}'
+                        '[{"id":"12345","name":"Quarterly Report.docx","web_url":"https://example.com/quarterly-report.docx","last_modified":"2023-06-10T09:15:30Z","created":"2023-06-01T14:20:15Z","size":45678},{"id":"67890","name":"Project Proposal.docx","web_url":"https://example.com/project-proposal.docx","last_modified":"2023-06-15T11:30:45Z","created":"2023-06-05T16:40:20Z","size":38910}]'
                     ],
                 },
             ),
@@ -402,10 +409,11 @@ def create_server(user_id, api_key=None):
                     "required": ["file_id"],
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Document download details including file ID, filename, direct download URL, file size in bytes, browser access URL, and the document's MIME type",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing document download details including file ID, filename, direct download URL, file size in bytes, browser access URL, and the document's MIME type",
                     "examples": [
-                        '{\n  "file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "url": "<download_url>",\n  "size": 36582,\n  "web_url": "<web_url>",\n  "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"\n}'
+                        '[{"file_id":"12345","name":"Test Document.docx","url":"https://download.example.com/doc12345.docx","size":36582,"web_url":"https://view.example.com/doc12345.docx","mime_type":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}]'
                     ],
                 },
             ),
@@ -423,10 +431,11 @@ def create_server(user_id, api_key=None):
                     "required": ["file_id"],
                 },
                 outputSchema={
-                    "type": "object",
-                    "description": "Result of the document deletion operation including confirmation of deletion, the ID of the deleted file, and overall success status",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing result of the document deletion operation including confirmation of deletion, the ID of the deleted file, and overall success status",
                     "examples": [
-                        '{\n  "deleted": true,\n  "file_id": "<file_id>",\n  "success": true\n}'
+                        '[{"deleted":true,"file_id":"12345","success":true}]'
                     ],
                 },
             ),
