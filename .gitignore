@@ -179,3 +179,4 @@ oauth.keys.json
 # Cursor
 .cursor/
 .cursor/**
+**/logs/*

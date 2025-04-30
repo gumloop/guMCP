@@ -31,6 +31,8 @@ asn1crypto==1.5.1
     # via snowflake-connector-python
 async-timeout==5.0.1
     # via aiohttp
+atproto==0.0.61
+    # via -r requirements.in
 attrs==25.3.0
     # via
     #   aiohttp
@@ -60,9 +62,12 @@ charset-normalizer==3.4.1
     #   requests
     #   snowflake-connector-python
 click==8.1.8
-    # via uvicorn
+    # via
+    #   atproto
+    #   uvicorn
 cryptography==44.0.2
     # via
+    #   atproto
     #   pyjwt
     #   pyopenssl
     #   snowflake-connector-python
@@ -72,6 +77,8 @@ distro==1.9.0
     # via
     #   anthropic
     #   browserbase
+dnspython==2.7.0
+    # via atproto
 dropbox==12.0.2
     # via -r requirements.in
 enum-compat==0.0.3
@@ -122,6 +129,7 @@ httplib2==0.22.0
 httpx==0.28.1
     # via
     #   anthropic
+    #   atproto
     #   browserbase
     #   mcp
     #   notion-client
@@ -140,6 +148,8 @@ isodate==0.7.2
     # via zeep
 jiter==0.9.0
     # via anthropic
+libipld==3.0.1
+    # via atproto
 lxml==5.3.2
     # via
     #   python-docx
@@ -191,13 +201,14 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.11.1
+pydantic==2.11.3
     # via
     #   anthropic
+    #   atproto
     #   browserbase
     #   mcp
     #   pydantic-settings
-pydantic-core==2.33.0
+pydantic-core==2.33.1
     # via pydantic
 pydantic-settings==2.8.1
     # via mcp
@@ -305,6 +316,7 @@ typing-extensions==4.13.0
     # via
     #   anthropic
     #   anyio
+    #   atproto
     #   beautifulsoup4
     #   browserbase
     #   multidict
@@ -332,6 +344,8 @@ uvicorn==0.34.0
     # via
     #   -r requirements.in
     #   mcp
+websockets==13.1
+    # via atproto
 wrapt==1.17.2
     # via deprecated
 yarl==1.18.3

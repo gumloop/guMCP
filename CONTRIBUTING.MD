@@ -171,6 +171,36 @@ When implementing tools for a server, please follow these guidelines:
 
 5. **Error Handling**: Implement proper error handling with informative error messages to help users understand what went wrong.
 
+6. **Test Framework Compliance**: We strongly recommend implementing your tools following our [guMCP Test](../tests/README.md). This helps with testing and generating accurate outputSchema.
+
+7. **Output Schema**: Every tool definition must include an outputSchema to help Gummie understand the response format:
+
+   ```python
+   outputSchema={
+       "type": "string",
+       "description": "JSON response containing the operation result",
+       "examples": [
+           '{"status":"success","document_id":"doc123","name":"Example Document"}'
+       ],
+   }
+   ```
+
+   You can manually create `outputSchema` following our guidelines, but we recommend using:
+   
+   - The `scripts/tool_test_executor.py` script which runs tools and saves their outputs to `./scripts/logs/<server_name>.json`
+   - If using tool_test_executor.py, ensure your server follows the testing framework structure in [guMCP Test](../tests/README.md) for optimal results
+   - Example command: `python scripts/tool_test_executor.py <server_name>`
+
+   After generating tool outputs, provide both the generated output file (from `./scripts/logs/<server_name>.json`) and your tool definition file to Cursor, ChatGPT or other LLMs along with this prompt to create high-quality outputSchema:
+
+   ```
+   When updating outputSchema example, please follow these guidelines:
+   1. Be reasonable and detailed in your descriptions. Clearly explain any changes or logic so the modifications are easy to understand and trace.
+   2. Use obfuscation thoughtfully. Avoid confusing large language models. For example, instead of modifying actual URLs or IDs, use placeholders like <URL> or <ID> to maintain clarity while abstracting sensitive or irrelevant data.
+   3. Avoid excessive output. You don't need to include full data sets—just enough to preserve the structure. For instance, if the data is an array with 100 items, include only 2–3 representative examples.
+   4. Make sure the output schema example is similar to actual output responses by tool and description should be relevant enough to the example.
+   ```
+
 ### Resources
 
 Resources in guMCP follow a consistent URI format:
@@ -223,13 +253,16 @@ Note: You must have an `ANTHROPIC_API_KEY` in your `.env` file for this to work 
 
 When adding new features, please ensure you:
 
-1. Write tests for new functionality
-2. Ensure all tests pass before submitting a PR
-3. Use pytest fixtures where appropriate
-4. Use descriptive test names that follow the pattern `test_<functionality>_<expected_behavior>`
+1. Write tests following our [guMCP Test](../tests/README.md) framework
+2. Implement both RESOURCE_TESTS and TOOL_TESTS for complete coverage
+3. Ensure all tests pass before submitting a PR
+4. Use the shared context to pass values between tests
+5. Use descriptive test names that follow the pattern `test_<functionality>_<expected_behavior>`
+6. Every tool must have a corresponding test in the TOOL_TESTS array
 
-- All servers should have a corresponding `tests.py` file testing all tools, resources, prompts, etc.
-- Please have some tests that do NOT use mocks and expect the user to already be authenticated locally. This helps us ensure that functionality is actually correct and working end-to-end.
+All servers should have a corresponding `tests.py` file testing all tools, resources, prompts, etc. This not only ensures functionality but also helps generate accurate outputSchema examples through the auto_generator.py script.
+
+Please have some tests that do NOT use mocks and expect the user to already be authenticated locally. This helps us ensure that functionality is actually correct and working end-to-end.
 
 ## Pull Request Process
 

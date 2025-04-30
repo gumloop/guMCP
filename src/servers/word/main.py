@@ -281,6 +281,11 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Returns an array of Word documents with their metadata including document IDs, names, web URLs, modification dates, and file sizes",
+                    "examples": ['{\n  "documents": []\n}'],
+                },
             ),
             Tool(
                 name="create_document",
@@ -303,6 +308,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Details of the newly created Word document including its ID, name, browser access URL, initial content, and storage location type",
+                    "examples": [
+                        '{\n  "created_file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "web_url": "<web_url>",\n  "content": "",\n  "is_sharepoint": false\n}'
+                    ],
+                },
             ),
             Tool(
                 name="read_document",
@@ -316,6 +328,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["file_id"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Full text content of the document along with metadata including file ID, name, content size in bytes, and last modification timestamp",
+                    "examples": [
+                        '{\n  "file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "content": "Example document content",\n  "size": 36582,\n  "last_modified": "2025-04-29T19:30:16Z"\n}'
+                    ],
                 },
             ),
             Tool(
@@ -334,6 +353,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["file_id", "content"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Status of the document update operation including file identifier, document name, append confirmation, updated file size, and preview of the appended content",
+                    "examples": [
+                        '{\n  "file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "appended": true,\n  "size": 36582,\n  "content_preview": "Example content"\n}'
+                    ],
                 },
             ),
             Tool(
@@ -354,6 +380,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Search query results containing an array of matching documents, the ID of the first result (if any), and whether the documents are stored in SharePoint",
+                    "examples": [
+                        '{\n  "documents": [],\n  "file_id": "",\n  "is_sharepoint": false\n}'
+                    ],
+                },
             ),
             Tool(
                 name="download_document",
@@ -368,6 +401,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id"],
                 },
+                outputSchema={
+                    "type": "object",
+                    "description": "Document download details including file ID, filename, direct download URL, file size in bytes, browser access URL, and the document's MIME type",
+                    "examples": [
+                        '{\n  "file_id": "<file_id>",\n  "name": "Test Document.docx",\n  "url": "<download_url>",\n  "size": 36582,\n  "web_url": "<web_url>",\n  "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"\n}'
+                    ],
+                },
             ),
             Tool(
                 name="delete_document",
@@ -381,6 +421,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["file_id"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Result of the document deletion operation including confirmation of deletion, the ID of the deleted file, and overall success status",
+                    "examples": [
+                        '{\n  "deleted": true,\n  "file_id": "<file_id>",\n  "success": true\n}'
+                    ],
                 },
             ),
         ]

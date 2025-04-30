@@ -1,0 +1,38 @@
+name: "Bluesky guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with Bluesky for social media management, including posting, following, blocking, and profile management."
+documentation_path: "README.md"
+tools:
+  # Profile Management
+  - name: "get_my_profile"
+    description: "Get the current user's profile information."
+  # Post Management
+  - name: "create_post"
+    description: "Create a new post with optional text and facets."
+  - name: "delete_post"
+    description: "Delete an existing post by its URI."
+  - name: "get_posts"
+    description: "Get recent posts from a user with pagination support."
+  - name: "get_liked_posts"
+    description: "Get a list of posts liked by the user with pagination support."
+  # Search
+  - name: "search_posts"
+    description: "Search for posts on Bluesky with query, limit, and cursor support."
+  - name: "search_profiles"
+    description: "Search for user profiles on Bluesky with query, limit, and cursor support."
+  # Social Graph
+  - name: "get_follows"
+    description: "Get a list of accounts the user follows with pagination support."
+  - name: "follow_user"
+    description: "Follow another user by their handle or DID."
+  - name: "unfollow_user"
+    description: "Unfollow a user by their handle."
+  # User Management
+  - name: "mute_user"
+    description: "Mute a user by their handle."
+  - name: "unmute_user"
+    description: "Unmute a user by their handle."
+  - name: "block_user"
+    description: "Block a user by their handle with optional reason."
+  - name: "unblock_user"
+    description: "Unblock a user by their handle."
