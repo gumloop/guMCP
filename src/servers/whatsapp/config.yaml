@@ -1,0 +1,29 @@
+name: "WhatsApp Business guMCP Server"
+icon: "assets/icon.png"
+description: "Interact with WhatsApp Business API for managing business accounts, templates, and messaging. Includes account management, template operations, and message sending capabilities."
+documentation_path: "README.md"
+tools:
+  - name: get_account_info
+    description: Get information about your WhatsApp Business Account.
+  - name: get_account_verification_status
+    description: Check the verification status of your WhatsApp Business Account.
+  - name: list_phone_numbers
+    description: List all phone numbers associated with your WhatsApp Business Account.
+  - name: get_phone_number_details
+    description: Get detailed information about a WhatsApp business phone number.
+  - name: get_business_profile
+    description: Get your WhatsApp Business Profile information.
+  - name: list_message_templates
+    description: List all your WhatsApp message templates.
+  - name: create_message_template
+    description: Create a new WhatsApp message template with specified components.
+  - name: get_template_preview
+    description: Preview a message template before sending.
+  - name: get_message_template_details
+    description: Get details about a specific message template.
+  - name: update_message_template
+    description: Update an existing message template.
+  - name: delete_message_template
+    description: Delete a message template from your account.
+  - name: send_template_message
+    description: Send a message using a template to a specified phone number.
