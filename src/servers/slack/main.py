@@ -269,8 +269,9 @@ def create_server(user_id, api_key=None):
                     "required": ["channel"],
                 },
                 outputSchema={
-                    "type": "string",
-                    "description": "JSON array of messages with user and message details",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing data of messages with user and message details",
                     "examples": [
                         '[{"user":"U12345","type":"message","ts":"1234567890.123456","text":"This is a test message","team":"T12345","user_name":"test_user","user_profile":{"real_name":"Test User","display_name":"Test User"}}, {"user":"U67890","type":"message","ts":"1234567891.123456","text":"Hello there","team":"T12345","user_name":"another_user","user_profile":{"real_name":"Another User","display_name":"Another User"}}]'
                     ],
@@ -298,10 +299,11 @@ def create_server(user_id, api_key=None):
                     "required": ["channel", "text"],
                 },
                 outputSchema={
-                    "type": "string",
-                    "description": "JSON response containing the result of the message send operation",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON string containing response of the message send operation",
                     "examples": [
-                        '{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"This is a test message","team":"T12345"}}'
+                        '[{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"This is a test message","team":"T12345"}}]'
                     ],
                 },
             ),
@@ -331,10 +333,11 @@ def create_server(user_id, api_key=None):
                     "required": ["channel", "title", "blocks"],
                 },
                 outputSchema={
-                    "type": "string",
-                    "description": "JSON response containing the result of the canvas creation",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON string containing response of the canvas creation",
                     "examples": [
-                        '{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"Test Canvas","team":"T12345","blocks":[{"type":"header","text":{"type":"plain_text","text":"Test Canvas"}},{"type":"section","text":{"type":"mrkdwn","text":"This is a test canvas message"}}]}}'
+                        '[{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"Test Canvas","team":"T12345","blocks":[{"type":"header","text":{"type":"plain_text","text":"Test Canvas"}},{"type":"section","text":{"type":"mrkdwn","text":"This is a test canvas message"}}]}}]'
                     ],
                 },
             ),
@@ -394,9 +397,8 @@ def create_server(user_id, api_key=None):
                     enriched_messages.append(enriched_message)
 
                 return [
-                    TextContent(
-                        type="text", text=json.dumps(enriched_messages, indent=2)
-                    )
+                    TextContent(type="text", text=json.dumps(message, indent=2))
+                    for message in enriched_messages
                 ]
 
             elif name == "send_message":
