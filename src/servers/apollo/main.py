@@ -169,6 +169,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Contact search results from Apollo",
+                    "examples": [
+                        '{"contacts":[{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","name":"John Doe","linkedin_url":"https://www.linkedin.com/in/johndoe","title":"CEO","organization_name":"Example Corp","email":"john.doe@example.com"}],"pagination":{"page":1,"per_page":10,"total_entries":1,"total_pages":1}}'
+                    ],
+                },
             ),
             types.Tool(
                 name="search_accounts",
@@ -202,6 +210,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "description": "The number of search results that should be returned for each page",
                         },
                     },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Account search results from Apollo",
+                    "examples": [
+                        '{"accounts":[{"id":"01234567-89ab-cdef-0123-456789abcdef","name":"Example Corp","website_url":"https://example.com","domain":"example.com","phone":"123-456-7890","city":"San Francisco","state":"CA","country":"United States"}],"pagination":{"page":1,"per_page":10,"total_entries":1,"total_pages":1}}'
+                    ],
                 },
             ),
             # ENRICHMENT TOOLS
@@ -262,6 +278,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Enriched person data from Apollo",
+                    "examples": [
+                        '{"person":{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","name":"John Doe","linkedin_url":"https://www.linkedin.com/in/johndoe","headline":"Chief Executive Officer at Example Corp","photo_url":"https://example.com/photo.jpg","email":"john.doe@example.com","organization_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                    ],
+                },
             ),
             types.Tool(
                 name="enrich_organization",
@@ -275,6 +299,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         }
                     },
                     "required": ["domain"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Enriched organization data from Apollo",
+                    "examples": [
+                        '{"organization":{"id":"01234567-89ab-cdef-0123-456789abcdef","name":"Example Corp","website_url":"https://example.com","domain":"example.com","phone":"123-456-7890","city":"San Francisco","state":"CA","country":"United States","industry":"Software","linkedin_url":"https://www.linkedin.com/company/example-corp","team_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                    ],
                 },
             ),
             # CONTACT MANAGEMENT TOOLS
@@ -348,6 +380,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                     "required": ["first_name", "last_name"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created contact",
+                    "examples": [
+                        '{"contact":{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","organization_name":"Example Corp","title":"CEO","email":"john.doe@example.com","team_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                    ],
                 },
             ),
             types.Tool(
@@ -423,6 +463,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                     "required": ["contact_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the updated contact",
+                    "examples": [
+                        '{"contact":{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","organization_name":"Updated Corp","title":"CTO","email":"john.doe@updated.com","team_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                    ],
                 },
             ),
             types.Tool(
@@ -790,6 +838,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -836,6 +893,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -900,6 +966,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -971,6 +1046,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1027,6 +1111,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1090,6 +1183,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1128,6 +1230,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1184,6 +1295,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1252,6 +1372,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1302,6 +1431,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1340,6 +1478,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1378,6 +1525,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1428,6 +1584,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1497,6 +1662,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1571,6 +1745,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1637,6 +1820,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1710,6 +1902,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1791,6 +1992,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
+                        # If the result is a list, return each item as a separate TextContent
+                        if isinstance(result, list):
+                            return [
+                                TextContent(
+                                    type="text", text=json.dumps(item, indent=2)
+                                )
+                                for item in result
+                            ]
+                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
