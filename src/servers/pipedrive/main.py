@@ -245,7 +245,9 @@ class PipedriveClient:
             data["expected_close_date"] = expected_close_date
         if visible_to is not None:
             if visible_to not in [1, 3]:
-                raise ValueError("Visible_to must be either 1 (owner & followers) or 3 (entire company)")
+                raise ValueError(
+                    "Visible_to must be either 1 (owner & followers) or 3 (entire company)"
+                )
             data["visible_to"] = visible_to
         if add_time is not None:
             data["add_time"] = add_time
@@ -332,7 +334,7 @@ class PipedriveClient:
         """
         if not title:
             raise ValueError("Title is required to create a lead")
-        
+
         if not person_id and not organization_id:
             raise ValueError("Either person_id or organization_id must be provided")
 
@@ -346,8 +348,14 @@ class PipedriveClient:
 
         # Add optional parameters if provided
         if value is not None:
-            if not isinstance(value, dict) or "amount" not in value or "currency" not in value:
-                raise ValueError("Value must be a dictionary with 'amount' and 'currency' keys")
+            if (
+                not isinstance(value, dict)
+                or "amount" not in value
+                or "currency" not in value
+            ):
+                raise ValueError(
+                    "Value must be a dictionary with 'amount' and 'currency' keys"
+                )
             data["value"] = value
         if owner_id is not None:
             data["owner_id"] = owner_id
@@ -357,7 +365,9 @@ class PipedriveClient:
             data["expected_close_date"] = expected_close_date
         if visible_to is not None:
             if visible_to not in [1, 3]:
-                raise ValueError("Visible_to must be either 1 (owner & followers) or 3 (entire company)")
+                raise ValueError(
+                    "Visible_to must be either 1 (owner & followers) or 3 (entire company)"
+                )
             data["visible_to"] = visible_to
         if was_seen is not None:
             data["was_seen"] = was_seen
@@ -407,9 +417,11 @@ class PipedriveClient:
         """
         if not content:
             raise ValueError("Content is required to create a note")
-        
+
         if not person_id and not organization_id and not deal_id:
-            raise ValueError("At least one of person_id, organization_id, or deal_id must be provided")
+            raise ValueError(
+                "At least one of person_id, organization_id, or deal_id must be provided"
+            )
 
         data = {"content": content}
 
@@ -517,7 +529,7 @@ class PipedriveClient:
 
     def delete_person(self, person_id: int) -> Dict:
         """Delete a person from Pipedrive.
-        
+
         Note: This is a soft delete operation. The person will be marked as inactive
         but will still exist in the system with active_flag set to false.
         """
@@ -721,14 +733,14 @@ async def create_pipedrive_client(user_id: str, api_key: str) -> PipedriveClient
     credentials = await get_credentials(user_id, SERVICE_NAME, api_key)
     if not credentials or not isinstance(credentials, dict):
         raise ValueError("Invalid credentials format")
-    
+
     # Extract API token and domain from the credentials
     api_token = credentials.get("access_token")
     api_domain = credentials.get("api_domain")
-    
+
     if not api_token:
         raise ValueError("No access token found in credentials")
-    
+
     return PipedriveClient(api_token, api_domain)
 
 
@@ -752,14 +764,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
     async def _get_pipedrive_client() -> PipedriveClient:
         """Get or create a Pipedrive client."""
         if not server._pipedrive_client:
-            server._pipedrive_client = await create_pipedrive_client(server.user_id, server.api_key)
+            server._pipedrive_client = await create_pipedrive_client(
+                server.user_id, server.api_key
+            )
         return server._pipedrive_client
 
     @server.list_resources()
     async def handle_list_resources() -> list[Resource]:
         """List available Pipedrive resources."""
         logger.info(f"Listing resources for user: {server.user_id}")
-        
+
         try:
             client = await _get_pipedrive_client()
             resources = []
@@ -777,7 +791,7 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         uri=f"pipedrive://person/{person_id}",
                         mimeType="application/json",
                         name=f"Person: {person_name}",
-                        description=f"Pipedrive contact: {person_name}"
+                        description=f"Pipedrive contact: {person_name}",
                     )
                 )
 
@@ -794,7 +808,7 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         uri=f"pipedrive://organization/{org_id}",
                         mimeType="application/json",
                         name=f"Organization: {org_name}",
-                        description=f"Pipedrive organization: {org_name}"
+                        description=f"Pipedrive organization: {org_name}",
                     )
                 )
             # List all deals
@@ -808,13 +822,13 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 deal_status = deal.get("status", "unknown")
                 deal_value = deal.get("value", 0)
                 deal_currency = deal.get("currency", "")
-                
+
                 resources.append(
                     Resource(
                         uri=f"pipedrive://deal/{deal_id}",
                         mimeType="application/json",
                         name=f"Deal: {deal_title}",
-                        description=f"Pipedrive deal: {deal_title} ({deal_status}) - {deal_value} {deal_currency}"
+                        description=f"Pipedrive deal: {deal_title} ({deal_status}) - {deal_value} {deal_currency}",
                     )
                 )
 
@@ -826,13 +840,13 @@ def create_server(user_id: str, api_key: str = None) -> Server:
             for lead in leads_data:
                 lead_id = lead.get("id")
                 lead_title = lead.get("title", "Unknown Lead")
-                
+
                 resources.append(
                     Resource(
                         uri=f"pipedrive://lead/{lead_id}",
                         mimeType="application/json",
                         name=f"Lead: {lead_title}",
-                        description=f"Pipedrive lead: {lead_title}"
+                        description=f"Pipedrive lead: {lead_title}",
                     )
                 )
 
@@ -845,20 +859,22 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 product_id = product.get("id")
                 product_name = product.get("name", "Unknown Product")
                 product_code = product.get("code", "")
-                
+
                 resources.append(
                     Resource(
                         uri=f"pipedrive://product/{product_id}",
                         mimeType="application/json",
                         name=f"Product: {product_name}",
-                        description=f"Pipedrive product: {product_name} (Code: {product_code})"
+                        description=f"Pipedrive product: {product_name} (Code: {product_code})",
                     )
                 )
 
             return resources
 
         except Exception as e:
-            logger.error(f"Error listing Pipedrive resources: {str(e)} {e.__traceback__.tb_lineno}")
+            logger.error(
+                f"Error listing Pipedrive resources: {str(e)} {e.__traceback__.tb_lineno}"
+            )
             return []
 
     @server.read_resource()
@@ -895,7 +911,11 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 raise ValueError(f"Unsupported resource type: {resource_type}")
 
             formatted_content = json.dumps(data, indent=2)
-            return [ReadResourceContents(content=formatted_content, mime_type="application/json")]
+            return [
+                ReadResourceContents(
+                    content=formatted_content, mime_type="application/json"
+                )
+            ]
 
         except Exception as e:
             logger.error(f"Error reading Pipedrive resource: {str(e)}")
@@ -918,7 +938,18 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "type": "object",
                     "properties": {
                         "subject": {"type": "string"},
-                        "type": {"type": "string", "enum": ["call", "meeting", "task", "deadline", "email", "lunch", "note"]},
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "call",
+                                "meeting",
+                                "task",
+                                "deadline",
+                                "email",
+                                "lunch",
+                                "note",
+                            ],
+                        },
                         "due_date": {"type": "string", "format": "date"},
                         "due_time": {"type": "string", "format": "time"},
                         "duration": {"type": "string"},
@@ -926,9 +957,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "deal_id": {"type": "integer"},
                         "person_id": {"type": "integer"},
                         "org_id": {"type": "integer"},
-                        "note": {"type": "string"}
+                        "note": {"type": "string"},
                     },
-                    "required": ["subject", "type", "due_date"]
+                    "required": ["subject", "type", "due_date"],
                 },
                 outputSchema={
                     "type": "string",
@@ -938,18 +969,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"type": "meeting", "due_date": "2024-03-20", "due_time": "14:00", '
                         '"duration": "1h", "user_id": 123, "deal_id": 456, "person_id": 789, '
                         '"org_id": 101, "note": "Discuss project requirements"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_activity",
                 description="Get a specific activity from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "activity_id": {"type": "integer"}
-                    },
-                    "required": ["activity_id"]
+                    "properties": {"activity_id": {"type": "integer"}},
+                    "required": ["activity_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -959,8 +988,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"type": "meeting", "due_date": "2024-03-20", "due_time": "14:00", '
                         '"duration": "1h", "user_id": 123, "deal_id": 456, "person_id": 789, '
                         '"org_id": 101, "note": "Discuss project requirements"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="update_activity",
@@ -970,7 +999,18 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "properties": {
                         "activity_id": {"type": "integer"},
                         "subject": {"type": "string"},
-                        "type": {"type": "string", "enum": ["call", "meeting", "task", "deadline", "email", "lunch", "note"]},
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "call",
+                                "meeting",
+                                "task",
+                                "deadline",
+                                "email",
+                                "lunch",
+                                "note",
+                            ],
+                        },
                         "due_date": {"type": "string", "format": "date"},
                         "due_time": {"type": "string", "format": "time"},
                         "duration": {"type": "string"},
@@ -978,9 +1018,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "deal_id": {"type": "integer"},
                         "person_id": {"type": "integer"},
                         "org_id": {"type": "integer"},
-                        "note": {"type": "string"}
+                        "note": {"type": "string"},
                     },
-                    "required": ["activity_id"]
+                    "required": ["activity_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -990,28 +1030,23 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"type": "meeting", "due_date": "2024-03-21", "due_time": "15:00", '
                         '"duration": "2h", "user_id": 123, "deal_id": 456, "person_id": 789, '
                         '"org_id": 101, "note": "Updated discussion points"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_activity",
                 description="Delete an activity from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "activity_id": {"type": "integer"}
-                    },
-                    "required": ["activity_id"]
+                    "properties": {"activity_id": {"type": "integer"}},
+                    "required": ["activity_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
-                    "examples": [
-                        '{"success": true, "data": {"id": 1}}'
-                    ]
-                }
+                    "examples": ['{"success": true, "data": {"id": 1}}'],
+                },
             ),
-
             # Deal Operations
             types.Tool(
                 name="create_deal",
@@ -1026,13 +1061,20 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "user_id": {"type": "integer"},
                         "person_id": {"type": "integer"},
                         "stage_id": {"type": "integer"},
-                        "status": {"type": "string", "enum": ["open", "won", "lost", "deleted"]},
-                        "probability": {"type": "integer", "minimum": 0, "maximum": 100},
+                        "status": {
+                            "type": "string",
+                            "enum": ["open", "won", "lost", "deleted"],
+                        },
+                        "probability": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100,
+                        },
                         "expected_close_date": {"type": "string", "format": "date"},
                         "visible_to": {"type": "integer", "enum": [1, 3]},
-                        "add_time": {"type": "string", "format": "date-time"}
+                        "add_time": {"type": "string", "format": "date-time"},
                     },
-                    "required": ["title"]
+                    "required": ["title"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1043,18 +1085,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"person_id": 789, "stage_id": 101, "status": "open", '
                         '"probability": 50, "expected_close_date": "2024-12-31", '
                         '"visible_to": 3, "add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_deal",
                 description="Get a specific deal from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "deal_id": {"type": "integer"}
-                    },
-                    "required": ["deal_id"]
+                    "properties": {"deal_id": {"type": "integer"}},
+                    "required": ["deal_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1065,8 +1105,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"person_id": 789, "stage_id": 101, "status": "open", '
                         '"probability": 50, "expected_close_date": "2024-12-31", '
                         '"visible_to": 3, "add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="update_deal",
@@ -1082,12 +1122,19 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "person_id": {"type": "integer"},
                         "org_id": {"type": "integer"},
                         "stage_id": {"type": "integer"},
-                        "status": {"type": "string", "enum": ["open", "won", "lost", "deleted"]},
-                        "probability": {"type": "integer", "minimum": 0, "maximum": 100},
+                        "status": {
+                            "type": "string",
+                            "enum": ["open", "won", "lost", "deleted"],
+                        },
+                        "probability": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100,
+                        },
                         "expected_close_date": {"type": "string", "format": "date"},
-                        "visible_to": {"type": "integer", "enum": [1, 3]}
+                        "visible_to": {"type": "integer", "enum": [1, 3]},
                     },
-                    "required": ["deal_id"]
+                    "required": ["deal_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1098,28 +1145,23 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"person_id": 789, "stage_id": 101, "status": "open", '
                         '"probability": 75, "expected_close_date": "2024-12-31", '
                         '"visible_to": 3, "add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_deal",
                 description="Delete a deal from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "deal_id": {"type": "integer"}
-                    },
-                    "required": ["deal_id"]
+                    "properties": {"deal_id": {"type": "integer"}},
+                    "required": ["deal_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
-                    "examples": [
-                        '{"success": true, "data": {"id": 1}}'
-                    ]
-                }
+                    "examples": ['{"success": true, "data": {"id": 1}}'],
+                },
             ),
-
             # Lead Operations
             types.Tool(
                 name="create_lead",
@@ -1134,22 +1176,17 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                             "type": "object",
                             "properties": {
                                 "amount": {"type": "number"},
-                                "currency": {"type": "string"}
-                            }
+                                "currency": {"type": "string"},
+                            },
                         },
                         "owner_id": {"type": "integer"},
-                        "label_ids": {
-                            "type": "array",
-                            "items": {"type": "integer"}
-                        },
+                        "label_ids": {"type": "array", "items": {"type": "integer"}},
                         "expected_close_date": {"type": "string", "format": "date"},
                         "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
                         "was_seen": {"type": "boolean"},
-                        "custom_fields": {
-                            "type": "object"
-                        }
+                        "custom_fields": {"type": "object"},
                     },
-                    "required": ["title", "person_id"]
+                    "required": ["title", "person_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1160,18 +1197,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"value": {"amount": 1000, "currency": "USD"}, "owner_id": 789, '
                         '"label_ids": [1, 2, 3], "expected_close_date": "2024-12-31", '
                         '"visible_to": 3, "was_seen": false}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_lead",
                 description="Get a specific lead from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "lead_id": {"type": "string"}
-                    },
-                    "required": ["lead_id"]
+                    "properties": {"lead_id": {"type": "string"}},
+                    "required": ["lead_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1182,28 +1217,25 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"value": {"amount": 1000, "currency": "USD"}, "owner_id": 789, '
                         '"label_ids": [1, 2, 3], "expected_close_date": "2024-12-31", '
                         '"visible_to": 3, "was_seen": true}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_lead",
                 description="Delete a lead from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "lead_id": {"type": "string"}
-                    },
-                    "required": ["lead_id"]
+                    "properties": {"lead_id": {"type": "string"}},
+                    "required": ["lead_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
                     "examples": [
                         '{"success": true, "data": {"id": "52e93d20-2603-11f0-a826-1f8b4459f0ad"}}'
-                    ]
-                }
+                    ],
+                },
             ),
-
             # Note Operations
             types.Tool(
                 name="create_note",
@@ -1218,9 +1250,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "user_id": {"type": "integer"},
                         "pinned_to_deal_flag": {"type": "boolean"},
                         "pinned_to_organization_flag": {"type": "boolean"},
-                        "pinned_to_person_flag": {"type": "boolean"}
+                        "pinned_to_person_flag": {"type": "boolean"},
                     },
-                    "required": ["content"]
+                    "required": ["content"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1230,18 +1262,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"person_id": 123, "organization_id": 456, "deal_id": 789, '
                         '"user_id": 101, "pinned_to_deal_flag": true, '
                         '"pinned_to_organization_flag": false, "pinned_to_person_flag": true}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_note",
                 description="Get a specific note from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "note_id": {"type": "integer"}
-                    },
-                    "required": ["note_id"]
+                    "properties": {"note_id": {"type": "integer"}},
+                    "required": ["note_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1251,8 +1281,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"person_id": 123, "organization_id": 456, "deal_id": 789, '
                         '"user_id": 101, "pinned_to_deal_flag": true, '
                         '"pinned_to_organization_flag": false, "pinned_to_person_flag": true}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="update_note",
@@ -1268,9 +1298,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "user_id": {"type": "integer"},
                         "pinned_to_deal_flag": {"type": "boolean"},
                         "pinned_to_organization_flag": {"type": "boolean"},
-                        "pinned_to_person_flag": {"type": "boolean"}
+                        "pinned_to_person_flag": {"type": "boolean"},
                     },
-                    "required": ["note_id"]
+                    "required": ["note_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1280,28 +1310,23 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"person_id": 123, "organization_id": 456, "deal_id": 789, '
                         '"user_id": 101, "pinned_to_deal_flag": true, '
                         '"pinned_to_organization_flag": false, "pinned_to_person_flag": true}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_note",
                 description="Delete a note from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "note_id": {"type": "integer"}
-                    },
-                    "required": ["note_id"]
+                    "properties": {"note_id": {"type": "integer"}},
+                    "required": ["note_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
-                    "examples": [
-                        '{"success": true, "data": {"id": 1}}'
-                    ]
-                }
+                    "examples": ['{"success": true, "data": {"id": 1}}'],
+                },
             ),
-
             # Person Operations
             types.Tool(
                 name="create_person",
@@ -1317,9 +1342,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                                 "properties": {
                                     "value": {"type": "string"},
                                     "primary": {"type": "boolean"},
-                                    "label": {"type": "string"}
-                                }
-                            }
+                                    "label": {"type": "string"},
+                                },
+                            },
                         },
                         "phone": {
                             "type": "array",
@@ -1328,15 +1353,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                                 "properties": {
                                     "value": {"type": "string"},
                                     "primary": {"type": "boolean"},
-                                    "label": {"type": "string"}
-                                }
-                            }
+                                    "label": {"type": "string"},
+                                },
+                            },
                         },
                         "org_id": {"type": "integer"},
                         "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
-                        "add_time": {"type": "string", "format": "date-time"}
+                        "add_time": {"type": "string", "format": "date-time"},
                     },
-                    "required": ["name"]
+                    "required": ["name"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1347,18 +1372,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"label": "work"}], "phone": [{"value": "+1234567890", '
                         '"primary": true, "label": "mobile"}], "org_id": 123, '
                         '"visible_to": 3, "add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_person",
                 description="Get a specific person from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "person_id": {"type": "integer"}
-                    },
-                    "required": ["person_id"]
+                    "properties": {"person_id": {"type": "integer"}},
+                    "required": ["person_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1369,8 +1392,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"label": "work"}], "phone": [{"value": "+1234567890", '
                         '"primary": true, "label": "mobile"}], "org_id": 123, '
                         '"visible_to": 3, "add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="update_person",
@@ -1387,9 +1410,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                                 "properties": {
                                     "value": {"type": "string"},
                                     "primary": {"type": "boolean"},
-                                    "label": {"type": "string"}
-                                }
-                            }
+                                    "label": {"type": "string"},
+                                },
+                            },
                         },
                         "phone": {
                             "type": "array",
@@ -1398,14 +1421,14 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                                 "properties": {
                                     "value": {"type": "string"},
                                     "primary": {"type": "boolean"},
-                                    "label": {"type": "string"}
-                                }
-                            }
+                                    "label": {"type": "string"},
+                                },
+                            },
                         },
                         "org_id": {"type": "integer"},
-                        "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]}
+                        "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
                     },
-                    "required": ["person_id"]
+                    "required": ["person_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1416,28 +1439,23 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"label": "work"}], "phone": [{"value": "+1234567890", '
                         '"primary": true, "label": "mobile"}], "org_id": 123, '
                         '"visible_to": 3, "add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_person",
                 description="Delete a person from Pipedrive.",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "person_id": {"type": "integer"}
-                    },
-                    "required": ["person_id"]
+                    "properties": {"person_id": {"type": "integer"}},
+                    "required": ["person_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
-                    "examples": [
-                        '{"success": true, "data": {"id": 1}}'
-                    ]
-                }
+                    "examples": ['{"success": true, "data": {"id": 1}}'],
+                },
             ),
-
             # Product Operations
             types.Tool(
                 name="create_product",
@@ -1454,15 +1472,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                                 "type": "object",
                                 "properties": {
                                     "price": {"type": "number"},
-                                    "currency": {"type": "string"}
-                                }
-                            }
+                                    "currency": {"type": "string"},
+                                },
+                            },
                         },
                         "active_flag": {"type": "boolean"},
                         "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
-                        "owner_id": {"type": "integer"}
+                        "owner_id": {"type": "integer"},
                     },
-                    "required": ["name", "code", "unit", "prices"]
+                    "required": ["name", "code", "unit", "prices"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1472,18 +1490,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"code": "PRM-001", "unit": "month", "prices": [{"price": 99.99, '
                         '"currency": "USD"}], "active_flag": true, "visible_to": 3, '
                         '"owner_id": 123}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_product",
                 description="Get a specific product from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "product_id": {"type": "integer"}
-                    },
-                    "required": ["product_id"]
+                    "properties": {"product_id": {"type": "integer"}},
+                    "required": ["product_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1493,8 +1509,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"code": "PRM-001", "unit": "month", "prices": [{"price": 99.99, '
                         '"currency": "USD"}], "active_flag": true, "visible_to": 3, '
                         '"owner_id": 123}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="update_product",
@@ -1512,15 +1528,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                                 "type": "object",
                                 "properties": {
                                     "price": {"type": "number"},
-                                    "currency": {"type": "string"}
-                                }
-                            }
+                                    "currency": {"type": "string"},
+                                },
+                            },
                         },
                         "active_flag": {"type": "boolean"},
                         "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
-                        "owner_id": {"type": "integer"}
+                        "owner_id": {"type": "integer"},
                     },
-                    "required": ["product_id"]
+                    "required": ["product_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1530,28 +1546,23 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '"code": "PRM-001", "unit": "month", "prices": [{"price": 149.99, '
                         '"currency": "USD"}], "active_flag": true, "visible_to": 3, '
                         '"owner_id": 123}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_product",
                 description="Delete a product from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "product_id": {"type": "integer"}
-                    },
-                    "required": ["product_id"]
+                    "properties": {"product_id": {"type": "integer"}},
+                    "required": ["product_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
-                    "examples": [
-                        '{"success": true, "data": {"id": 1}}'
-                    ]
-                }
+                    "examples": ['{"success": true, "data": {"id": 1}}'],
+                },
             ),
-
             # Organization Operations
             types.Tool(
                 name="create_organization",
@@ -1562,9 +1573,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "name": {"type": "string"},
                         "address": {"type": "string"},
                         "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
-                        "add_time": {"type": "string", "format": "date-time"}
+                        "add_time": {"type": "string", "format": "date-time"},
                     },
-                    "required": ["name"]
+                    "required": ["name"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1573,18 +1584,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '{"success": true, "data": {"id": 1, "name": "Acme Corp", '
                         '"address": "123 Main St", "visible_to": 3, '
                         '"add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="get_organization",
                 description="Get a specific organization from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "organization_id": {"type": "integer"}
-                    },
-                    "required": ["organization_id"]
+                    "properties": {"organization_id": {"type": "integer"}},
+                    "required": ["organization_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1593,8 +1602,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '{"success": true, "data": {"id": 1, "name": "Acme Corp", '
                         '"address": "123 Main St", "visible_to": 3, '
                         '"add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="update_organization",
@@ -1605,9 +1614,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "organization_id": {"type": "integer"},
                         "name": {"type": "string"},
                         "address": {"type": "string"},
-                        "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]}
+                        "visible_to": {"type": "integer", "enum": [1, 3, 5, 7]},
                     },
-                    "required": ["organization_id"]
+                    "required": ["organization_id"],
                 },
                 outputSchema={
                     "type": "string",
@@ -1616,44 +1625,36 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         '{"success": true, "data": {"id": 1, "name": "Acme Corp", '
                         '"address": "123 Main St", "visible_to": 3, '
                         '"add_time": "2024-03-20 10:00:00"}}'
-                    ]
-                }
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_organization",
                 description="Delete an organization from Pipedrive",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "organization_id": {"type": "integer"}
-                    },
-                    "required": ["organization_id"]
+                    "properties": {"organization_id": {"type": "integer"}},
+                    "required": ["organization_id"],
                 },
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the deletion result",
-                    "examples": [
-                        '{"success": true, "data": {"id": 1}}'
-                    ]
-                }
+                    "examples": ['{"success": true, "data": {"id": 1}}'],
+                },
             ),
-
             # User Operations
             types.Tool(
                 name="get_all_users",
                 description="Get all users from Pipedrive",
-                inputSchema={
-                    "type": "object",
-                    "properties": {}
-                },
+                inputSchema={"type": "object", "properties": {}},
                 outputSchema={
                     "type": "string",
                     "description": "JSON response containing the list of users",
                     "examples": [
                         '{"id": 2354543, "name": "John Doe", "email": "john@example.com", "lang": 1, "locale": "en_US", "timezone_name": "Asia/Kolkata", "timezone_offset": "+05:30", "default_currency": "USD", "icon_url": null, "active_flag": true, "is_deleted": false, "is_admin": 1, "role_id": 1, "created": "2025-04-30 09:03:50", "has_created_company": true, "is_you": true, "access": [{"app": "sales", "admin": true, "permission_set_id": "08d28770-11f0-8ff0-797a5cc8274d"}, {"app": "global", "admin": true, "permission_set_id": "08d76970-11f0-8ff0-797a5cc8274d"}, {"app": "account_settings", "admin": true, "permission_set_id": "08e12d70-25a2-11f0-797a5cc8274d"}], "phone": null, "modified": "2025-05-01 20:40:54", "last_login": "2025-05-01 20:40:54"}'
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -1728,7 +1729,9 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     deal_id=arguments.get("deal_id"),
                     user_id=arguments.get("user_id"),
                     pinned_to_deal_flag=arguments.get("pinned_to_deal_flag"),
-                    pinned_to_organization_flag=arguments.get("pinned_to_organization_flag"),
+                    pinned_to_organization_flag=arguments.get(
+                        "pinned_to_organization_flag"
+                    ),
                     pinned_to_person_flag=arguments.get("pinned_to_person_flag"),
                 )
             elif name == "create_person":
@@ -1879,16 +1882,24 @@ def create_server(user_id: str, api_key: str = None) -> Server:
 
             # If result is a dict with a 'data' key that is a list, return one TextContent per item
             if isinstance(result, dict) and isinstance(result.get("data"), list):
-                return [TextContent(type="text", text=json.dumps(item, indent=2)) for item in result["data"]]
+                return [
+                    TextContent(type="text", text=json.dumps(item, indent=2))
+                    for item in result["data"]
+                ]
             # If result itself is a list, return one TextContent per item
             elif isinstance(result, list):
-                return [TextContent(type="text", text=json.dumps(item, indent=2)) for item in result]
+                return [
+                    TextContent(type="text", text=json.dumps(item, indent=2))
+                    for item in result
+                ]
             # Otherwise, return a single TextContent
             else:
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
-            logger.error(f"Error executing tool {name}: {str(e)} {e.__traceback__.tb_lineno}")
+            logger.error(
+                f"Error executing tool {name}: {str(e)} {e.__traceback__.tb_lineno}"
+            )
             return [TextContent(type="text", text=str(e))]
 
     return server

@@ -26,7 +26,7 @@ SCOPES: list[str] = [
     "video-calls",
     "messengers-integration",
     "projects:full",
-    "webhooks:full"
+    "webhooks:full",
 ]  # Pipedrive app scopes
 
 
@@ -83,7 +83,8 @@ def refresh_token_builder(
 
 
 def authenticate_and_save_credentials(
-    user_id: str, service_name: str,
+    user_id: str,
+    service_name: str,
 ) -> Dict[str, Any]:
     """
     Run Pipedrive OAuth flow and save credentials.
@@ -97,16 +98,16 @@ def authenticate_and_save_credentials(
         Dict[str, Any]: The OAuth token data
     """
     return run_oauth_flow(
-            service_name=service_name,
-            user_id=user_id,
-            scopes=SCOPES,
-            auth_url_base=AUTH_URL,
-            token_url=TOKEN_URL,
-            auth_params_builder=build_auth_params,
-            token_data_builder=build_token_data,
-            process_token_response=process_token_response,
-            token_header_builder=build_token_headers,
-        )
+        service_name=service_name,
+        user_id=user_id,
+        scopes=SCOPES,
+        auth_url_base=AUTH_URL,
+        token_url=TOKEN_URL,
+        auth_params_builder=build_auth_params,
+        token_data_builder=build_token_data,
+        process_token_response=process_token_response,
+        token_header_builder=build_token_headers,
+    )
 
 
 async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
@@ -128,5 +129,5 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         token_data_builder=refresh_token_builder,
         token_header_builder=build_token_headers,
         api_key=api_key,
-        return_full_credentials=True
+        return_full_credentials=True,
     )

@@ -52,7 +52,6 @@ TOOL_TESTS = [
         "regex_extractors": {"note_id": r'"?id"?[:\s]+(\d+)'},
         "description": "create a new note in Pipedrive",
     },
-
     # Read Operations
     {
         "name": "get_all_users",
@@ -109,7 +108,6 @@ TOOL_TESTS = [
         "description": "get a specific note from Pipedrive",
         "depends_on": ["note_id"],
     },
-
     # Update Operations
     {
         "name": "update_organization",
@@ -153,7 +151,6 @@ TOOL_TESTS = [
         "description": "update a note in Pipedrive",
         "depends_on": ["note_id"],
     },
-
     # Delete Operations
     {
         "name": "delete_organization",
@@ -280,7 +277,7 @@ async def test_read_resource(client):
         assert response, "No response returned from read_resource"
         print(f"Response: {response}")
         print("✅ read_resource for lead passed.")
-    
+
     product_resource_uri = [
         resource.uri
         for resource in list_response.resources
