@@ -137,6 +137,14 @@ def create_server(user_id, api_key=None):
                 name="get_me",
                 description="Get your Cal.com user profile information",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing the Cal.com user profile information",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "email": "example@example.com",\n    "timeFormat": 12,\n    "defaultScheduleId": 12345,\n    "weekStart": "Sunday",\n    "timeZone": "America/New_York",\n    "username": "example-user",\n    "organizationId": 12345\n  },\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
             Tool(
                 name="get_event_types",
@@ -167,6 +175,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["username"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing list of event types available for the specified user or organization",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": [\n    {\n      "id": 123456,\n      "slug": "meeting-30min",\n      "title": "30-minute Meeting",\n      "length": 30,\n      "description": "Short meeting to discuss projects"\n    }\n  ],\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
             Tool(
                 name="get_booking",
@@ -180,6 +196,14 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["bookingUid"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing detailed information about a specific booking",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "uid": "ABCD1234efgh5678",\n    "title": "30-minute Meeting between User and Attendee",\n    "status": "accepted",\n    "start": "2023-05-01T14:30:00.000Z",\n    "end": "2023-05-01T15:00:00.000Z",\n    "eventTypeId": 12345,\n    "attendees": [\n      {\n        "name": "John Doe",\n        "email": "attendee@example.com",\n        "timeZone": "America/Chicago"\n      }\n    ]\n  },\n  "_status_code": 200\n}'
+                    ],
                 },
             ),
             Tool(
@@ -207,6 +231,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["bookingUid", "start"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing the result of the booking reschedule operation",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "uid": "ABCD1234efgh5678",\n    "title": "Meeting Title",\n    "status": "accepted",\n    "start": "2023-05-01T15:30:00.000Z",\n    "end": "2023-05-01T16:00:00.000Z",\n    "reschedulingReason": "Testing API reschedule"\n  },\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
             Tool(
                 name="cancel_booking",
@@ -229,6 +261,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["bookingUid"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing the result of the booking cancellation operation",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "uid": "ABCD1234efgh5678",\n    "title": "Meeting Title",\n    "status": "cancelled",\n    "cancellationReason": "Testing API cancellation"\n  },\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
             Tool(
                 name="confirm_booking",
@@ -242,6 +282,14 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["bookingUid"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing the result of the booking confirmation operation",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "uid": "ABCD1234efgh5678",\n    "title": "Meeting Title",\n    "status": "accepted"\n  },\n  "_status_code": 200\n}'
+                    ],
                 },
             ),
             Tool(
@@ -260,6 +308,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["bookingUid"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing the result of the booking decline operation",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "uid": "ABCD1234efgh5678",\n    "title": "Meeting Title",\n    "status": "declined",\n    "reason": "Testing API decline"\n  },\n  "_status_code": 200\n}'
+                    ],
                 },
             ),
             Tool(
@@ -347,6 +403,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["start", "attendee"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing details of the newly created booking",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": {\n    "id": 123456,\n    "uid": "ABCD1234efgh5678",\n    "title": "Meeting with John Doe",\n    "status": "accepted",\n    "start": "2023-05-01T10:00:00.000Z",\n    "end": "2023-05-01T10:30:00.000Z",\n    "attendees": [\n      {\n        "name": "John Doe",\n        "email": "john@example.com",\n        "timeZone": "America/New_York"\n      }\n    ]\n  },\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
             Tool(
                 name="get_bookings",
@@ -394,11 +458,27 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing list of bookings matching the specified filters",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": [\n    {\n      "id": 123456,\n      "uid": "ABCD1234efgh5678",\n      "title": "Meeting between User and Attendee",\n      "status": "accepted",\n      "start": "2023-05-01T14:30:00.000Z",\n      "end": "2023-05-01T15:00:00.000Z"\n    },\n    {\n      "id": 123457,\n      "uid": "EFGH5678ijkl9012",\n      "title": "Call between User and Client",\n      "status": "accepted",\n      "start": "2023-05-02T10:00:00.000Z",\n      "end": "2023-05-02T10:30:00.000Z"\n    }\n  ],\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
             Tool(
                 name="get_schedules",
                 description="Get all schedules from the authenticated user in Cal.com",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing list of availability schedules for the authenticated user",
+                    "examples": [
+                        '{\n  "status": "success",\n  "data": [\n    {\n      "id": 12345,\n      "name": "Working Hours",\n      "timeZone": "America/New_York",\n      "availability": [\n        {\n          "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],\n          "startTime": "09:00",\n          "endTime": "17:00"\n        }\n      ],\n      "isDefault": true\n    }\n  ],\n  "_status_code": 200\n}'
+                    ],
+                },
             ),
         ]
 
