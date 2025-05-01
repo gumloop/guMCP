@@ -640,8 +640,10 @@ def create_server(user_id, api_key=None):
                     )
                     .execute()
                 )
+                files = results.get("files", [])
                 return [
-                    types.TextContent(type="text", text=json.dumps(results, indent=2))
+                    types.TextContent(type="text", text=json.dumps(file, indent=2))
+                    for file in files
                 ]
             elif name == "create_form":
                 # Create basic form
@@ -719,12 +721,12 @@ def create_server(user_id, api_key=None):
                     "edit_url": edit_url,
                     "title": arguments["title"],
                 }
-
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
             elif name == "get_form":
                 result = (
                     forms_service.forms().get(formId=arguments["form_id"]).execute()
                 )
-
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
             elif name == "update_form":
                 form_id = arguments["form_id"]
 
@@ -789,7 +791,7 @@ def create_server(user_id, api_key=None):
                     "edit_url": edit_url,
                     "result": form,
                 }
-
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
             elif name == "move_form_to_trash":
                 form_id = arguments["form_id"]
                 drive_service = await create_drive_service(
@@ -800,7 +802,7 @@ def create_server(user_id, api_key=None):
                     .update(fileId=form_id, body={"trashed": True})
                     .execute()
                 )
-
+                return [types.TextContent(type="text", text=json.dumps(result.get("id", form_id), indent=2))]
             elif name == "get_response":
                 result = (
                     forms_service.forms()
@@ -810,7 +812,7 @@ def create_server(user_id, api_key=None):
                     )
                     .execute()
                 )
-
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
             elif name == "list_responses":
                 params = {"formId": arguments["form_id"]}
                 if "page_size" in arguments:
@@ -819,7 +821,11 @@ def create_server(user_id, api_key=None):
                     params["pageToken"] = arguments["page_token"]
 
                 result = forms_service.forms().responses().list(**params).execute()
-
+                responses = result.get("responses", [])
+                return [
+                    types.TextContent(type="text", text=json.dumps(response, indent=2))
+                    for response in responses
+                ]
             elif name == "search_forms":
                 drive_service = await create_drive_service(
                     server.user_id, server.api_key
@@ -830,7 +836,11 @@ def create_server(user_id, api_key=None):
                     .list(q=query, fields="files(id, name)")
                     .execute()
                 )
-
+                files = result.get("files", [])
+                return [
+                    types.TextContent(type="text", text=json.dumps(file, indent=2))
+                    for file in files
+                ]
             elif name == "add_question":
                 form_id = arguments["form_id"]
                 question_type = arguments["question_type"]
@@ -898,7 +908,7 @@ def create_server(user_id, api_key=None):
                     .batchUpdate(formId=form_id, body=request)
                     .execute()
                 )
-
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
             elif name == "delete_item":
                 form_id = arguments["form_id"]
                 item_id = arguments["item_id"]
@@ -922,11 +932,9 @@ def create_server(user_id, api_key=None):
                     .batchUpdate(formId=form_id, body=request_body)
                     .execute()
                 )
-
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
             else:
                 raise ValueError(f"Unknown tool: {name}")
-
-            return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
             logger.error(f"Error calling Google Forms API: {e}")

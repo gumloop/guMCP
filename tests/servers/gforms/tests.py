@@ -5,6 +5,29 @@ from tests.utils.test_tools import get_test_id, run_tool_test
 # Generate a unique form name for testing
 form_name = f"test_form_{str(uuid.uuid4())[:4]}"
 
+RESOURCE_TESTS = [
+    {
+        "name": "list_resources",
+        "expected_keywords": ["resources"],
+        "regex_extractors": {
+            "resource_uri": r'"?uri"?[:\s]+"?(gforms://form/[^"]+)"?',
+            "resource_name": r'"?name"?[:\s]+"?([^"]+)"?',
+        },
+        "description": "list Google Forms resources and extract a resource URI",
+    },
+    {
+        "name": "read_resource",
+        "args_template": 'with uri="{resource_uri}"',
+        "expected_keywords": ["contents"],
+        "regex_extractors": {
+            "document_id": r'"?id"?[:\s]+"?([^"]+)"?',
+            "document_name": r'"?name"?[:\s]+"?([^"]+)"?',
+        },
+        "description": "read a Google Form resource and extract document details",
+        "depends_on": ["resource_uri"],
+    },
+]
+
 TOOL_TESTS = [
     {
         "name": "list_forms",
@@ -114,23 +137,16 @@ def context():
     return SHARED_CONTEXT
 
 
+@pytest.mark.parametrize("test_config", RESOURCE_TESTS, ids=get_test_id)
+@pytest.mark.asyncio
+async def test_gforms_resource(client, context, test_config):
+    return await run_tool_test(client, context, test_config)
+
+
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_gforms_tool(client, context, test_config):
     return await run_tool_test(client, context, test_config)
-
-
-@pytest.mark.asyncio
-async def test_list_resources(client):
-    """Test listing resources from Google Forms"""
-    response = await client.list_resources()
-    print(f"Response: {response}")
-    assert response, "No response returned from list_resources"
-
-    for i, resource in enumerate(response.resources):
-        print(f"  - {i}: {resource.name} ({resource.uri}) {resource.description}")
-
-    print("✅ Successfully listed resources")
 
 
 @pytest.mark.asyncio
