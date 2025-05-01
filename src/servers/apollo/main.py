@@ -172,9 +172,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Contact search results from Apollo",
+                    "description": "Array of JSON strings containing search results for contacts",
                     "examples": [
-                        '{"contacts":[{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","name":"John Doe","linkedin_url":"https://www.linkedin.com/in/johndoe","title":"CEO","organization_name":"Example Corp","email":"john.doe@example.com"}],"pagination":{"page":1,"per_page":10,"total_entries":1,"total_pages":1}}'
+                        '{"contacts":[{"id":"<ID>","first_name":"Test","last_name":"User"}],"total":1}'
                     ],
                 },
             ),
@@ -214,9 +214,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Account search results from Apollo",
+                    "description": "Array of JSON strings containing search results for accounts",
                     "examples": [
-                        '{"accounts":[{"id":"01234567-89ab-cdef-0123-456789abcdef","name":"Example Corp","website_url":"https://example.com","domain":"example.com","phone":"123-456-7890","city":"San Francisco","state":"CA","country":"United States"}],"pagination":{"page":1,"per_page":10,"total_entries":1,"total_pages":1}}'
+                        '{"accounts":[{"id":"<ID>","name":"<Org Name>"}],"total":5}'
                     ],
                 },
             ),
@@ -281,9 +281,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Enriched person data from Apollo",
+                    "description": "Array of JSON strings containing enriched person data",
                     "examples": [
-                        '{"person":{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","name":"John Doe","linkedin_url":"https://www.linkedin.com/in/johndoe","headline":"Chief Executive Officer at Example Corp","photo_url":"https://example.com/photo.jpg","email":"john.doe@example.com","organization_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                        '{"id":"<ID>","name":"John Doe","email":"john.doe@example.com","organization_name":"<Org>","linkedin_url":"<URL>"}'
                     ],
                 },
             ),
@@ -303,9 +303,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Enriched organization data from Apollo",
+                    "description": "Array of JSON strings containing enriched organization data",
                     "examples": [
-                        '{"organization":{"id":"01234567-89ab-cdef-0123-456789abcdef","name":"Example Corp","website_url":"https://example.com","domain":"example.com","phone":"123-456-7890","city":"San Francisco","state":"CA","country":"United States","industry":"Software","linkedin_url":"https://www.linkedin.com/company/example-corp","team_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                        '{"id":"<ID>","name":"<Org>","website":"<URL>","employees":100}'
                     ],
                 },
             ),
@@ -384,9 +384,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Details of the newly created contact",
+                    "description": "Array of JSON strings containing the created contact data",
                     "examples": [
-                        '{"contact":{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","organization_name":"Example Corp","title":"CEO","email":"john.doe@example.com","team_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                        '{"id":"<ID>","first_name":"Test","last_name":"User","email":"test.user@testorg.com"}'
                     ],
                 },
             ),
@@ -467,9 +467,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Details of the updated contact",
+                    "description": "Array of JSON strings containing the updated contact data",
                     "examples": [
-                        '{"contact":{"id":"01234567-89ab-cdef-0123-456789abcdef","first_name":"John","last_name":"Doe","organization_name":"Updated Corp","title":"CTO","email":"john.doe@updated.com","team_id":"fedcba98-7654-3210-fedc-ba9876543210"}}'
+                        '{"id":"<ID>","first_name":"Test","last_name":"User Updated","email":"test.user.updated@testorg.com"}'
                     ],
                 },
             ),
@@ -486,11 +486,25 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["contact_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings confirming contact deletion",
+                    "examples": ['{"deleted":true,"id":"<ID>"}'],
+                },
             ),
             types.Tool(
                 name="list_contact_stages",
                 description="Retrieve the IDs for available contact stages in your Apollo account",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing contact stage IDs and names",
+                    "examples": [
+                        '{"contact_stages":[{"id":"<ID>","name":"Stage Name"}]}'
+                    ],
+                },
             ),
             # ACCOUNT MANAGEMENT TOOLS
             # Tools for managing accounts in your Apollo account
@@ -526,6 +540,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                     "required": ["name"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the created account data",
+                    "examples": [
+                        '{"id":"<ID>","name":"Test Organization","domain":"testorg.com"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -565,11 +587,27 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["account_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the updated account data",
+                    "examples": [
+                        '{"id":"<ID>","name":"Test Organization Updated","domain":"testorg-updated.com"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_account_stages",
                 description="Retrieve the IDs for available account stages in your Apollo account",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing account stage IDs and names",
+                    "examples": [
+                        '{"account_stages":[{"id":"<ID>","name":"Stage Name"}]}'
+                    ],
+                },
             ),
             # DEAL MANAGEMENT TOOLS
             # Tools for managing deals in your Apollo account
@@ -605,6 +643,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                     "required": ["name"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the created deal data",
+                    "examples": ['{"id":"<ID>","name":"Test Deal","amount":"10000"}'],
                 },
             ),
             types.Tool(
@@ -656,6 +700,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["opportunity_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the updated deal data",
+                    "examples": [
+                        '{"id":"<ID>","name":"Test Deal Updated","amount":"15000"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_deals",
@@ -673,11 +725,23 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing deal listings",
+                    "examples": ['{"deals":[{"id":"<ID>","name":"Test Deal"}]}'],
+                },
             ),
             types.Tool(
                 name="list_deal_stages",
                 description="Retrieve information about every deal stage in your Apollo account",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing deal stage IDs and names",
+                    "examples": ['{"deal_stages":[{"id":"<ID>","name":"Stage Name"}]}'],
+                },
             ),
             # TASK AND USER MANAGEMENT TOOLS
             # Tools for managing tasks and users in your Apollo account
@@ -726,6 +790,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         "status",
                     ],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing created task data",
+                    "examples": [
+                        '{"tasks":[{"id":"<ID>","type":"call","status":"scheduled"}]}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_users",
@@ -742,6 +814,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "description": "The number of search results that should be returned for each page",
                         },
                     },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing user listings",
+                    "examples": [
+                        '{"users":[{"id":"<ID>","name":"Test User"}],"total":10}'
+                    ],
                 },
             ),
         ]
@@ -838,15 +918,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -893,15 +964,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -966,15 +1028,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1046,15 +1099,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1111,15 +1155,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1183,15 +1218,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1230,15 +1256,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1295,15 +1312,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1372,15 +1380,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1431,15 +1430,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1478,15 +1468,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1525,15 +1506,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1584,15 +1556,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1662,15 +1625,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1745,15 +1699,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1820,15 +1765,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1902,15 +1838,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
@@ -1992,15 +1919,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     # Check if the request was successful
                     if response.status_code == 200:
                         result = response.json()
-                        # If the result is a list, return each item as a separate TextContent
-                        if isinstance(result, list):
-                            return [
-                                TextContent(
-                                    type="text", text=json.dumps(item, indent=2)
-                                )
-                                for item in result
-                            ]
-                        # If the result is a dict, return it as a single TextContent
                         return [
                             TextContent(type="text", text=json.dumps(result, indent=2))
                         ]
