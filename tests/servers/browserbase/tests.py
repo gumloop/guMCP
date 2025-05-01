@@ -1,4 +1,5 @@
 import pytest
+import json
 
 WEB_URL = "gumloop.com"
 
@@ -11,13 +12,15 @@ async def test_load_webpage_tool(client):
         client: The test client fixture for the MCP server.
     """
     response = await client.process_query(
-        f"Use the load_webpage_tool tool to fetch content from the website - {WEB_URL}"
-        "If successful, start your response with 'Here is the content' and then provide the content"
+        f"Use the load_webpage_tool tool to fetch content from the website - {WEB_URL}. "
+        "Parse the JSON response and verify it has status, url, and content fields."
     )
 
     assert (
-        "here is the content" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
+        "status" in response.lower()
+        and "url" in response.lower()
+        and "content" in response.lower()
+    ), f"Expected JSON fields not found in response: {response}"
     assert response, "No response returned from load_webpage_tool"
 
     print(f"Response: {response}")

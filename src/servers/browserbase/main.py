@@ -1,8 +1,9 @@
 import os
 import sys
+import json
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
@@ -62,6 +63,14 @@ def create_server(user_id: str, api_key: Optional[str] = None):
                     "properties": {"url": {"type": "string"}},
                     "required": ["url"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON string containing webpage content and metadata",
+                    "examples": [
+                        '[{"status":"success","url":"https://example.com","content":"<!DOCTYPE html><html>...</html>"}]'
+                    ],
+                },
             ),
         ]
 
@@ -95,7 +104,9 @@ def create_server(user_id: str, api_key: Optional[str] = None):
                     await page.close()
                     await browser.close()
 
-            return [types.TextContent(type="text", text=content)]
+            result = {"status": "success", "url": url, "content": content}
+
+            return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
         raise ValueError(f"Unknown tool: {name}")
 
