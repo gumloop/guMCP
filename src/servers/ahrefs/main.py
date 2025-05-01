@@ -190,6 +190,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing domain rating metrics",
+                    "examples": [
+                        '{"domain_rating": {"domain_rating": 91.0, "ahrefs_rank": 970}, "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="backlinks_stats",
@@ -223,6 +230,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing backlinks statistics",
+                    "examples": [
+                        '{"metrics": {"live": 1428, "all_time": 707927, "live_refdomains": 155, "all_time_refdomains": 2010}, "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="outlinks_stats",
@@ -251,6 +265,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing outlinks statistics",
+                    "examples": [
+                        '{"metrics": {"outgoing_links": 701421, "outgoing_links_dofollow": 452207, "linked_domains": 14123, "linked_domains_dofollow": 2459}, "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -294,6 +315,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing SEO metrics for the target domain or URL",
+                    "examples": [
+                        '{"metrics": {"org_keywords": 1794, "paid_keywords": 0, "org_keywords_1_3": 256, "org_traffic": 116565, "org_cost": 388017, "paid_traffic": 0, "paid_cost": null, "paid_pages": 0}, "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="metrics_by_country",
@@ -335,6 +363,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing metrics by country for the target domain or URL",
+                    "examples": [
+                        '{"metrics": [{"paid_cost": 0, "country": "us"}, {"paid_cost": null, "country": "uk"}, {"paid_cost": 1786, "country": "ca"}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -378,6 +413,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing pages by traffic data for the target domain or URL",
+                    "examples": [
+                        '{"pages": {"range0_pages": 13387, "range100_traffic": 82943, "range100_pages": 5446, "range1k_traffic": 333344, "range1k_pages": 1087}, "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="domain_rating_history",
@@ -410,6 +452,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date_from"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing domain rating history over time",
+                    "examples": [
+                        '{"domain_ratings": [{"date": "2023-01-01T00:00:00Z", "domain_rating": 47.0}, {"date": "2023-02-01T00:00:00Z", "domain_rating": 47.0}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="url_rating_history",
@@ -441,6 +490,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date_from"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing URL rating history over time",
+                    "examples": [
+                        '{"url_ratings": [{"date": "2023-01-01T00:00:00Z", "url_rating": 55.0}, {"date": "2023-02-01T00:00:00Z", "url_rating": 55.0}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -483,6 +539,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date_from"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing referring domains history over time",
+                    "examples": [
+                        '{"refdomains": [{"date": "2023-01-01T00:00:00Z", "refdomains": 48424}, {"date": "2023-02-01T00:00:00Z", "refdomains": 49039}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -529,6 +592,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date_from"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing pages history over time",
+                    "examples": [
+                        '{"pages": [{"date": "2023-01-01T00:00:00Z", "pages": 1}, {"date": "2023-02-01T00:00:00Z", "pages": 1}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -585,6 +655,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date_from"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing SEO metrics history over time",
+                    "examples": [
+                        '{"metrics": [{"date": "2023-01-01T00:00:00Z", "org_cost": 242033, "org_traffic": 1751, "paid_cost": 429, "paid_traffic": 178}, {"date": "2023-02-01T00:00:00Z", "org_cost": 218213, "org_traffic": 1738, "paid_cost": 554, "paid_traffic": 423}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="keywords_history",
@@ -634,6 +711,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date_from"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing keywords history over time",
+                    "examples": [
+                        '{"keywords": [{"date": "2023-01-01T00:00:00Z", "top3": 284, "top4_10": 307, "top11_plus": 674}, {"date": "2023-02-01T00:00:00Z", "top3": 283, "top4_10": 294, "top11_plus": 755}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -691,6 +775,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date_from"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing total search volume history over time",
+                    "examples": [
+                        '{"metrics": [{"date": "2023-01-01T00:00:00Z", "total_search_volume": 4313912}, {"date": "2023-02-01T00:00:00Z", "total_search_volume": 4937698}], "_status_code": 200}'
+                    ],
+                },
             ),
         ]
 
@@ -737,6 +828,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing backlinks data with detailed information about each link",
+                    "examples": [
+                        '{"backlinks": [{"ahrefs_rank_source": 814, "ahrefs_rank_target": 759, "alt": null, "anchor": "Word Count", "domain_rating_source": 91.0, "domain_rating_target": 50.0, "first_seen": "2023-08-08T17:45:31Z", "http_code": 200, "is_dofollow": true, "url_from": "<URL>", "url_to": "<URL>"}, {"ahrefs_rank_source": 920, "ahrefs_rank_target": 850, "alt": null, "anchor": "SEO Tools", "domain_rating_source": 87.0, "domain_rating_target": 65.0, "first_seen": "2023-07-15T09:22:18Z", "http_code": 200, "is_dofollow": false, "url_from": "<URL>", "url_to": "<URL>"}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="broken_backlinks",
@@ -773,6 +871,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing broken backlinks data with detailed link information",
+                    "examples": [
+                        '{"backlinks": [{"ahrefs_rank_source": 798, "ahrefs_rank_target": 814, "alt": null, "anchor": "version pro", "domain_rating_source": 83.0, "domain_rating_target": 91.0, "first_seen": "2024-05-17T18:21:47Z", "http_code": 200, "http_code_target": 404, "is_dofollow": true, "url_from": "<URL>", "url_to": "<URL>"}, {"ahrefs_rank_source": 652, "ahrefs_rank_target": 723, "alt": "logo", "anchor": "marketing tools", "domain_rating_source": 76.0, "domain_rating_target": 88.0, "first_seen": "2024-03-12T11:35:22Z", "http_code": 200, "http_code_target": 404, "is_dofollow": false, "url_from": "<URL>", "url_to": "<URL>"}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -811,6 +916,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing referring domains data for the target domain or URL",
+                    "examples": [
+                        '{"refdomains": [{"domain": "<DOMAIN>", "domain_rating": 75.0, "dofollow_links": 1, "first_seen": "2023-04-28T02:53:50Z", "links_to_target": 1, "traffic_domain": 12500}, {"domain": "<DOMAIN>", "domain_rating": 68.0, "dofollow_links": 3, "first_seen": "2023-05-12T14:22:31Z", "links_to_target": 5, "traffic_domain": 8700}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="anchors",
@@ -847,6 +959,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "date"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing anchor text data for the target domain or URL",
+                    "examples": [
+                        '{"anchors": [{"anchor": "SEO tools", "dofollow_links": 28, "first_seen": "2022-11-06T00:33:24Z", "last_seen": "2023-10-19T07:55:08Z", "links_to_target": 42, "refdomains": 35, "top_domain_rating": 86.0}, {"anchor": "backlink checker", "dofollow_links": 17, "first_seen": "2022-08-14T12:42:11Z", "last_seen": "2023-09-28T15:33:56Z", "links_to_target": 24, "refdomains": 22, "top_domain_rating": 79.0}], "_status_code": 200}'
+                    ],
                 },
             ),
         ]
@@ -909,6 +1028,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "country", "date", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing organic keyword data for the target domain or URL",
+                    "examples": [
+                        '{"keywords": [{"keyword": "word count", "best_position": 2, "keyword_difficulty": 84, "volume": 192000, "language": "en"}, {"keyword": "syllable counter", "best_position": 9, "keyword_difficulty": 49, "volume": 32000, "language": "en"}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="organic_competitors",
@@ -966,6 +1092,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "country", "date", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing organic competitors data for the target domain or URL",
+                    "examples": [
+                        '{"domains": [{"domain": "<DOMAIN>", "domain_rating": 86.0, "intersections": 0.25, "keywords": 1200, "keywords_unique": 950, "traffic": 250000}, {"domain": "<DOMAIN>", "domain_rating": 78.0, "intersections": 0.18, "keywords": 850, "keywords_unique": 620, "traffic": 175000}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="top_pages",
@@ -1021,7 +1154,14 @@ def create_server(user_id, api_key=None):
                             "description": "Column to order results by",
                         },
                     },
-                    "required": ["target", "date", "select"],
+                    "required": ["target", "country", "date", "select"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing top organic pages data for the target domain",
+                    "examples": [
+                        '{"pages": [{"url": "<URL>", "traffic": 15000, "keywords": 350, "top_keyword": "best example", "top_keyword_volume": 5000}, {"url": "<URL>", "traffic": 8500, "keywords": 120, "top_keyword": "example tutorial", "top_keyword_volume": 3200}], "_status_code": 200}'
+                    ],
                 },
             ),
         ]
@@ -1084,6 +1224,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "date", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing paid pages data for the target domain or URL",
+                    "examples": [
+                        '{"pages": [{"url": "<URL>", "keywords": 6, "sum_traffic": 15, "ads_count": 4}, {"url": "<URL>", "keywords": 4, "sum_traffic": 6, "ads_count": 5}], "_status_code": 200}'
+                    ],
+                },
             ),
         ]
 
@@ -1133,6 +1280,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing pages with the most external links data",
+                    "examples": [
+                        '{"pages": [{"url_to": "<URL>", "title_target": "Free Backlink Checker", "links_to_target": 249035}, {"url_to": "<URL>", "title_target": "SEO Analysis Tool", "links_to_target": 187620}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="best_by_internal_links",
@@ -1172,6 +1326,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "select"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing pages with the most internal links data",
+                    "examples": [
+                        '{"pages": [{"url_to": "<URL>", "title_target": "Login", "links_to_target": 6713}, {"url_to": "<URL>", "title_target": "Signup", "links_to_target": 6711}], "_status_code": 200}'
+                    ],
                 },
             ),
         ]
@@ -1217,6 +1378,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing domains linked from the target domain or URL",
+                    "examples": [
+                        '{"linkeddomains": [{"domain": "<DOMAIN>", "domain_rating": 83.0, "dofollow_linked_domains": 20, "linked_pages": 45}, {"domain": "<DOMAIN>", "domain_rating": 77.0, "dofollow_linked_domains": 15, "linked_pages": 32}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="outgoing_external_anchors",
@@ -1257,6 +1425,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["target", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing outgoing external anchors data for the target domain or URL",
+                    "examples": [
+                        '{"outgoing_external_anchors": [{"anchor": "digital marketing", "dofollow_links": 12, "linked_domains": 8, "linked_pages": 15, "links_from_target": 24}, {"anchor": "SEO guide", "dofollow_links": 8, "linked_domains": 6, "linked_pages": 9, "links_from_target": 17}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="outgoing_internal_anchors",
@@ -1296,6 +1471,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["target", "select"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing outgoing internal anchors data for the target domain or URL",
+                    "examples": [
+                        '{"outgoing_internal_anchors": [{"anchor": "contact us", "dofollow_links": 45, "linked_pages": 1, "links_from_target": 78}, {"anchor": "pricing", "dofollow_links": 38, "linked_pages": 1, "links_from_target": 62}], "_status_code": 200}'
+                    ],
                 },
             ),
         ]
@@ -1355,6 +1537,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["country", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing keywords overview data for the target domain or URL",
+                    "examples": [
+                        '{"keywords_overview": [{"keyword": "word count", "difficulty": 84, "volume": 192000}, {"keyword": "syllable counter", "difficulty": 49, "volume": 32000}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="volume_history",
@@ -1386,6 +1575,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["keyword", "country"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing volume history over time",
+                    "examples": [
+                        '{"volume_history": [{"date": "2023-01-01T00:00:00Z", "volume": 192000}, {"date": "2023-02-01T00:00:00Z", "volume": 188000}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="volume_by_country",
@@ -1408,6 +1604,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["keyword"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing volume by country data for the target domain or URL",
+                    "examples": [
+                        '{"volume_by_country": [{"country": "US", "volume": 192000}, {"country": "CA", "volume": 32000}], "_status_code": 200}'
+                    ],
                 },
             ),
             Tool(
@@ -1459,6 +1662,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["country", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing matching terms data for the target domain or URL",
+                    "examples": [
+                        '{"matching_terms": [{"keyword": "word counter tool", "difficulty": 72, "volume": 68000}, {"keyword": "character count tool", "difficulty": 65, "volume": 41000}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="related_terms",
@@ -1509,6 +1719,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["country", "select"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing related terms data for the target domain or URL",
+                    "examples": [
+                        '{"related_terms": [{"keyword": "word count checker", "difficulty": 76, "volume": 82000}, {"keyword": "letter counter", "difficulty": 52, "volume": 24000}], "_status_code": 200}'
+                    ],
+                },
             ),
             Tool(
                 name="search_suggestions",
@@ -1548,6 +1765,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["country", "select"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing search suggestions data for the target domain or URL",
+                    "examples": [
+                        '{"search_suggestions": [{"keyword": "word count in google docs", "difficulty": 45, "volume": 38000}, {"keyword": "free word count tool", "difficulty": 56, "volume": 29000}], "_status_code": 200}'
+                    ],
                 },
             ),
         ]

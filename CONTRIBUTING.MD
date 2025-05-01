@@ -177,11 +177,10 @@ When implementing tools for a server, please follow these guidelines:
 
    ```python
    outputSchema={
-       "type": "array",
-       "items": {"type": "string"},
-       "description": "Array of JSON strings containing the operation results",
+       "type": "string",
+       "description": "JSON response containing the operation result",
        "examples": [
-           '[{"status":"success","document_id":"doc123","name":"Example Document"}]'
+           '{"status":"success","document_id":"doc123","name":"Example Document"}'
        ],
    }
    ```
