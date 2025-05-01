@@ -196,6 +196,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing a list of companies matching the search query",
+                    "examples": [
+                        'Found 2 companies:\n[\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Acme Inc",\n      "domains": ["acme.com"]\n    }\n  },\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Acme Corp",\n      "domains": ["acmecorp.com"]\n    }\n  }\n]'
+                    ],
+                },
             ),
             Tool(
                 name="read_company",
@@ -206,6 +213,13 @@ def create_server(user_id, api_key=None):
                         "id": {"type": "string", "description": "Company ID"}
                     },
                     "required": ["id"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing detailed information about the requested company",
+                    "examples": [
+                        'Company details:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Acme Inc",\n      "domains": ["acme.com"],\n      "description": "Technology company"\n    }\n  }\n}'
+                    ],
                 },
             ),
             Tool(
@@ -223,6 +237,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing the details of the newly created company",
+                    "examples": [
+                        'Company created successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "New Company",\n      "domains": ["newcompany.com"]\n    }\n  }\n}'
+                    ],
+                },
             ),
             Tool(
                 name="update_company",
@@ -238,6 +259,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["id", "attributes"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing the details of the updated company",
+                    "examples": [
+                        'Company updated successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Updated Company",\n      "domains": ["updatedcompany.com"],\n      "description": "Technology company"\n    }\n  }\n}'
+                    ],
+                },
             ),
             Tool(
                 name="search_contacts",
@@ -249,6 +277,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing a list of contacts matching the search query",
+                    "examples": [
+                        'Found 2 contacts:\n[\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }]\n    }\n  },\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "Jane",\n        "last_name": "Doe",\n        "full_name": "Jane Doe"\n      },\n      "email_addresses": [{\n        "email_address": "jane@example.com"\n      }]\n    }\n  }\n]'
+                    ],
+                },
             ),
             Tool(
                 name="read_contact",
@@ -259,6 +294,13 @@ def create_server(user_id, api_key=None):
                         "id": {"type": "string", "description": "Contact ID"}
                     },
                     "required": ["id"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing detailed information about the requested contact",
+                    "examples": [
+                        'Contact details:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }],\n      "job_title": "Software Engineer"\n    }\n  }\n}'
+                    ],
                 },
             ),
             Tool(
@@ -281,6 +323,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing the details of the newly created contact",
+                    "examples": [
+                        'Contact created successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }]\n    }\n  }\n}'
+                    ],
+                },
             ),
             Tool(
                 name="update_contact",
@@ -296,6 +345,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["id", "attributes"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing the details of the updated contact",
+                    "examples": [
+                        'Contact updated successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }],\n      "job_title": "Software Engineer"\n    }\n  }\n}'
+                    ],
+                },
             ),
             Tool(
                 name="list_lists",
@@ -303,6 +359,13 @@ def create_server(user_id, api_key=None):
                 inputSchema={
                     "type": "object",
                     "properties": {},
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing all available lists in Attio",
+                    "examples": [
+                        'Available lists:\n[\n  {\n    "id": "<ID>",\n    "attributes": {\n      "title": "Prospect List",\n      "description": "List of prospective customers"\n    }\n  },\n  {\n    "id": "<ID>",\n    "attributes": {\n      "title": "Customer List",\n      "description": "List of current customers"\n    }\n  }\n]'
+                    ],
                 },
             ),
             Tool(
@@ -314,6 +377,13 @@ def create_server(user_id, api_key=None):
                         "list_id": {"type": "string", "description": "List ID"},
                     },
                     "required": ["list_id"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing records from the specified list",
+                    "examples": [
+                        'List records:\n{\n  "data": [\n    {\n      "id": "<ID>",\n      "type": "company",\n      "attributes": {\n        "name": "Acme Inc",\n        "domains": ["acme.com"]\n      }\n    },\n    {\n      "id": "<ID>",\n      "type": "contact",\n      "attributes": {\n        "name": "John Doe",\n        "email": "john@example.com"\n      }\n    }\n  ]\n}'
+                    ],
                 },
             ),
             Tool(
@@ -334,6 +404,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["list_id", "record_id", "record_type"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON string containing the result of adding a record to a list",
+                    "examples": [
+                        'Record added to list successfully:\n{\n  "data": {\n    "id": "<ID>",\n    "record_id": "<RECORD_ID>",\n    "type": "company",\n    "list_id": "<LIST_ID>"\n  }\n}'
+                    ],
                 },
             ),
         ]
