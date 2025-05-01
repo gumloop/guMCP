@@ -277,10 +277,11 @@ def create_server(user_id, api_key=None):
                 description="List all phone numbers associated with the WABA",
                 inputSchema={"type": "object", "properties": {}},
                 outputSchema={
-                    "type": "object",
+                    "type": "array",
+                    "items": {"type": "string"},
                     "description": "List of phone numbers with their verification status, display numbers, quality ratings, and IDs",
                     "examples": [
-                        '{"data": [{ "verified_name": "Test Number", "code_verification_status": "NOT_VERIFIED", "display_phone_number": "15556447198", "quality_rating": "GREEN", "platform_type": "CLOUD_API", "throughput": { "level": "STANDARD" }, "id": "0123456789" } ], "paging": { "cursors": { "before": "dishagadhgakjdbhgaidhligbhaeiklgb", "after": "ujghdjgklfsdaikgbgdskaibgjkdbg" } }}'
+                        '{"verified_name": "Test Number", "code_verification_status": "NOT_VERIFIED", "display_phone_number": "15556447198", "quality_rating": "GREEN", "platform_type": "CLOUD_API", "throughput": { "level": "STANDARD" }, "id": "0123456789"}'
                     ],
                 },
             ),
@@ -289,10 +290,11 @@ def create_server(user_id, api_key=None):
                 description="List all message templates",
                 inputSchema={"type": "object", "properties": {}},
                 outputSchema={
-                    "type": "object",
+                    "type": "array",
+                    "items": {"type": "string"},
                     "description": "List of message templates with their names, components, status, and IDs",
                     "examples": [
-                        '{ "data": [ { "name": "test_template_e8a7", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "Hello from guMCP" } ], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789" } ], "paging": { "cursors": { "before": "MAZDZD", "after": "MjQZD" } }}'
+                        '{"name": "test_template_e8a7", "parameter_format": "POSITIONAL", "components": [{"type": "BODY", "text": "Hello from guMCP"}], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
                     ],
                 },
             ),
@@ -359,10 +361,11 @@ def create_server(user_id, api_key=None):
                     "required": ["template_name", "language"],
                 },
                 outputSchema={
-                    "type": "object",
+                    "type": "array",
+                    "items": {"type": "string"},
                     "description": "Template preview details including template name, components, status, ID and more",
                     "examples": [
-                        '{ "name": "test_template_830b", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "Hello from guMCP" } ], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
+                        '{"name": "test_template_830b", "parameter_format": "POSITIONAL", "components": [{"type": "BODY", "text": "Hello from guMCP"}], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
                     ],
                 },
             ),
@@ -371,10 +374,11 @@ def create_server(user_id, api_key=None):
                 description="Get detailed information about a WhatsApp business phone number",
                 inputSchema={"type": "object", "properties": {}},
                 outputSchema={
-                    "type": "object",
+                    "type": "array",
+                    "items": {"type": "string"},
                     "description": "Phone number details including verification status, display number, quality rating, ID and more",
                     "examples": [
-                        '{ "verified_name": "Test Number", "code_verification_status": "NOT_VERIFIED", "display_phone_number": "0123456789", "quality_rating": "GREEN", "platform_type": "CLOUD_API", "throughput": { "level": "STANDARD" }, "id": "0123456789"}'
+                        '{"verified_name": "Test Number", "code_verification_status": "NOT_VERIFIED", "display_phone_number": "0123456789", "quality_rating": "GREEN", "platform_type": "CLOUD_API", "throughput": {"level": "STANDARD"}, "id": "0123456789"}'
                     ],
                 },
             ),
@@ -402,10 +406,11 @@ def create_server(user_id, api_key=None):
                     "required": ["template_id"],
                 },
                 outputSchema={
-                    "type": "object",
+                    "type": "array",
+                    "items": {"type": "string"},
                     "description": "Template details including name, components, status, ID and more",
                     "examples": [
-                        '{ "name": "test_template_830b", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "Hello from guMCP" } ], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
+                        '{"name": "test_template_830b", "parameter_format": "POSITIONAL", "components": [{"type": "BODY", "text": "Hello from guMCP"}], "language": "en_US", "status": "REJECTED", "category": "MARKETING", "id": "0123456789"}'
                     ],
                 },
             ),
@@ -506,10 +511,12 @@ def create_server(user_id, api_key=None):
                     "required": ["to", "template_name", "language_code"],
                 },
                 outputSchema={
-                    "type": "object",
+                    "type": "array",
+                    "items": {"type": "string"},
                     "description": "Message template details including name, components, status, ID and more",
                     "examples": [
-                        '{ "data": [ { "name": "sales_announcement", "parameter_format": "POSITIONAL", "components": [ { "type": "BODY", "text": "SALE SALE SALE" } ], "language": "en_US", "status": "APPROVED", "category": "MARKETING", "id": "0123456789" }, { "name": "hello_world", "parameter_format": "POSITIONAL", "components": [ { "type": "HEADER", "format": "TEXT", "text": "Hello World" }, { "type": "BODY", "text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us." }, { "type": "FOOTER", "text": "WhatsApp Business Platform sample message" } ], "language": "en_US", "status": "APPROVED", "category": "UTILITY", "id": "0123456789" } ], "paging": { "cursors": { "before": "MAZDZD", "after": "MjQZD" } }}'
+                        '{"name": "sales_announcement", "parameter_format": "POSITIONAL", "components": [{"type": "BODY", "text": "SALE SALE SALE"}], "language": "en_US", "status": "APPROVED", "category": "MARKETING", "id": "0123456789"}',
+                        '{"name": "hello_world", "parameter_format": "POSITIONAL", "components": [{"type": "HEADER", "format": "TEXT", "text": "Hello World"}, {"type": "BODY", "text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."}, {"type": "FOOTER", "text": "WhatsApp Business Platform sample message"}], "language": "en_US", "status": "APPROVED", "category": "UTILITY", "id": "0123456789"}'
                     ],
                 },
             ),
@@ -531,15 +538,9 @@ def create_server(user_id, api_key=None):
         phone_number_id = credentials.get("phone_number_id", None)
 
         if not api_key:
-            return [
-                TextContent(type="text", text="Error: Whatsapp Access Token not found")
-            ]
+            return [TextContent(type="text", text="Error: Whatsapp Access Token not found")]
         if not waba_id:
-            return [
-                TextContent(
-                    type="text", text="Error: WhatsApp Business Account ID not found"
-                )
-            ]
+            return [TextContent(type="text", text="Error: WhatsApp Business Account ID not found")]
         if not phone_number_id:
             return [TextContent(type="text", text="Error: Phone Number ID not found")]
 
@@ -552,9 +553,7 @@ def create_server(user_id, api_key=None):
             if name == "get_account_info":
                 response = requests.get(f"{API_ENDPOINT}/{waba_id}", headers=headers)
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "get_account_verification_status":
                 response = requests.get(
@@ -562,27 +561,33 @@ def create_server(user_id, api_key=None):
                     headers=headers,
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "list_phone_numbers":
                 response = requests.get(
                     f"{API_ENDPOINT}/{waba_id}/phone_numbers", headers=headers
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                data = response.json()
+                if "data" in data:
+                    return [
+                        TextContent(type="text", text=json.dumps(item, indent=2))
+                        for item in data["data"]
+                    ]
+                return [TextContent(type="text", text=json.dumps(data, indent=2))]
 
             elif name == "list_message_templates":
                 response = requests.get(
                     f"{API_ENDPOINT}/{waba_id}/message_templates", headers=headers
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                data = response.json()
+                if "data" in data:
+                    return [
+                        TextContent(type="text", text=json.dumps(item, indent=2))
+                        for item in data["data"]
+                    ]
+                return [TextContent(type="text", text=json.dumps(data, indent=2))]
 
             elif name == "create_message_template":
                 # Format components according to WhatsApp API requirements
@@ -617,10 +622,8 @@ def create_server(user_id, api_key=None):
                     headers=headers,
                     json=template_data,
                 )
-
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                response.raise_for_status()
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "get_template_preview":
                 template_name = arguments["template_name"]
@@ -631,18 +634,14 @@ def create_server(user_id, api_key=None):
                     params={"name": template_name, "language": language},
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "get_phone_number_details":
                 response = requests.get(
                     f"{API_ENDPOINT}/{phone_number_id}", headers=headers
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "get_business_profile":
                 response = requests.get(
@@ -650,9 +649,13 @@ def create_server(user_id, api_key=None):
                     headers=headers,
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                data = response.json()
+                if "data" in data:
+                    return [
+                        TextContent(type="text", text=json.dumps(item, indent=2))
+                        for item in data["data"]
+                    ]
+                return [TextContent(type="text", text=json.dumps(data, indent=2))]
 
             elif name == "get_message_template_details":
                 template_id = arguments["template_id"]
@@ -660,9 +663,7 @@ def create_server(user_id, api_key=None):
                     f"{API_ENDPOINT}/{template_id}", headers=headers
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "update_message_template":
                 template_id = arguments["template_id"]
@@ -682,9 +683,7 @@ def create_server(user_id, api_key=None):
                     f"{API_ENDPOINT}/{template_id}", headers=headers, json=data
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "delete_message_template":
                 template_id = arguments["template_id"]
@@ -695,9 +694,7 @@ def create_server(user_id, api_key=None):
                     params={"hsm_id": template_id, "name": template_name},
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             elif name == "send_template_message":
                 data = {
@@ -715,9 +712,7 @@ def create_server(user_id, api_key=None):
                     json=data,
                 )
                 response.raise_for_status()
-                return [
-                    TextContent(type="text", text=json.dumps(response.json(), indent=2))
-                ]
+                return [TextContent(type="text", text=json.dumps(response.json(), indent=2))]
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
