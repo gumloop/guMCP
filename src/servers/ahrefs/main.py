@@ -194,9 +194,7 @@ def create_server(user_id, api_key=None):
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing domain rating metrics",
-                    "examples": [
-                        '[{"domain_rating": 91.0, "ahrefs_rank": 970}]'
-                    ],
+                    "examples": ['[{"domain_rating": 91.0, "ahrefs_rank": 970}]'],
                 },
             ),
             Tool(
@@ -375,7 +373,7 @@ def create_server(user_id, api_key=None):
                     "examples": [
                         '{"paid_cost": 0, "country": "us"}',
                         '{"paid_cost": null, "country": "uk"}',
-                        '{"paid_cost": 1786, "country": "ca"}'
+                        '{"paid_cost": 1786, "country": "ca"}',
                     ],
                 },
             ),
@@ -466,7 +464,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing domain rating history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "domain_rating": 47.0}',
-                        '{"date": "2023-02-01T00:00:00Z", "domain_rating": 47.0}'
+                        '{"date": "2023-02-01T00:00:00Z", "domain_rating": 47.0}',
                     ],
                 },
             ),
@@ -507,7 +505,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing URL rating history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "url_rating": 55.0}',
-                        '{"date": "2023-02-01T00:00:00Z", "url_rating": 55.0}'
+                        '{"date": "2023-02-01T00:00:00Z", "url_rating": 55.0}',
                     ],
                 },
             ),
@@ -558,7 +556,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing referring domains history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "refdomains": 48424}',
-                        '{"date": "2023-02-01T00:00:00Z", "refdomains": 49039}'
+                        '{"date": "2023-02-01T00:00:00Z", "refdomains": 49039}',
                     ],
                 },
             ),
@@ -613,7 +611,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing pages history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "pages": 1}',
-                        '{"date": "2023-02-01T00:00:00Z", "pages": 1}'
+                        '{"date": "2023-02-01T00:00:00Z", "pages": 1}',
                     ],
                 },
             ),
@@ -677,7 +675,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing SEO metrics history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "org_cost": 242033, "org_traffic": 1751, "paid_cost": 429, "paid_traffic": 178}',
-                        '{"date": "2023-02-01T00:00:00Z", "org_cost": 218213, "org_traffic": 1738, "paid_cost": 554, "paid_traffic": 423}'
+                        '{"date": "2023-02-01T00:00:00Z", "org_cost": 218213, "org_traffic": 1738, "paid_cost": 554, "paid_traffic": 423}',
                     ],
                 },
             ),
@@ -736,7 +734,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing keywords history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "top3": 284, "top4_10": 307, "top11_plus": 674}',
-                        '{"date": "2023-02-01T00:00:00Z", "top3": 283, "top4_10": 294, "top11_plus": 755}'
+                        '{"date": "2023-02-01T00:00:00Z", "top3": 283, "top4_10": 294, "top11_plus": 755}',
                     ],
                 },
             ),
@@ -801,7 +799,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing total search volume history over time",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "total_search_volume": 4313912}',
-                        '{"date": "2023-02-01T00:00:00Z", "total_search_volume": 4937698}'
+                        '{"date": "2023-02-01T00:00:00Z", "total_search_volume": 4937698}',
                     ],
                 },
             ),
@@ -856,7 +854,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about individual backlinks",
                     "examples": [
                         '{"ahrefs_rank_source": 814, "ahrefs_rank_target": 759, "alt": null, "anchor": "Word Count", "domain_rating_source": 91.0, "domain_rating_target": 50.0, "first_seen": "2023-08-08T17:45:31Z", "http_code": 200, "is_dofollow": true, "url_from": "<URL>", "url_to": "<URL>"}',
-                        '{"ahrefs_rank_source": 920, "ahrefs_rank_target": 850, "alt": null, "anchor": "SEO Tools", "domain_rating_source": 87.0, "domain_rating_target": 65.0, "first_seen": "2023-07-15T09:22:18Z", "http_code": 200, "is_dofollow": false, "url_from": "<URL>", "url_to": "<URL>"}'
+                        '{"ahrefs_rank_source": 920, "ahrefs_rank_target": 850, "alt": null, "anchor": "SEO Tools", "domain_rating_source": 87.0, "domain_rating_target": 65.0, "first_seen": "2023-07-15T09:22:18Z", "http_code": 200, "is_dofollow": false, "url_from": "<URL>", "url_to": "<URL>"}',
                     ],
                 },
             ),
@@ -1061,7 +1059,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about individual organic keywords",
                     "examples": [
                         '{"keyword": "word count", "best_position": 2, "keyword_difficulty": 84, "volume": 192000, "language": "en"}',
-                        '{"keyword": "syllable counter", "best_position": 9, "keyword_difficulty": 49, "volume": 32000, "language": "en"}'
+                        '{"keyword": "syllable counter", "best_position": 9, "keyword_difficulty": 49, "volume": 32000, "language": "en"}',
                     ],
                 },
             ),
@@ -1127,7 +1125,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about individual organic competitors",
                     "examples": [
                         '{"domain": "<DOMAIN>", "domain_rating": 86.0, "intersections": 0.25, "keywords": 1200, "keywords_unique": 950, "traffic": 250000}',
-                        '{"domain": "<DOMAIN>", "domain_rating": 78.0, "intersections": 0.18, "keywords": 850, "keywords_unique": 620, "traffic": 175000}'
+                        '{"domain": "<DOMAIN>", "domain_rating": 78.0, "intersections": 0.18, "keywords": 850, "keywords_unique": 620, "traffic": 175000}',
                     ],
                 },
             ),
@@ -1193,7 +1191,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about individual top organic pages",
                     "examples": [
                         '{"url": "<URL>", "traffic": 15000, "keywords": 350, "top_keyword": "best example", "top_keyword_volume": 5000}',
-                        '{"url": "<URL>", "traffic": 8500, "keywords": 120, "top_keyword": "example tutorial", "top_keyword_volume": 3200}'
+                        '{"url": "<URL>", "traffic": 8500, "keywords": 120, "top_keyword": "example tutorial", "top_keyword_volume": 3200}',
                     ],
                 },
             ),
@@ -1263,7 +1261,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about individual paid pages",
                     "examples": [
                         '{"url": "<URL>", "keywords": 6, "sum_traffic": 15, "ads_count": 4}',
-                        '{"url": "<URL>", "keywords": 4, "sum_traffic": 6, "ads_count": 5}'
+                        '{"url": "<URL>", "keywords": 4, "sum_traffic": 6, "ads_count": 5}',
                     ],
                 },
             ),
@@ -1321,7 +1319,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about pages with the most external links",
                     "examples": [
                         '{"url_to": "<URL>", "title_target": "Free Backlink Checker", "links_to_target": 249035}',
-                        '{"url_to": "<URL>", "title_target": "SEO Analysis Tool", "links_to_target": 187620}'
+                        '{"url_to": "<URL>", "title_target": "SEO Analysis Tool", "links_to_target": 187620}',
                     ],
                 },
             ),
@@ -1370,7 +1368,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about pages with the most internal links",
                     "examples": [
                         '{"url_to": "<URL>", "title_target": "Login", "links_to_target": 6713}',
-                        '{"url_to": "<URL>", "title_target": "Signup", "links_to_target": 6711}'
+                        '{"url_to": "<URL>", "title_target": "Signup", "links_to_target": 6711}',
                     ],
                 },
             ),
@@ -1423,7 +1421,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about domains linked from the target",
                     "examples": [
                         '{"domain": "<DOMAIN>", "domain_rating": 83.0, "dofollow_linked_domains": 20, "linked_pages": 45}',
-                        '{"domain": "<DOMAIN>", "domain_rating": 77.0, "dofollow_linked_domains": 15, "linked_pages": 32}'
+                        '{"domain": "<DOMAIN>", "domain_rating": 77.0, "dofollow_linked_domains": 15, "linked_pages": 32}',
                     ],
                 },
             ),
@@ -1472,7 +1470,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about outgoing external anchors",
                     "examples": [
                         '{"anchor": "digital marketing", "dofollow_links": 12, "linked_domains": 8, "linked_pages": 15, "links_from_target": 24}',
-                        '{"anchor": "SEO guide", "dofollow_links": 8, "linked_domains": 6, "linked_pages": 9, "links_from_target": 17}'
+                        '{"anchor": "SEO guide", "dofollow_links": 8, "linked_domains": 6, "linked_pages": 9, "links_from_target": 17}',
                     ],
                 },
             ),
@@ -1521,7 +1519,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about outgoing internal anchors",
                     "examples": [
                         '{"anchor": "contact us", "dofollow_links": 45, "linked_pages": 1, "links_from_target": 78}',
-                        '{"anchor": "pricing", "dofollow_links": 38, "linked_pages": 1, "links_from_target": 62}'
+                        '{"anchor": "pricing", "dofollow_links": 38, "linked_pages": 1, "links_from_target": 62}',
                     ],
                 },
             ),
@@ -1588,7 +1586,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about keyword metrics",
                     "examples": [
                         '{"keyword": "word count", "difficulty": 84, "volume": 192000}',
-                        '{"keyword": "syllable counter", "difficulty": 49, "volume": 32000}'
+                        '{"keyword": "syllable counter", "difficulty": 49, "volume": 32000}',
                     ],
                 },
             ),
@@ -1628,7 +1626,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about search volume history",
                     "examples": [
                         '{"date": "2023-01-01T00:00:00Z", "volume": 192000}',
-                        '{"date": "2023-02-01T00:00:00Z", "volume": 188000}'
+                        '{"date": "2023-02-01T00:00:00Z", "volume": 188000}',
                     ],
                 },
             ),
@@ -1660,7 +1658,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about search volume by country",
                     "examples": [
                         '{"country": "US", "volume": 192000}',
-                        '{"country": "CA", "volume": 32000}'
+                        '{"country": "CA", "volume": 32000}',
                     ],
                 },
             ),
@@ -1719,7 +1717,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about matching terms",
                     "examples": [
                         '{"keyword": "word counter tool", "difficulty": 72, "volume": 68000}',
-                        '{"keyword": "character count tool", "difficulty": 65, "volume": 41000}'
+                        '{"keyword": "character count tool", "difficulty": 65, "volume": 41000}',
                     ],
                 },
             ),
@@ -1778,7 +1776,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about related terms",
                     "examples": [
                         '{"keyword": "word count checker", "difficulty": 76, "volume": 82000}',
-                        '{"keyword": "letter counter", "difficulty": 52, "volume": 24000}'
+                        '{"keyword": "letter counter", "difficulty": 52, "volume": 24000}',
                     ],
                 },
             ),
@@ -1827,7 +1825,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing data about search suggestions",
                     "examples": [
                         '{"keyword": "word count in google docs", "difficulty": 45, "volume": 38000}',
-                        '{"keyword": "free word count tool", "difficulty": 56, "volume": 29000}'
+                        '{"keyword": "free word count tool", "difficulty": 56, "volume": 29000}',
                     ],
                 },
             ),
@@ -1937,7 +1935,7 @@ def create_server(user_id, api_key=None):
             # Clean up response by removing status code
             if "_status_code" in response:
                 del response["_status_code"]
-                
+
             # Simple approach: Check every value in the response to find arrays to iterate
             for key, value in response.items():
                 if isinstance(value, list) and value:  # If we find a non-empty array
@@ -1946,7 +1944,7 @@ def create_server(user_id, api_key=None):
                         TextContent(type="text", text=json.dumps(item, indent=2))
                         for item in value
                     ]
-            
+
             # If no arrays found or arrays were empty, return the whole response
             return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
