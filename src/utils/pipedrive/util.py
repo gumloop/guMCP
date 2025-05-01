@@ -110,7 +110,7 @@ def authenticate_and_save_credentials(
     )
 
 
-async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
+async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> dict:
     """
     Retrieve (or refresh if needed) the access token for Pipedrive.
 
@@ -120,7 +120,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         api_key: Optional API key (used by auth client abstraction).
 
     Returns:
-        A valid access token string.
+        A valid dictionary of credentials.
     """
     return await refresh_token_if_needed(
         user_id=user_id,

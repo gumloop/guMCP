@@ -85,6 +85,9 @@ class PipedriveClient:
         if response.status_code in [200, 201]:
             return response.json()
         elif response.status_code in [204, 410]:
+            # Handle empty responses
+            if not response.content:
+                return {"status": "success", "data": {}}
             return {"status": "success", "data": response.json().get("data", {})}
         else:
             logger.error(f"Error: {response.status_code} - {response.text}")
