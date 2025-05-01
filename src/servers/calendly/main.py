@@ -300,6 +300,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of strings describing found event types, including name, duration in minutes, active status, scheduling URL, and ID.",
+                    "examples": [
+                        "Found 1 event types:\n\n- 30 Minute Meeting (30 min)\n  Active: Yes\n  Scheduling URL: <URL>\n  ID: <ID>\n"
+                    ],
+                },
             ),
             Tool(
                 name="get_availability",
@@ -321,6 +329,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["event_type_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of strings representing available time slots per date between provided start and end dates.",
+                    "examples": [
+                        "Available times between <DATE> and <DATE>:\n\n<DATE>:\n  - <TIME>\n  - <TIME>\n\n<DATE>:\n  - <TIME>\n  - <TIME>\n"
+                    ],
                 },
             ),
             Tool(
@@ -344,6 +360,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of strings describing scheduled events, including name, status, time range, location, and ID.",
+                    "examples": [
+                        "Found 1 active events:\n\n- 30 Minute Meeting\n  Status: active\n  Time: <START_TIME> to <END_TIME>\n  Location: <LOCATION>\n  ID: <ID>\n"
+                    ],
+                },
             ),
             Tool(
                 name="cancel_event",
@@ -362,6 +386,12 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["event_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of strings confirming event cancellation or reporting status.",
+                    "examples": ["Successfully canceled event: <EVENT_NAME>"],
+                },
             ),
             Tool(
                 name="create_scheduling_link",
@@ -375,6 +405,12 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["event_type_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of strings containing the single-use scheduling link.",
+                    "examples": ["Scheduling link created:\n\n<URL>"],
                 },
             ),
         ]
