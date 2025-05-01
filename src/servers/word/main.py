@@ -286,7 +286,8 @@ def create_server(user_id, api_key=None):
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing Word documents with their metadata including document IDs, names, web URLs, modification dates, and file sizes",
                     "examples": [
-                        '[{"document_id":"12345","name":"Document1.docx","web_url":"https://example.com/doc1.docx","last_modified":"2023-07-15T10:30:00Z","created":"2023-07-01T09:15:00Z","size":25600},{"document_id":"67890","name":"Document2.docx","web_url":"https://example.com/doc2.docx","last_modified":"2023-07-20T14:45:00Z","created":"2023-07-05T11:30:00Z","size":32768}]'
+                        '{"id":"12345","name":"Document1.docx","web_url":"https://example.com/doc1.docx","last_modified":"2023-07-15T10:30:00Z","created":"2023-07-01T09:15:00Z","size":25600}',
+                        '{"id":"67890","name":"Document2.docx","web_url":"https://example.com/doc2.docx","last_modified":"2023-07-20T14:45:00Z","created":"2023-07-05T11:30:00Z","size":32768}',
                     ],
                 },
             ),
@@ -316,7 +317,7 @@ def create_server(user_id, api_key=None):
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing details of the newly created Word document including its ID, name, browser access URL, initial content, and storage location type",
                     "examples": [
-                        '[{"created_file_id":"12345","name":"Test Document.docx","web_url":"https://example.com/test-document.docx","content":"","is_sharepoint":false}]'
+                        '{"created_file_id":"12345","name":"Test Document.docx","web_url":"https://example.com/test-document.docx","content":"","is_sharepoint":false}'
                     ],
                 },
             ),
@@ -338,7 +339,7 @@ def create_server(user_id, api_key=None):
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing full text content of the document along with metadata including file ID, name, content size in bytes, and last modification timestamp",
                     "examples": [
-                        '[{"file_id":"12345","name":"Test Document.docx","content":"Example document content with multiple paragraphs and formatting","size":36582,"last_modified":"2023-04-29T19:30:16Z"}]'
+                        '{"file_id":"12345","name":"Test Document.docx","content":"Example document content with multiple paragraphs and formatting","size":36582,"last_modified":"2023-04-29T19:30:16Z"}'
                     ],
                 },
             ),
@@ -364,7 +365,7 @@ def create_server(user_id, api_key=None):
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing status of the document update operation including file identifier, document name, append confirmation, updated file size, and preview of the appended content",
                     "examples": [
-                        '[{"file_id":"12345","name":"Test Document.docx","appended":true,"size":38950,"content_preview":"Example content that was appended to the document"}]'
+                        '{"file_id":"12345","name":"Test Document.docx","appended":true,"size":38950,"content_preview":"Example content that was appended to the document"}'
                     ],
                 },
             ),
@@ -391,7 +392,8 @@ def create_server(user_id, api_key=None):
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing search query results with matching documents, the ID of the first result (if any), and whether the documents are stored in SharePoint",
                     "examples": [
-                        '[{"id":"12345","name":"Quarterly Report.docx","web_url":"https://example.com/quarterly-report.docx","last_modified":"2023-06-10T09:15:30Z","created":"2023-06-01T14:20:15Z","size":45678},{"id":"67890","name":"Project Proposal.docx","web_url":"https://example.com/project-proposal.docx","last_modified":"2023-06-15T11:30:45Z","created":"2023-06-05T16:40:20Z","size":38910}]'
+                        '{"id":"12345","name":"Quarterly Report.docx","web_url":"https://example.com/quarterly-report.docx","last_modified":"2023-06-10T09:15:30Z","created":"2023-06-01T14:20:15Z","size":45678}',
+                        '{"id":"67890","name":"Project Proposal.docx","web_url":"https://example.com/project-proposal.docx","last_modified":"2023-06-15T11:30:45Z","created":"2023-06-05T16:40:20Z","size":38910}',
                     ],
                 },
             ),
@@ -413,7 +415,7 @@ def create_server(user_id, api_key=None):
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing document download details including file ID, filename, direct download URL, file size in bytes, browser access URL, and the document's MIME type",
                     "examples": [
-                        '[{"file_id":"12345","name":"Test Document.docx","url":"https://download.example.com/doc12345.docx","size":36582,"web_url":"https://view.example.com/doc12345.docx","mime_type":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}]'
+                        '{"file_id":"12345","name":"Test Document.docx","url":"https://download.example.com/doc12345.docx","size":36582,"web_url":"https://view.example.com/doc12345.docx","mime_type":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}'
                     ],
                 },
             ),
@@ -434,7 +436,7 @@ def create_server(user_id, api_key=None):
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Array of JSON strings containing result of the document deletion operation including confirmation of deletion, the ID of the deleted file, and overall success status",
-                    "examples": ['[{"deleted":true,"file_id":"12345","success":true}]'],
+                    "examples": ['{"deleted":true,"file_id":"12345","success":true}'],
                 },
             ),
         ]
@@ -500,12 +502,15 @@ def create_server(user_id, api_key=None):
                 else:
                     documents = result.get("value", [])
 
-                formatted_result = {"documents": []}
-                if documents and len(documents) > 0:
-                    first_doc = documents[0]
-                    formatted_result = {
-                        "document_id": first_doc.get("id", ""),
-                        "documents": [
+                if not documents:
+                    return [
+                        TextContent(type="text", text=json.dumps({"documents": []}))
+                    ]
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
                             {
                                 "id": item.get("id"),
                                 "name": item.get("name"),
@@ -513,15 +518,11 @@ def create_server(user_id, api_key=None):
                                 "last_modified": item.get("lastModifiedDateTime"),
                                 "created": item.get("createdDateTime"),
                                 "size": item.get("size"),
-                            }
-                            for item in documents
-                        ],
-                    }
-
-                return [
-                    TextContent(
-                        type="text", text=json.dumps(formatted_result, indent=2)
+                            },
+                            indent=2,
+                        ),
                     )
+                    for item in documents
                 ]
 
             elif name == "create_document":
@@ -726,29 +727,28 @@ def create_server(user_id, api_key=None):
                 else:
                     result_items = result.get("value", [])
 
-                formatted_result = {
-                    "documents": [],
-                    "file_id": result_items[0].get("id") if result_items else "",
-                    "is_sharepoint": is_sharepoint,
-                }
-
-                if result_items:
-                    formatted_result["documents"] = [
-                        {
-                            "id": item.get("id"),
-                            "name": item.get("name"),
-                            "web_url": item.get("webUrl"),
-                            "last_modified": item.get("lastModifiedDateTime"),
-                            "created": item.get("createdDateTime"),
-                            "size": item.get("size"),
-                        }
-                        for item in result_items
+                if not result_items:
+                    return [
+                        TextContent(type="text", text=json.dumps({"documents": []}))
                     ]
 
                 return [
                     TextContent(
-                        type="text", text=json.dumps(formatted_result, indent=2)
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "id": item.get("id"),
+                                "name": item.get("name"),
+                                "web_url": item.get("webUrl"),
+                                "last_modified": item.get("lastModifiedDateTime"),
+                                "created": item.get("createdDateTime"),
+                                "size": item.get("size"),
+                                "is_sharepoint": is_sharepoint,
+                            },
+                            indent=2,
+                        ),
                     )
+                    for item in result_items
                 ]
 
             elif name == "download_document":
