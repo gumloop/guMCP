@@ -1,32 +1,10 @@
 import uuid
 import pytest
-from tests.utils.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
 
 # Generate a unique form name for testing
 form_name = f"test_form_{str(uuid.uuid4())[:4]}"
 
-RESOURCE_TESTS = [
-    {
-        "name": "list_resources",
-        "expected_keywords": ["resources"],
-        "regex_extractors": {
-            "resource_uri": r'"?uri"?[:\s]+"?(gforms://form/[^"]+)"?',
-            "resource_name": r'"?name"?[:\s]+"?([^"]+)"?',
-        },
-        "description": "list Google Forms resources and extract a resource URI",
-    },
-    {
-        "name": "read_resource",
-        "args_template": 'with uri="{resource_uri}"',
-        "expected_keywords": ["contents"],
-        "regex_extractors": {
-            "document_id": r'"?id"?[:\s]+"?([^"]+)"?',
-            "document_name": r'"?name"?[:\s]+"?([^"]+)"?',
-        },
-        "description": "read a Google Form resource and extract document details",
-        "depends_on": ["resource_uri"],
-    },
-]
 
 TOOL_TESTS = [
     {
@@ -137,10 +115,11 @@ def context():
     return SHARED_CONTEXT
 
 
-@pytest.mark.parametrize("test_config", RESOURCE_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
-async def test_gforms_resource(client, context, test_config):
-    return await run_tool_test(client, context, test_config)
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response
 
 
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
@@ -148,21 +127,3 @@ async def test_gforms_resource(client, context, test_config):
 async def test_gforms_tool(client, context, test_config):
     return await run_tool_test(client, context, test_config)
 
-
-@pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading a resource from Google Forms"""
-    list_response = await client.list_resources()
-
-    form_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("gforms://form/")
-    ]
-
-    if len(form_resource_uri) > 0:
-        form_resource_uri = form_resource_uri[0]
-        response = await client.read_resource(form_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for form passed.")

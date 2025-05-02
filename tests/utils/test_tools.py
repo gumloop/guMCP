@@ -7,20 +7,8 @@ def get_test_id(test_config):
     return f"{test_config['name']}_{hash(test_config['description']) % 1000}"
 
 
-def validate_resource_uri(uri):
-    """
-    Validates that a resource URI follows the expected format: {server_id}://{resource_type}/{resource_id}
-    Returns a tuple of (is_valid, components) where components is (server_id, resource_type, resource_id)
-    """
-    pattern = r"^([a-zA-Z0-9_-]+)://([a-zA-Z0-9_-]+)/(.+)$"
-    match = re.match(pattern, uri)
-    if not match:
-        return False, None
-    return True, match.groups()
-
-
 @pytest.mark.asyncio
-async def run_tool_test(client, context, test_config):
+async def run_tool_test(client, context: dict, test_config: dict) -> dict:
     """
     Common test function for running tool tests across different servers.
 
@@ -28,6 +16,9 @@ async def run_tool_test(client, context, test_config):
         client: The client fixture
         context: Module-scoped context dictionary to store test values
         test_config: Configuration for the specific test to run
+
+    Returns:
+        Updated context dictionary with test results
     """
     if test_config.get("skip", False):
         pytest.skip(f"Test {test_config['name']} marked to skip")
@@ -111,17 +102,34 @@ async def run_tool_test(client, context, test_config):
             if match and len(match.groups()) > 0:
                 context[key] = match.group(1).strip()
 
-    should_validate = test_config.get("validate_resource_uri", False) or (
-        tool_name in ["list_resources", "read_resource"] and "resource_uri" in context
-    )
-
-    if should_validate and "resource_uri" in context:
-        is_valid, components = validate_resource_uri(context["resource_uri"])
-        if is_valid:
-            context["resource_server"] = components[0]
-            context["resource_type"] = components[1]
-            context["resource_id"] = components[2]
-        else:
-            pytest.fail(f"Invalid resource URI format: {context['resource_uri']}")
-
     return context
+
+
+@pytest.mark.asyncio
+async def run_resources_test(client):
+    """
+    Generic test function for list_resources and read_resource handlers.
+    """
+    # List resources
+    response = await client.list_resources()
+    assert (
+        response
+        and hasattr(response, "resources")
+        and isinstance(response.resources, list)
+    ), f"Invalid list_resources response: {response}"
+    if not response.resources:
+        pytest.skip("No resources found")
+
+    # Test only the first resource
+    resource = response.resources[0]
+    assert (
+        isinstance(resource.name, str) and resource.name
+    ), f"Invalid resource name for URI {resource.uri}"
+
+    contents = await client.read_resource(resource.uri)
+    assert hasattr(contents, "contents") and isinstance(
+        contents.contents, list
+    ), f"Invalid read_resource response for {resource.uri}"
+    assert contents.contents, f"No content returned for {resource.uri}"
+
+    return response

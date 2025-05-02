@@ -272,6 +272,14 @@ def create_server(user_id, api_key=None):
                     "type": "object",
                     "properties": {},
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing user profile information",
+                    "examples": [
+                        '{"did":"did:plc:<ID>","handle":"user.bsky.social","displayName":"User Name","description":"User bio description","avatar":"https://<URL>/avatar.jpg","indexedAt":"2023-04-01T12:34:56.789Z","viewer":{"muted":false,"blockedBy":false},"labels":[]}'
+                    ],
+                },
             ),
             types.Tool(
                 name="search_posts",
@@ -294,6 +302,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["query"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing search results with posts and cursor for pagination",
+                    "examples": [
+                        '{"cursor":"<CURSOR>","hitsTotal":120,"posts":[{"uri":"at://<URI>","cid":"<CID>","value":{"text":"Example post content","createdAt":"2023-06-15T14:22:33.456Z"},"author":{"did":"did:plc:<ID>","handle":"user.bsky.social","displayName":"User Name","avatar":"https://<URL>/avatar.jpg"},"indexedAt":"2023-06-15T14:22:33.789Z","replyCount":5,"repostCount":10,"likeCount":25}]}'
+                    ],
                 },
             ),
             types.Tool(
@@ -318,6 +334,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing profile search results with actors and cursor for pagination",
+                    "examples": [
+                        '{"cursor":"<CURSOR>","actors":[{"did":"did:plc:<ID>","handle":"user.bsky.social","displayName":"User Name","description":"User bio","avatar":"https://<URL>/avatar.jpg","indexedAt":"2023-05-10T08:15:30.123Z","viewer":{"muted":false,"blockedBy":false},"labels":[]}]}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_liked_posts",
@@ -335,6 +359,14 @@ def create_server(user_id, api_key=None):
                             "description": "Pagination cursor for next page of results",
                         },
                     },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing liked posts with feed and cursor for pagination",
+                    "examples": [
+                        '{"cursor":"<CURSOR>","feed":[{"post":{"uri":"at://<URI>","cid":"<CID>","author":{"did":"did:plc:<ID>","handle":"author.bsky.social","displayName":"Author Name"},"record":{"text":"Post content here","createdAt":"2023-07-20T16:45:12.345Z"},"likeCount":42,"replyCount":8},"reason":{"$type":"app.bsky.feed.defs#reasonLike","by":{"did":"did:plc:<ID>","handle":"user.bsky.social"},"indexedAt":"2023-07-21T10:11:12.345Z"}}]}'
+                    ],
                 },
             ),
             types.Tool(
@@ -354,6 +386,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing follow list with users and cursor for pagination",
+                    "examples": [
+                        '{"cursor":"<CURSOR>","follows":[{"did":"did:plc:<ID>","handle":"user.bsky.social","displayName":"User Name","description":"User bio","avatar":"https://<URL>/avatar.jpg","indexedAt":"2023-05-10T08:15:30.123Z","viewer":{"following":true,"followedBy":false},"labels":[]}]}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_posts",
@@ -371,6 +411,14 @@ def create_server(user_id, api_key=None):
                             "description": "Pagination cursor for next page of results",
                         },
                     },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing user posts with feed and cursor for pagination",
+                    "examples": [
+                        '{"cursor":"<CURSOR>","feed":[{"post":{"uri":"at://<URI>","cid":"<CID>","author":{"did":"did:plc:<ID>","handle":"user.bsky.social","displayName":"User Name"},"record":{"text":"Post content here","createdAt":"2023-08-05T09:30:45.678Z"},"indexedAt":"2023-08-05T09:30:46.789Z","likeCount":15,"replyCount":3}}]}'
+                    ],
                 },
             ),
             types.Tool(
@@ -405,6 +453,12 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["text"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing information about the created post",
+                    "examples": ['{"uri":"at://<URI>","cid":"<CID>"}'],
+                },
             ),
             types.Tool(
                 name="delete_post",
@@ -418,6 +472,12 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["post_uri"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing result of the delete operation",
+                    "examples": ["{}"],
                 },
             ),
             types.Tool(
@@ -437,6 +497,12 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["handle"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing information about the follow operation",
+                    "examples": ['{"uri":"at://<URI>","cid":"<CID>"}'],
+                },
             ),
             types.Tool(
                 name="unfollow_user",
@@ -450,6 +516,12 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["handle"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing result of the unfollow operation",
+                    "examples": ['"Successfully unfollowed @user.bsky.social"'],
                 },
             ),
             types.Tool(
@@ -469,6 +541,12 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["handle"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing result of the mute operation",
+                    "examples": ['"User did:plc:<ID> muted successfully."'],
+                },
             ),
             types.Tool(
                 name="unmute_user",
@@ -486,6 +564,12 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["handle"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing result of the unmute operation",
+                    "examples": ['"User did:plc:<ID> unmuted successfully."'],
                 },
             ),
             types.Tool(
@@ -509,6 +593,12 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["handle", "reason"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing information about the block operation",
+                    "examples": ['{"uri":"at://<URI>","cid":"<CID>"}'],
+                },
             ),
             types.Tool(
                 name="unblock_user",
@@ -523,6 +613,12 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["handle"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON string containing result of the unblock operation",
+                    "examples": ['"Successfully unblocked @user.bsky.social"'],
                 },
             ),
         ]

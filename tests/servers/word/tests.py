@@ -1,30 +1,7 @@
 import pytest
 import random
-from tests.utils.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
 
-
-RESOURCE_TESTS = [
-    {
-        "name": "list_resources",
-        "expected_keywords": ["resources"],
-        "regex_extractors": {
-            "resource_uri": r'"?uri"?[:\s]+"?(word://file/[^"]+)"?',
-            "resource_name": r'"?name"?[:\s]+"?([^"]+)"?',
-        },
-        "description": "list Word document resources and extract a resource URI",
-    },
-    {
-        "name": "read_resource",
-        "args_template": 'with uri="{resource_uri}"',
-        "expected_keywords": ["contents"],
-        "regex_extractors": {
-            "document_id": r'"?id"?[:\s]+"?([^"]+)"?',
-            "document_name": r'"?name"?[:\s]+"?([^"]+)"?',
-        },
-        "description": "read a Word document resource and extract document details",
-        "depends_on": ["resource_uri"],
-    },
-]
 
 TOOL_TESTS = [
     {
@@ -93,12 +70,6 @@ def context():
     return SHARED_CONTEXT
 
 
-@pytest.mark.parametrize("test_config", RESOURCE_TESTS, ids=get_test_id)
-@pytest.mark.asyncio
-async def test_word_resource(client, context, test_config):
-    return await run_tool_test(client, context, test_config)
-
-
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_word_tool(client, context, test_config):
@@ -106,34 +77,7 @@ async def test_word_tool(client, context, test_config):
 
 
 @pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading a Word document resource"""
-    response = await client.list_resources()
-
-    if not (response and hasattr(response, "resources") and len(response.resources)):
-        pytest.skip("No Word resources found to test read_resource functionality")
-        return
-
-    word_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("word://file/")),
-        None,
-    )
-
-    if not word_resource:
-        pytest.skip("No Word resources found to test read_resource functionality")
-        return
-
-    response = await client.read_resource(word_resource.uri)
-    assert response.contents, "Response should contain Word document data"
-    assert response.contents[0].mimeType == "application/json", "Expected JSON response"
-
-    import json
-
-    content_data = json.loads(response.contents[0].text)
-
-    if "error" in content_data:
-        pytest.fail(f"Error reading document: {content_data.get('error')}")
-
-    assert "id" in content_data, "Response should include document ID"
-    assert "name" in content_data, "Response should include document name"
-    assert "webUrl" in content_data, "Response should include webUrl"
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response

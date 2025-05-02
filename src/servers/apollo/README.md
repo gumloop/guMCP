@@ -12,7 +12,7 @@ guMCP server implementation for interacting with Apollo.io for sales prospecting
 To generate an Apollo.io API key, follow these steps:
 
 1. Log in to your [Apollo.io account](https://www.apollo.io/)
-2. Navigate to Settings > API Keys
+2. Navigate to Settings > Integrations > API > Connect
 3. Choose between two types of API keys:
    - **Regular API Key**: For basic operations like search and enrichment
    - **Master API Key**: For advanced operations requiring elevated permissions

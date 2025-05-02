@@ -2,7 +2,7 @@ import pytest
 import re
 import random
 import string
-from tests.utils.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
 
 
 TOOL_TESTS = [
@@ -165,51 +165,12 @@ def context():
     return SHARED_CONTEXT
 
 
+@pytest.mark.asyncio
+async def test_resources(client):
+    return await run_resources_test(client)
+
+
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_excel_tool(client, context, test_config):
     return await run_tool_test(client, context, test_config)
-
-
-@pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading an Excel workbook resource"""
-    # First list resources to get a valid Excel file
-    response = await client.list_resources()
-    assert (
-        response and hasattr(response, "resources") and len(response.resources)
-    ), f"Invalid list resources response: {response}"
-
-    # Find the first Excel file resource
-    excel_resource = next(
-        (r for r in response.resources if str(r.uri).startswith("excel://file/")),
-        None,
-    )
-
-    # Skip test if no Excel resources found
-    if not excel_resource:
-        pytest.skip("No Excel resources found to test read_resource functionality")
-        return
-
-    # Read Excel file details
-    response = await client.read_resource(excel_resource.uri)
-
-    # Verify response
-    assert response.contents, "Response should contain Excel workbook data"
-    assert response.contents[0].mimeType == "application/json", "Expected JSON response"
-
-    # Parse the JSON content
-    import json
-
-    content_text = response.contents[0].text
-    content_data = json.loads(content_text)
-
-    # Verify basic workbook data
-    assert "id" in content_data, "Response should include workbook ID"
-    assert "name" in content_data, "Response should include workbook name"
-    assert "worksheets" in content_data, "Response should include worksheets data"
-
-    print("Excel workbook data read:")
-    print(f"  - Workbook name: {content_data.get('name')}")
-    print(f"  - Worksheets count: {len(content_data.get('worksheets', []))}")
-    print("✅ Successfully read Excel workbook data")

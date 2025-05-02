@@ -17,10 +17,9 @@ GuMCP server implementation for interacting with the **Browserbase API** for hea
 
 To use Browserbase services, you’ll need both your API key and project ID:
 
-1. Log in to your [Browserbase dashboard](https://app.browserbase.com/)
-2. Navigate to **API Keys** section
-3. Copy your API key
-4. Navigate to **Projects**, and copy your desired **Project ID**
+1. Log in to your [Browserbase dashboard](https://browserbase.com/)
+2. Navigate to **Settings** section
+3. Copy your API key and Project ID
 
 ---
 

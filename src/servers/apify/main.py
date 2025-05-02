@@ -61,6 +61,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing actor creation data",
+                    "examples": [
+                        '{"id": "actor123", "name": "My Actor", "username": "user123", "description": "A test actor"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="build_actor",
@@ -76,6 +84,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["actor_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing actor build data",
+                    "examples": [
+                        '{"id": "build123", "actId": "actor123", "status": "READY", "buildNumber": "0.0.1"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_actors",
@@ -88,6 +104,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing actor data",
+                    "examples": [
+                        '{"id": "actor123", "name": "My Actor", "username": "user123"}',
+                        '{"id": "actor456", "name": "Another Actor", "username": "user456"}',
+                    ],
+                },
             ),
             types.Tool(
                 name="get_actor",
@@ -96,6 +121,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "type": "object",
                     "properties": {"actor_id": {"type": "string"}},
                     "required": ["actor_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing actor details",
+                    "examples": [
+                        '{"id": "actor123", "name": "My Actor", "username": "user123", "description": "A test actor"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -109,6 +142,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["actor_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing actor run data",
+                    "examples": [
+                        '{"id": "run123", "actId": "actor123", "status": "READY", "startedAt": "2023-05-01T12:34:56.789Z"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_actor_runs",
@@ -117,6 +158,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "type": "object",
                     "properties": {"actor_id": {"type": "string"}},
                     "required": ["actor_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing actor runs data",
+                    "examples": [
+                        '{"id": "run123", "actId": "actor123", "status": "SUCCEEDED"}',
+                        '{"id": "run456", "actId": "actor123", "status": "RUNNING"}',
+                    ],
                 },
             ),
             types.Tool(
@@ -127,12 +177,29 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "properties": {"actor_id": {"type": "string"}},
                     "required": ["actor_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing operation result",
+                    "examples": [
+                        '{"status": "success", "message": "delete_actor completed successfully"}'
+                    ],
+                },
             ),
             # Tasks
             types.Tool(
                 name="list_tasks",
                 description="List all Tasks",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing task data",
+                    "examples": [
+                        '{"id": "task123", "name": "My Task", "actId": "actor123"}',
+                        '{"id": "task456", "name": "Another Task", "actId": "actor456"}',
+                    ],
+                },
             ),
             types.Tool(
                 name="get_task",
@@ -141,6 +208,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "type": "object",
                     "properties": {"task_id": {"type": "string"}},
                     "required": ["task_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing task details",
+                    "examples": [
+                        '{"id": "task123", "name": "My Task", "actId": "actor123", "input": {"key": "value"}}'
+                    ],
                 },
             ),
             types.Tool(
@@ -154,6 +229,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["actor_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing task creation data",
+                    "examples": [
+                        '{"id": "task123", "actId": "actor123", "name": "My Task", "username": "user123"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="update_task",
@@ -166,6 +249,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["task_id", "body"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing updated task data",
+                    "examples": [
+                        '{"id": "task123", "name": "Updated Task", "actId": "actor123", "description": "Updated description"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_task",
@@ -174,6 +265,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "type": "object",
                     "properties": {"task_id": {"type": "string"}},
                     "required": ["task_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing operation result",
+                    "examples": [
+                        '{"status": "success", "message": "delete_task completed successfully"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -187,6 +286,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["task_id", "body"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing updated task input",
+                    "examples": ['{"key1": "value1", "key2": "value2", "key3": 123}'],
+                },
             ),
             types.Tool(
                 name="run_task",
@@ -199,6 +304,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["task_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing task run data",
+                    "examples": [
+                        '{"id": "run123", "actId": "actor123", "actorTaskId": "task123", "status": "READY"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="list_task_runs",
@@ -208,12 +321,30 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "properties": {"task_id": {"type": "string"}},
                     "required": ["task_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing task runs data",
+                    "examples": [
+                        '{"id": "run123", "actId": "actor123", "status": "SUCCEEDED"}',
+                        '{"id": "run456", "actId": "actor123", "status": "RUNNING"}',
+                    ],
+                },
             ),
             # Datasets
             types.Tool(
                 name="list_datasets",
                 description="List all Datasets",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing dataset data",
+                    "examples": [
+                        '{"id": "dataset123", "name": "My Dataset", "itemCount": 42}',
+                        '{"id": "dataset456", "name": "Another Dataset", "itemCount": 100}',
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_dataset",
@@ -222,6 +353,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "type": "object",
                     "properties": {"dataset_id": {"type": "string"}},
                     "required": ["dataset_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing operation result",
+                    "examples": [
+                        '{"status": "success", "message": "delete_dataset completed successfully"}'
+                    ],
                 },
             ),
         ]
@@ -364,55 +503,62 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 raise ValueError(f"Unknown tool: {name}")
 
             if response.status_code == 204:
-                return [
-                    types.TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "status": "success",
-                                "message": f"{name} completed successfully",
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                result = {
+                    "status": "success",
+                    "message": f"{name} completed successfully",
+                }
+                return [types.TextContent(type="text", text=json.dumps(result))]
             elif response.status_code in [200, 201]:
-                return [
-                    types.TextContent(
-                        type="text", text=json.dumps(response.json(), indent=2)
-                    )
-                ]
+                response_json = response.json()
+
+                # Handle response with data field containing items array
+                if isinstance(response_json, dict) and "data" in response_json:
+                    data = response_json["data"]
+
+                    # If data contains items array, return each item separately
+                    if (
+                        isinstance(data, dict)
+                        and "items" in data
+                        and isinstance(data["items"], list)
+                    ):
+                        items = data["items"]
+                        if items:
+                            return [
+                                types.TextContent(type="text", text=json.dumps(item))
+                                for item in items
+                            ]
+                        else:
+                            # Empty array case
+                            return [types.TextContent(type="text", text=json.dumps({}))]
+
+                    # Otherwise return data as a single item
+                    return [types.TextContent(type="text", text=json.dumps(data))]
+
+                # For update_task_input which returns the input directly
+                elif name == "update_task_input":
+                    return [
+                        types.TextContent(type="text", text=json.dumps(response_json))
+                    ]
+
+                # Default case: return the whole response
+                return [types.TextContent(type="text", text=json.dumps(response_json))]
             else:
-                return [
-                    types.TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": {
-                                    "message": f"API Error: {response.text}",
-                                    "statusCode": response.status_code,
-                                }
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {
+                    "error": {
+                        "message": f"API Error: {response.text}",
+                        "statusCode": response.status_code,
+                    }
+                }
+                return [types.TextContent(type="text", text=json.dumps(error))]
 
         except Exception as e:
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "error": {
-                                "Exception": str(e),
-                                "traceback": e.__traceback__.tb_lineno,
-                            }
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            error = {
+                "error": {
+                    "Exception": str(e),
+                    "traceback": e.__traceback__.tb_lineno,
+                }
+            }
+            return [types.TextContent(type="text", text=json.dumps(error))]
 
     return server
 
