@@ -126,4 +126,3 @@ async def test_resources(client, context):
 @pytest.mark.asyncio
 async def test_gforms_tool(client, context, test_config):
     return await run_tool_test(client, context, test_config)
-
