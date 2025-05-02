@@ -8,24 +8,44 @@ Each server should have a test file (`tests.py`) in its directory that implement
 
 ### Test Components
 
-- **RESOURCE_TESTS**: Tests for resource operations (e.g., list_resources, read_resource)
-- **TOOL_TESTS**: Tests for server tools (e.g., create_document, read_document)
+- **Resources Test**: Tests for resource operations using `run_resources_test`
+- **Tool Tests**: Tests for server tools using `run_tool_test`
 - **Shared Context**: A dictionary that persists between tests to maintain state
 
-## Test Configuration Format
+## Testing Resources
 
-Both TOOL_TESTS and RESOURCE_TESTS use the same configuration format:
+Resources can be tested using the simplified `run_resources_test` helper:
+
+```python
+from tests.utils.test_tools import run_resources_test
+
+@pytest.mark.asyncio
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response
+```
+
+This helper:
+- Checks for a valid list_resources response
+- Skips if no resources are found
+- Validates the first resource and its read_resource response
+- Stores the first resource URI in context for use in tool tests
+
+## Tool Test Configuration Format
+
+Tool tests use the following configuration format:
 
 ```python
 {
-    "name": "tool_or_resource_operation_name",
+    "name": "tool_name",
     "args_template": "with param1={value1} param2={value2}",  # Optional
     "args": "with static_param=value",  # Optional alternative to args_template
     "expected_keywords": ["keyword1", "keyword2"],  # Must appear in response
     "regex_extractors": {  # Optional, extracts values from response
         "value_name": r'"?field_name"?[:\s]+"?([^"]+)"?',
     },
-    "description": "Describes what this test does",
+    "description": "Describes what this tool does",
     "depends_on": ["value_name"],  # Optional, dependencies from context
     "setup": lambda context: {"key": "value"},  # Optional setup function
     "skip": False  # Optional, skip this test if True
@@ -37,28 +57,17 @@ Both TOOL_TESTS and RESOURCE_TESTS use the same configuration format:
 - Tests can depend on values from previous tests via the `depends_on` list
 - Values are extracted using regex patterns in `regex_extractors`
 - The shared context dictionary persists between tests
+- The first resource URI is available as `first_resource_uri` in context
 
 ## Example
 
 ```python
-RESOURCE_TESTS = [
-    {
-        "name": "list_resources",
-        "expected_keywords": ["resources"],
-        "regex_extractors": {
-            "resource_uri": r'"?uri"?[:\s]+"?(server://type/[^"]+)"?',
-        },
-        "description": "list resources and extract a URI",
-    },
-    {
-        "name": "read_resource",
-        "args_template": 'with uri="{resource_uri}"',
-        "expected_keywords": ["contents"],
-        "description": "read a resource's details",
-        "depends_on": ["resource_uri"],
-    },
-]
+# Import required components
+import pytest
+import random
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
 
+# Define tool tests
 TOOL_TESTS = [
     {
         "name": "create_document",
@@ -78,6 +87,26 @@ TOOL_TESTS = [
         "depends_on": ["created_file_id"],
     },
 ]
+
+# Shared context dictionary
+SHARED_CONTEXT = {}
+
+@pytest.fixture(scope="module")
+def context():
+    return SHARED_CONTEXT
+
+# Test resources
+@pytest.mark.asyncio
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response
+
+# Test tools
+@pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
+@pytest.mark.asyncio
+async def test_tool(client, context, test_config):
+    return await run_tool_test(client, context, test_config)
 ```
 
 ## Running Tests
