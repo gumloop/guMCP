@@ -6,6 +6,7 @@ def get_test_id(test_config):
     """Generate a unique test ID based on the test name and description hash"""
     return f"{test_config['name']}_{hash(test_config['description']) % 1000}"
 
+
 @pytest.mark.asyncio
 async def run_tool_test(client, context: dict, test_config: dict) -> dict:
     """
@@ -15,7 +16,7 @@ async def run_tool_test(client, context: dict, test_config: dict) -> dict:
         client: The client fixture
         context: Module-scoped context dictionary to store test values
         test_config: Configuration for the specific test to run
-        
+
     Returns:
         Updated context dictionary with test results
     """
@@ -111,16 +112,24 @@ async def run_resources_test(client):
     """
     # List resources
     response = await client.list_resources()
-    assert response and hasattr(response, "resources") and isinstance(response.resources, list), f"Invalid list_resources response: {response}"
+    assert (
+        response
+        and hasattr(response, "resources")
+        and isinstance(response.resources, list)
+    ), f"Invalid list_resources response: {response}"
     if not response.resources:
         pytest.skip("No resources found")
 
     # Test only the first resource
     resource = response.resources[0]
-    assert isinstance(resource.name, str) and resource.name, f"Invalid resource name for URI {resource.uri}"
+    assert (
+        isinstance(resource.name, str) and resource.name
+    ), f"Invalid resource name for URI {resource.uri}"
 
     contents = await client.read_resource(resource.uri)
-    assert hasattr(contents, "contents") and isinstance(contents.contents, list), f"Invalid read_resource response for {resource.uri}"
+    assert hasattr(contents, "contents") and isinstance(
+        contents.contents, list
+    ), f"Invalid read_resource response for {resource.uri}"
     assert contents.contents, f"No content returned for {resource.uri}"
 
     return response

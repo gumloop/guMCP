@@ -164,12 +164,13 @@ SHARED_CONTEXT = {}
 def context():
     return SHARED_CONTEXT
 
+
 @pytest.mark.asyncio
 async def test_resources(client):
     return await run_resources_test(client)
+
 
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_excel_tool(client, context, test_config):
     return await run_tool_test(client, context, test_config)
-

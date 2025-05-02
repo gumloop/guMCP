@@ -64,6 +64,7 @@ TOOL_TESTS = [
 # Shared context dictionary at module level
 SHARED_CONTEXT = {}
 
+
 @pytest.fixture(scope="module")
 def context():
     return SHARED_CONTEXT
@@ -80,5 +81,3 @@ async def test_resources(client, context):
     response = await run_resources_test(client)
     context["first_resource_uri"] = response.resources[0].uri
     return response
-
-
