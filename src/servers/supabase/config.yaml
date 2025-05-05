@@ -12,6 +12,15 @@ tools:
     description: "Get details of a specific Supabase project by its reference ID"
   - name: "create_project"
     description: "Create a new Supabase project in an organization"
+  # DATA MANAGEMENT TOOLS
+  - name: "read_table_data"
+    description: "Read data from a table in a Supabase project"
+  - name: "create_table_data"
+    description: "Create new rows in a table in a Supabase project"
+  - name: "update_table_data"
+    description: "Update rows in a table in a Supabase project"
+  - name: "delete_table_data"
+    description: "Delete rows from a table in a Supabase project"
   # STORAGE MANAGEMENT TOOLS
   - name: "create_storage_bucket"
     description: "Create a new storage bucket in a Supabase project"

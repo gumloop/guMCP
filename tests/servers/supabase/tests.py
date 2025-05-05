@@ -1,6 +1,6 @@
 import pytest
 import uuid
-from tests.utils.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
 
 # Global configuration - set these before running tests
 PROJECT_REF = ""  # Replace with your actual project reference ID
@@ -98,6 +98,50 @@ TOOL_TESTS = [
         },
         "depends_on": ["organization_id"],
     },
+    # DATA MANAGEMENT TOOLS TESTS
+    # NOTE: You need to have a 'student' table created in your project before running these tests
+    # with columns: id (bigint), created_at (timestamp with timezone), name (varchar), age (bigint), city (text)
+    {
+        "name": "read_table_data",
+        "args_template": 'with project_ref="{0}" supabase_key="{1}" table_name="student" select="*"'.format(
+            PROJECT_REF, SUPABASE_KEY
+        ),
+        "expected_keywords": ["rows", "student"],
+        "description": "read data from the student table",
+    },
+    {
+        "name": "create_table_data",
+        "args_template": (
+            'with project_ref="{0}" supabase_key="{1}" table_name="student" '
+            'data={{"name": "Test Student {{random_id}}", "age": 21, "city": "Test City"}}'
+        ).format(PROJECT_REF, SUPABASE_KEY),
+        "expected_keywords": ["inserted", "student"],
+        "regex_extractors": {
+            "student_id": r'"?id"?[:\s]+(\d+)',
+        },
+        "description": "insert a new row into the student table",
+        "setup": lambda context: {"random_id": str(uuid.uuid4().hex[:8])},
+    },
+    {
+        "name": "update_table_data",
+        "args_template": (
+            'with project_ref="{0}" supabase_key="{1}" table_name="student" '
+            'data={{"city": "Updated City"}} filters={{"id": {{student_id}}}}'
+        ).format(PROJECT_REF, SUPABASE_KEY),
+        "expected_keywords": ["updated", "student"],
+        "description": "update a row in the student table",
+        "depends_on": ["student_id"],
+    },
+    {
+        "name": "delete_table_data",
+        "args_template": (
+            'with project_ref="{0}" supabase_key="{1}" table_name="student" '
+            'filters={{"id": {{student_id}}}}'
+        ).format(PROJECT_REF, SUPABASE_KEY),
+        "expected_keywords": ["deleted", "student"],
+        "description": "delete a row from the student table",
+        "depends_on": ["student_id"],
+    },
 ]
 
 # Shared context dictionary at module level
@@ -117,20 +161,7 @@ async def test_supabase_tool(client, context, test_config):
 
 
 @pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading a resource from Supabase"""
-    list_response = await client.list_resources()
-    print(f"List response: {list_response}")
-
-    form_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("supabase://project/")
-    ]
-
-    if len(form_resource_uri) > 0:
-        form_resource_uri = form_resource_uri[0]
-        response = await client.read_resource(form_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for form passed.")
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response

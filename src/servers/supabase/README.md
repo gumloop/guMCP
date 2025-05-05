@@ -34,7 +34,7 @@ guMCP server implementation for interacting with Supabase for project management
 
 ### 🔑 Obtaining Project ID and Service Role Key
 
-For storage operations, you'll need to use your project's reference ID and service role API key:
+For storage operations and data management tools, you'll need to use your project's reference ID and API key:
 
 1. **Log in to your [Supabase Dashboard](https://app.supabase.com/)**
 2. Select the **Project** you want to work with
@@ -43,9 +43,10 @@ For storage operations, you'll need to use your project's reference ID and servi
 5. In the **Project API Keys** section, you'll find:
    - **Project Reference ID**: The unique identifier for your project (displayed in the URL and in the Project Settings)
    - **Project API Keys**: 
-     - Look for the key labeled **service_role secret** 
-     - Click the **Copy** button next to it
-6. Save these values to use with the storage tools (create_storage_bucket, list_storage_buckets, etc.)
+     - **anon public**: For client-side operations with RLS policies
+     - **service_role secret**: For admin operations (required for storage and some data operations)
+     - Click the **Copy** button next to the appropriate key
+6. Save these values to use with the tools
 
 > ⚠️ **Important**: The service_role key has admin rights to your entire project. Never expose it in client-side code or public repositories.
 
@@ -95,6 +96,19 @@ This server exposes tools grouped into the following categories:
 - `get_project` – Get details of a specific project
 - `create_project` – Create a new Supabase project
 
+#### 📊 Data Management
+
+- `read_table_data` – Read data from a table in a Supabase project
+- `create_table_data` – Create new rows in a table in a Supabase project
+- `update_table_data` – Update rows in a table in a Supabase project
+- `delete_table_data` – Delete rows from a table in a Supabase project
+
+> ⚠️ **Important**: Tables must be created manually through the Supabase Dashboard. The data management tools only allow you to interact with existing tables. To create a table:
+> 1. Navigate to the **Table Editor** section in your Supabase project
+> 2. Click **New Table** and define your table schema
+> 3. Set up appropriate columns with data types and constraints
+> 4. Configure Row Level Security (RLS) policies as needed
+
 #### 🗄️ Storage Management
 
 - `create_storage_bucket` – Create a new storage bucket
@@ -125,15 +139,18 @@ python tests/clients/RemoteMCPTestClient.py --endpoint=http://localhost:8000/sup
 ### 📌 Notes on Supabase API Usage
 
 - The server interacts with Supabase's management API for project/org operations
+- Data management operations use the Supabase PostgreSQL database API
 - Storage operations require a project-specific service_role API key
 - Service_role keys should be used carefully and never exposed in client code
 - The API uses standard REST endpoints for all operations
 - Resource-level permissions apply in Supabase projects
 - For storage operations, bucket-level permissions and RLS policies apply
+- For data operations, Row Level Security (RLS) policies apply
 
 ### ⚠️ Important Security Notes
 
 1. For all storage operations, you must use a service_role key, not an anon key
 2. You can find your service_role key in the Supabase Dashboard under Project Settings → API
 3. Service_role keys have full admin access to your project, so keep them secure
-4. Use RLS policies to secure your storage buckets properly
+4. Use RLS policies to secure your storage buckets and database tables properly
+5. Tables must be created manually through the Supabase Dashboard before using data management tools

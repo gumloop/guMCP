@@ -353,6 +353,157 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     ],
                 },
             ),
+            # DATA MANAGEMENT TOOLS
+            types.Tool(
+                name="read_table_data",
+                description="Read data from a table in a Supabase project",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "project_ref": {
+                            "type": "string",
+                            "description": "The reference ID of the project (required)",
+                        },
+                        "supabase_key": {
+                            "type": "string",
+                            "description": "The Supabase API key for this project (required)",
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "The name of the table to read data from (required)",
+                        },
+                        "select": {
+                            "type": "string",
+                            "description": "Columns to select (default: '*' for all columns)",
+                            "default": "*"
+                        },
+                        "filters": {
+                            "type": "object",
+                            "description": "Optional filters to apply (column name as key, value to filter by as value)",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of rows to return",
+                        }
+                    },
+                    "required": ["project_ref", "supabase_key", "table_name"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the operation results",
+                    "examples": [
+                        '[{"status":"success","data":[{"id":1,"name":"Example"}]}]'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="create_table_data",
+                description="Create new rows in a table in a Supabase project",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "project_ref": {
+                            "type": "string",
+                            "description": "The reference ID of the project (required)",
+                        },
+                        "supabase_key": {
+                            "type": "string",
+                            "description": "The Supabase API key for this project (required)",
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "The name of the table to insert data into (required)",
+                        },
+                        "data": {
+                            "type": ["object", "array"],
+                            "description": "The data to insert. Pass an object to insert a single row or an array to insert multiple rows (required)",
+                        },
+                    },
+                    "required": ["project_ref", "supabase_key", "table_name", "data"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the operation results",
+                    "examples": [
+                        '[{"status":"success","data":[{"id":1,"name":"Example"}]}]'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="update_table_data",
+                description="Update rows in a table in a Supabase project",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "project_ref": {
+                            "type": "string",
+                            "description": "The reference ID of the project (required)",
+                        },
+                        "supabase_key": {
+                            "type": "string",
+                            "description": "The Supabase API key for this project (required)",
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "The name of the table to update data in (required)",
+                        },
+                        "data": {
+                            "type": "object",
+                            "description": "The data to update (column/value pairs) (required)",
+                        },
+                        "filters": {
+                            "type": "object",
+                            "description": "Filters to apply to identify rows to update (column name as key, value to filter by as value) (required)",
+                        },
+                    },
+                    "required": ["project_ref", "supabase_key", "table_name", "data", "filters"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the operation results",
+                    "examples": [
+                        '[{"status":"success","data":[{"id":1,"name":"Updated Example"}]}]'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="delete_table_data",
+                description="Delete rows from a table in a Supabase project",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "project_ref": {
+                            "type": "string",
+                            "description": "The reference ID of the project (required)",
+                        },
+                        "supabase_key": {
+                            "type": "string",
+                            "description": "The Supabase API key for this project (required)",
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "The name of the table to delete data from (required)",
+                        },
+                        "filters": {
+                            "type": "object",
+                            "description": "Filters to apply to identify rows to delete (column name as key, value to filter by as value) (required)",
+                        },
+                    },
+                    "required": ["project_ref", "supabase_key", "table_name", "filters"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the operation results",
+                    "examples": [
+                        '[{"status":"success","data":[{"id":1,"name":"Deleted Example"}]}]'
+                    ],
+                },
+            ),
+            # DATABASE STRUCTURE TOOLS
             types.Tool(
                 name="create_storage_bucket",
                 description="Create a new storage bucket in a Supabase project",
@@ -1008,6 +1159,452 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         types.TextContent(
                             type="text",
                             text=f"Error deleting storage bucket: {error_str}",
+                        )
+                    ]
+
+            elif name == "read_table_data":
+                # Extract required parameters
+                project_ref = arguments.get("project_ref")
+                supabase_key = arguments.get("supabase_key")
+                table_name = arguments.get("table_name")
+                select = arguments.get("select", "*")
+                filters = arguments.get("filters", {})
+                limit = arguments.get("limit")
+                
+                # Validate required parameters
+                if not project_ref or not supabase_key or not table_name:
+                    missing_params = []
+                    if not project_ref:
+                        missing_params.append("project_ref")
+                    if not supabase_key:
+                        missing_params.append("supabase_key")
+                    if not table_name:
+                        missing_params.append("table_name")
+                        
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error: Missing required parameters: {', '.join(missing_params)}",
+                        )
+                    ]
+                
+                try:
+                    # Get or create a Supabase SDK client for this project
+                    supabase = get_or_create_supabase_sdk_client(
+                        project_ref, supabase_key
+                    )
+                    
+                    # Prepare the query
+                    query = supabase.table(table_name).select(select)
+                    
+                    # Apply filters if provided
+                    if filters:
+                        for column, value in filters.items():
+                            query = query.eq(column, value)
+                    
+                    # Apply limit if provided
+                    if limit:
+                        query = query.limit(limit)
+                    
+                    # Execute the query
+                    response = query.execute()
+                    
+                    # Check if the request was successful
+                    if response.data is not None:
+                        rows = response.data
+                        count = len(rows)
+                        
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Successfully retrieved {count} rows from table '{table_name}':\n{json.dumps(rows, indent=2)}",
+                            )
+                        ]
+                    else:
+                        # Handle empty result
+                        if hasattr(response, 'error') and response.error:
+                            return [
+                                types.TextContent(
+                                    type="text",
+                                    text=f"Error reading data from table '{table_name}': {response.error.message}",
+                                )
+                            ]
+                        else:
+                            return [
+                                types.TextContent(
+                                    type="text",
+                                    text=f"No data found in table '{table_name}' with the specified filters.",
+                                )
+                            ]
+                
+                except Exception as e:
+                    error_str = str(e)
+                    logger.error(f"Error reading table data: {error_str}")
+                    
+                    # Check if this is a table not found error
+                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to read data.",
+                            )
+                        ]
+                    
+                    # Check if this is likely an API key permission issue
+                    if (
+                        "403" in error_str
+                        or "unauthorized" in error_str.lower()
+                        or "invalid signature" in error_str.lower()
+                    ):
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
+                            )
+                        ]
+                    
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error reading data from table '{table_name}': {error_str}",
+                        )
+                    ]
+
+            elif name == "create_table_data":
+                # Extract required parameters
+                project_ref = arguments.get("project_ref")
+                supabase_key = arguments.get("supabase_key")
+                table_name = arguments.get("table_name")
+                data = arguments.get("data")
+                
+                # Validate required parameters
+                if not project_ref or not supabase_key or not table_name or data is None:
+                    missing_params = []
+                    if not project_ref:
+                        missing_params.append("project_ref")
+                    if not supabase_key:
+                        missing_params.append("supabase_key")
+                    if not table_name:
+                        missing_params.append("table_name")
+                    if data is None:
+                        missing_params.append("data")
+                        
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error: Missing required parameters: {', '.join(missing_params)}",
+                        )
+                    ]
+                
+                try:
+                    # Get or create a Supabase SDK client for this project
+                    supabase = get_or_create_supabase_sdk_client(
+                        project_ref, supabase_key
+                    )
+                    
+                    # Prepare the query
+                    query = supabase.table(table_name).insert(data)
+                                        
+                    # Execute the query
+                    response = query.execute()
+                    
+                    # Check if the request was successful
+                    if hasattr(response, 'data') and response.data is not None:
+                        rows = response.data
+                        count = len(rows) if isinstance(rows, list) else 1
+                        
+                        operation_type = "inserted"
+                        if isinstance(data, list):
+                            operation_type = f"inserted {len(data)} rows"
+                        else:
+                            operation_type = "inserted row"
+                        
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Successfully {operation_type} into table '{table_name}':\n{json.dumps(rows, indent=2)}",
+                            )
+                        ]
+                    else:
+                        # Handle error or empty result
+                        if hasattr(response, 'error') and response.error:
+                            return [
+                                types.TextContent(
+                                    type="text",
+                                    text=f"Error inserting data into table '{table_name}': {response.error.message}",
+                                )
+                            ]
+                        else:
+                            return [
+                                types.TextContent(
+                                    type="text",
+                                    text=f"Operation completed, but no data was returned from table '{table_name}'.",
+                                )
+                            ]
+                
+                except Exception as e:
+                    error_str = str(e)
+                    logger.error(f"Error inserting table data: {error_str}")
+                    
+                    # Check if this is a table not found error
+                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to insert data.",
+                            )
+                        ]
+                    
+                    # Check if this is a constraint violation error (e.g., duplicate key)
+                    if "duplicate key" in error_str.lower() or "violates" in error_str.lower() and "constraint" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: The data you're trying to insert violates a database constraint. This could be due to a duplicate unique key or other constraint violation: {error_str}",
+                            )
+                        ]
+                    
+                    # Check if this is likely an API key permission issue
+                    if (
+                        "403" in error_str
+                        or "unauthorized" in error_str.lower()
+                        or "invalid signature" in error_str.lower()
+                    ):
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
+                            )
+                        ]
+                    
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error inserting data into table '{table_name}': {error_str}",
+                        )
+                    ]
+
+            elif name == "update_table_data":
+                # Extract required parameters
+                project_ref = arguments.get("project_ref")
+                supabase_key = arguments.get("supabase_key")
+                table_name = arguments.get("table_name")
+                data = arguments.get("data")
+                filters = arguments.get("filters")
+                
+                # Validate required parameters
+                if not project_ref or not supabase_key or not table_name or data is None or not filters:
+                    missing_params = []
+                    if not project_ref:
+                        missing_params.append("project_ref")
+                    if not supabase_key:
+                        missing_params.append("supabase_key")
+                    if not table_name:
+                        missing_params.append("table_name")
+                    if data is None:
+                        missing_params.append("data")
+                    if not filters:
+                        missing_params.append("filters")
+                        
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error: Missing required parameters: {', '.join(missing_params)}",
+                        )
+                    ]
+                
+                try:
+                    # Get or create a Supabase SDK client for this project
+                    supabase = get_or_create_supabase_sdk_client(
+                        project_ref, supabase_key
+                    )
+                    
+                    # Prepare the update query with data
+                    query = supabase.table(table_name).update(data)
+                    
+                    # Apply all filters
+                    for column, value in filters.items():
+                        query = query.eq(column, value)
+                    
+                    # Execute the query
+                    response = query.execute()
+                    
+                    # Check if the request was successful
+                    if hasattr(response, 'data') and response.data is not None:
+                        rows = response.data
+                        count = len(rows) if isinstance(rows, list) else 1
+                        
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Successfully updated {count} rows in table '{table_name}':\n{json.dumps(rows, indent=2)}",
+                            )
+                        ]
+                    else:
+                        # Handle error or empty result
+                        if hasattr(response, 'error') and response.error:
+                            return [
+                                types.TextContent(
+                                    type="text",
+                                    text=f"Error updating data in table '{table_name}': {response.error.message}",
+                                )
+                            ]
+                        else:
+                            return [
+                                types.TextContent(
+                                    type="text",
+                                    text=f"No rows were updated in table '{table_name}'. This could be because no rows matched your filter criteria.",
+                                )
+                            ]
+                
+                except Exception as e:
+                    error_str = str(e)
+                    logger.error(f"Error updating table data: {error_str}")
+                    
+                    # Check if this is a table not found error
+                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to update data.",
+                            )
+                        ]
+                    
+                    # Check if this is a constraint violation error
+                    if "violates" in error_str.lower() and "constraint" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: The update violates a database constraint. This could be due to a foreign key violation or other constraint: {error_str}",
+                            )
+                        ]
+                    
+                    # Check if this is likely an API key permission issue
+                    if (
+                        "403" in error_str
+                        or "unauthorized" in error_str.lower()
+                        or "invalid signature" in error_str.lower()
+                    ):
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
+                            )
+                        ]
+                    
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error updating data in table '{table_name}': {error_str}",
+                        )
+                    ]
+
+            elif name == "delete_table_data":
+                # Extract required parameters
+                project_ref = arguments.get("project_ref")
+                supabase_key = arguments.get("supabase_key")
+                table_name = arguments.get("table_name")
+                filters = arguments.get("filters")
+                
+                # Validate required parameters
+                if not project_ref or not supabase_key or not table_name or not filters:
+                    missing_params = []
+                    if not project_ref:
+                        missing_params.append("project_ref")
+                    if not supabase_key:
+                        missing_params.append("supabase_key")
+                    if not table_name:
+                        missing_params.append("table_name")
+                    if not filters:
+                        missing_params.append("filters")
+                        
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error: Missing required parameters: {', '.join(missing_params)}",
+                        )
+                    ]
+                
+                try:
+                    # Get or create a Supabase SDK client for this project
+                    supabase = get_or_create_supabase_sdk_client(
+                        project_ref, supabase_key
+                    )
+                    
+                    # For safety, require at least one filter to be specified
+                    if not filters:
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text="Error: At least one filter must be specified for delete operations to prevent accidental deletion of all rows.",
+                            )
+                        ]
+                    
+                    # Prepare the delete query
+                    query = supabase.table(table_name).delete()
+                    
+                    # Apply all filters
+                    for column, value in filters.items():
+                        query = query.eq(column, value)
+                    
+                    # Execute the query
+                    response = query.execute()
+                    
+                    # Check if the request was successful
+                    if hasattr(response, 'error') and response.error:
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error deleting data from table '{table_name}': {response.error.message}",
+                            )
+                        ]
+                    
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Successfully deleted data from table '{table_name}' matching the specified filters.",
+                        )
+                    ]
+                
+                except Exception as e:
+                    error_str = str(e)
+                    logger.error(f"Error deleting table data: {error_str}")
+                    
+                    # Check if this is a table not found error
+                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to delete data.",
+                            )
+                        ]
+                    
+                    # Check if this is a constraint violation error (e.g., foreign key constraint)
+                    if "violates" in error_str.lower() and "constraint" in error_str.lower():
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"Error: The delete operation violates a database constraint. This is likely because the data you're trying to delete is referenced by other tables: {error_str}",
+                            )
+                        ]
+                    
+                    # Check if this is likely an API key permission issue
+                    if (
+                        "403" in error_str
+                        or "unauthorized" in error_str.lower()
+                        or "invalid signature" in error_str.lower()
+                    ):
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
+                            )
+                        ]
+                    
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f"Error deleting data from table '{table_name}': {error_str}",
                         )
                     ]
 
