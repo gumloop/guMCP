@@ -157,7 +157,7 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
 
     Args:
         user_id: ID of the user.
-        service_name: Name of the service (webflow).
+        service_name: Name of the service (asana).
         api_key: Optional API key (used by auth client abstraction).
 
     Returns:

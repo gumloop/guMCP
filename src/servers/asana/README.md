@@ -22,7 +22,7 @@ To create an Asana OAuth app and get your credentials, follow these steps:
    - Note down Client ID and Client Secret
    - Add redirect url (`http://localhost:8080`) 
    - provide necessary scopes for the app 
-6. Done, youe app is registered
+6. Done, your app is registered
 
 ## ⚠️ Important Note on OAuth Scopes
 
