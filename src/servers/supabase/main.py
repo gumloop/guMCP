@@ -375,7 +375,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         "select": {
                             "type": "string",
                             "description": "Columns to select (default: '*' for all columns)",
-                            "default": "*"
+                            "default": "*",
                         },
                         "filters": {
                             "type": "object",
@@ -384,7 +384,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         "limit": {
                             "type": "integer",
                             "description": "Maximum number of rows to return",
-                        }
+                        },
                     },
                     "required": ["project_ref", "supabase_key", "table_name"],
                 },
@@ -458,7 +458,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "description": "Filters to apply to identify rows to update (column name as key, value to filter by as value) (required)",
                         },
                     },
-                    "required": ["project_ref", "supabase_key", "table_name", "data", "filters"],
+                    "required": [
+                        "project_ref",
+                        "supabase_key",
+                        "table_name",
+                        "data",
+                        "filters",
+                    ],
                 },
                 outputSchema={
                     "type": "array",
@@ -492,7 +498,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "description": "Filters to apply to identify rows to delete (column name as key, value to filter by as value) (required)",
                         },
                     },
-                    "required": ["project_ref", "supabase_key", "table_name", "filters"],
+                    "required": [
+                        "project_ref",
+                        "supabase_key",
+                        "table_name",
+                        "filters",
+                    ],
                 },
                 outputSchema={
                     "type": "array",
@@ -1170,7 +1181,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 select = arguments.get("select", "*")
                 filters = arguments.get("filters", {})
                 limit = arguments.get("limit")
-                
+
                 # Validate required parameters
                 if not project_ref or not supabase_key or not table_name:
                     missing_params = []
@@ -1180,40 +1191,40 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         missing_params.append("supabase_key")
                     if not table_name:
                         missing_params.append("table_name")
-                        
+
                     return [
                         types.TextContent(
                             type="text",
                             text=f"Error: Missing required parameters: {', '.join(missing_params)}",
                         )
                     ]
-                
+
                 try:
                     # Get or create a Supabase SDK client for this project
                     supabase = get_or_create_supabase_sdk_client(
                         project_ref, supabase_key
                     )
-                    
+
                     # Prepare the query
                     query = supabase.table(table_name).select(select)
-                    
+
                     # Apply filters if provided
                     if filters:
                         for column, value in filters.items():
                             query = query.eq(column, value)
-                    
+
                     # Apply limit if provided
                     if limit:
                         query = query.limit(limit)
-                    
+
                     # Execute the query
                     response = query.execute()
-                    
+
                     # Check if the request was successful
                     if response.data is not None:
                         rows = response.data
                         count = len(rows)
-                        
+
                         return [
                             types.TextContent(
                                 type="text",
@@ -1222,7 +1233,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         ]
                     else:
                         # Handle empty result
-                        if hasattr(response, 'error') and response.error:
+                        if hasattr(response, "error") and response.error:
                             return [
                                 types.TextContent(
                                     type="text",
@@ -1236,20 +1247,23 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                     text=f"No data found in table '{table_name}' with the specified filters.",
                                 )
                             ]
-                
+
                 except Exception as e:
                     error_str = str(e)
                     logger.error(f"Error reading table data: {error_str}")
-                    
+
                     # Check if this is a table not found error
-                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                    if (
+                        "relation" in error_str.lower()
+                        and "does not exist" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to read data.",
                             )
                         ]
-                    
+
                     # Check if this is likely an API key permission issue
                     if (
                         "403" in error_str
@@ -1262,7 +1276,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
                             )
                         ]
-                    
+
                     return [
                         types.TextContent(
                             type="text",
@@ -1276,9 +1290,14 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 supabase_key = arguments.get("supabase_key")
                 table_name = arguments.get("table_name")
                 data = arguments.get("data")
-                
+
                 # Validate required parameters
-                if not project_ref or not supabase_key or not table_name or data is None:
+                if (
+                    not project_ref
+                    or not supabase_key
+                    or not table_name
+                    or data is None
+                ):
                     missing_params = []
                     if not project_ref:
                         missing_params.append("project_ref")
@@ -1288,37 +1307,37 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         missing_params.append("table_name")
                     if data is None:
                         missing_params.append("data")
-                        
+
                     return [
                         types.TextContent(
                             type="text",
                             text=f"Error: Missing required parameters: {', '.join(missing_params)}",
                         )
                     ]
-                
+
                 try:
                     # Get or create a Supabase SDK client for this project
                     supabase = get_or_create_supabase_sdk_client(
                         project_ref, supabase_key
                     )
-                    
+
                     # Prepare the query
                     query = supabase.table(table_name).insert(data)
-                                        
+
                     # Execute the query
                     response = query.execute()
-                    
+
                     # Check if the request was successful
-                    if hasattr(response, 'data') and response.data is not None:
+                    if hasattr(response, "data") and response.data is not None:
                         rows = response.data
                         count = len(rows) if isinstance(rows, list) else 1
-                        
+
                         operation_type = "inserted"
                         if isinstance(data, list):
                             operation_type = f"inserted {len(data)} rows"
                         else:
                             operation_type = "inserted row"
-                        
+
                         return [
                             types.TextContent(
                                 type="text",
@@ -1327,7 +1346,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         ]
                     else:
                         # Handle error or empty result
-                        if hasattr(response, 'error') and response.error:
+                        if hasattr(response, "error") and response.error:
                             return [
                                 types.TextContent(
                                     type="text",
@@ -1341,29 +1360,36 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                     text=f"Operation completed, but no data was returned from table '{table_name}'.",
                                 )
                             ]
-                
+
                 except Exception as e:
                     error_str = str(e)
                     logger.error(f"Error inserting table data: {error_str}")
-                    
+
                     # Check if this is a table not found error
-                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                    if (
+                        "relation" in error_str.lower()
+                        and "does not exist" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to insert data.",
                             )
                         ]
-                    
+
                     # Check if this is a constraint violation error (e.g., duplicate key)
-                    if "duplicate key" in error_str.lower() or "violates" in error_str.lower() and "constraint" in error_str.lower():
+                    if (
+                        "duplicate key" in error_str.lower()
+                        or "violates" in error_str.lower()
+                        and "constraint" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: The data you're trying to insert violates a database constraint. This could be due to a duplicate unique key or other constraint violation: {error_str}",
                             )
                         ]
-                    
+
                     # Check if this is likely an API key permission issue
                     if (
                         "403" in error_str
@@ -1376,7 +1402,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
                             )
                         ]
-                    
+
                     return [
                         types.TextContent(
                             type="text",
@@ -1391,9 +1417,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 table_name = arguments.get("table_name")
                 data = arguments.get("data")
                 filters = arguments.get("filters")
-                
+
                 # Validate required parameters
-                if not project_ref or not supabase_key or not table_name or data is None or not filters:
+                if (
+                    not project_ref
+                    or not supabase_key
+                    or not table_name
+                    or data is None
+                    or not filters
+                ):
                     missing_params = []
                     if not project_ref:
                         missing_params.append("project_ref")
@@ -1405,35 +1437,35 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         missing_params.append("data")
                     if not filters:
                         missing_params.append("filters")
-                        
+
                     return [
                         types.TextContent(
                             type="text",
                             text=f"Error: Missing required parameters: {', '.join(missing_params)}",
                         )
                     ]
-                
+
                 try:
                     # Get or create a Supabase SDK client for this project
                     supabase = get_or_create_supabase_sdk_client(
                         project_ref, supabase_key
                     )
-                    
+
                     # Prepare the update query with data
                     query = supabase.table(table_name).update(data)
-                    
+
                     # Apply all filters
                     for column, value in filters.items():
                         query = query.eq(column, value)
-                    
+
                     # Execute the query
                     response = query.execute()
-                    
+
                     # Check if the request was successful
-                    if hasattr(response, 'data') and response.data is not None:
+                    if hasattr(response, "data") and response.data is not None:
                         rows = response.data
                         count = len(rows) if isinstance(rows, list) else 1
-                        
+
                         return [
                             types.TextContent(
                                 type="text",
@@ -1442,7 +1474,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         ]
                     else:
                         # Handle error or empty result
-                        if hasattr(response, 'error') and response.error:
+                        if hasattr(response, "error") and response.error:
                             return [
                                 types.TextContent(
                                     type="text",
@@ -1456,29 +1488,35 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                     text=f"No rows were updated in table '{table_name}'. This could be because no rows matched your filter criteria.",
                                 )
                             ]
-                
+
                 except Exception as e:
                     error_str = str(e)
                     logger.error(f"Error updating table data: {error_str}")
-                    
+
                     # Check if this is a table not found error
-                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                    if (
+                        "relation" in error_str.lower()
+                        and "does not exist" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to update data.",
                             )
                         ]
-                    
+
                     # Check if this is a constraint violation error
-                    if "violates" in error_str.lower() and "constraint" in error_str.lower():
+                    if (
+                        "violates" in error_str.lower()
+                        and "constraint" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: The update violates a database constraint. This could be due to a foreign key violation or other constraint: {error_str}",
                             )
                         ]
-                    
+
                     # Check if this is likely an API key permission issue
                     if (
                         "403" in error_str
@@ -1491,7 +1529,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
                             )
                         ]
-                    
+
                     return [
                         types.TextContent(
                             type="text",
@@ -1505,7 +1543,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 supabase_key = arguments.get("supabase_key")
                 table_name = arguments.get("table_name")
                 filters = arguments.get("filters")
-                
+
                 # Validate required parameters
                 if not project_ref or not supabase_key or not table_name or not filters:
                     missing_params = []
@@ -1517,20 +1555,20 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         missing_params.append("table_name")
                     if not filters:
                         missing_params.append("filters")
-                        
+
                     return [
                         types.TextContent(
                             type="text",
                             text=f"Error: Missing required parameters: {', '.join(missing_params)}",
                         )
                     ]
-                
+
                 try:
                     # Get or create a Supabase SDK client for this project
                     supabase = get_or_create_supabase_sdk_client(
                         project_ref, supabase_key
                     )
-                    
+
                     # For safety, require at least one filter to be specified
                     if not filters:
                         return [
@@ -1539,55 +1577,61 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 text="Error: At least one filter must be specified for delete operations to prevent accidental deletion of all rows.",
                             )
                         ]
-                    
+
                     # Prepare the delete query
                     query = supabase.table(table_name).delete()
-                    
+
                     # Apply all filters
                     for column, value in filters.items():
                         query = query.eq(column, value)
-                    
+
                     # Execute the query
                     response = query.execute()
-                    
+
                     # Check if the request was successful
-                    if hasattr(response, 'error') and response.error:
+                    if hasattr(response, "error") and response.error:
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error deleting data from table '{table_name}': {response.error.message}",
                             )
                         ]
-                    
+
                     return [
                         types.TextContent(
                             type="text",
                             text=f"Successfully deleted data from table '{table_name}' matching the specified filters.",
                         )
                     ]
-                
+
                 except Exception as e:
                     error_str = str(e)
                     logger.error(f"Error deleting table data: {error_str}")
-                    
+
                     # Check if this is a table not found error
-                    if "relation" in error_str.lower() and "does not exist" in error_str.lower():
+                    if (
+                        "relation" in error_str.lower()
+                        and "does not exist" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: Table '{table_name}' does not exist in the database. Please create the table using the Supabase Dashboard before attempting to delete data.",
                             )
                         ]
-                    
+
                     # Check if this is a constraint violation error (e.g., foreign key constraint)
-                    if "violates" in error_str.lower() and "constraint" in error_str.lower():
+                    if (
+                        "violates" in error_str.lower()
+                        and "constraint" in error_str.lower()
+                    ):
                         return [
                             types.TextContent(
                                 type="text",
                                 text=f"Error: The delete operation violates a database constraint. This is likely because the data you're trying to delete is referenced by other tables: {error_str}",
                             )
                         ]
-                    
+
                     # Check if this is likely an API key permission issue
                     if (
                         "403" in error_str
@@ -1600,7 +1644,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 text="Error: You must use a valid API key for data operations. Check your API key in the Supabase Dashboard > Project Settings > API.",
                             )
                         ]
-                    
+
                     return [
                         types.TextContent(
                             type="text",

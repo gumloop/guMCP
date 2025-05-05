@@ -113,7 +113,7 @@ TOOL_TESTS = [
         "name": "create_table_data",
         "args_template": (
             'with project_ref="{0}" supabase_key="{1}" table_name="student" '
-            'data={{"name": "Test Student {{random_id}}", "age": 21, "city": "Test City"}}'
+            'data="name": "Test Student {{random_id}}", "age": 21, "city": "Test City"'
         ).format(PROJECT_REF, SUPABASE_KEY),
         "expected_keywords": ["inserted", "student"],
         "regex_extractors": {
@@ -126,7 +126,7 @@ TOOL_TESTS = [
         "name": "update_table_data",
         "args_template": (
             'with project_ref="{0}" supabase_key="{1}" table_name="student" '
-            'data={{"city": "Updated City"}} filters={{"id": {{student_id}}}}'
+            'data="city": "Updated City" filters="id": {{student_id}}'
         ).format(PROJECT_REF, SUPABASE_KEY),
         "expected_keywords": ["updated", "student"],
         "description": "update a row in the student table",
@@ -136,9 +136,9 @@ TOOL_TESTS = [
         "name": "delete_table_data",
         "args_template": (
             'with project_ref="{0}" supabase_key="{1}" table_name="student" '
-            'filters={{"id": {{student_id}}}}'
+            'filters="id": {{student_id}}'
         ).format(PROJECT_REF, SUPABASE_KEY),
-        "expected_keywords": ["deleted", "student"],
+        "expected_keywords": ["success"],
         "description": "delete a row from the student table",
         "depends_on": ["student_id"],
     },
