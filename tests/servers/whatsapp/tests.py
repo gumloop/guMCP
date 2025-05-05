@@ -1,6 +1,6 @@
 import uuid
 import pytest
-from tests.utils.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
 
 
 template_name = f"test_template_{str(uuid.uuid4())[:4]}"
@@ -144,58 +144,7 @@ async def test_whatsapp_tool(client, context, test_config):
 
 
 @pytest.mark.asyncio
-async def test_list_resources(client):
-    """Test listing resources from WhatsApp"""
-    response = await client.list_resources()
-    print(f"Response: {response}")
-    assert response, "No response returned from list_resources"
-
-    for i, resource in enumerate(response.resources):
-        print(f"  - {i}: {resource.name} ({resource.uri}) {resource.description}")
-
-    print("✅ Successfully listed resources")
-
-
-@pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading a resource from WhatsApp"""
-    list_response = await client.list_resources()
-
-    template_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("whatsapp://template/")
-    ]
-
-    if len(template_resource_uri) > 0:
-        template_resource_uri = template_resource_uri[0]
-        response = await client.read_resource(template_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for template passed.")
-
-    phone_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("whatsapp://phone/")
-    ]
-
-    if len(phone_resource_uri) > 0:
-        phone_resource_uri = phone_resource_uri[0]
-        response = await client.read_resource(phone_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for phone passed.")
-
-    profile_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("whatsapp://profile/")
-    ]
-
-    if len(profile_resource_uri) > 0:
-        profile_resource_uri = profile_resource_uri[0]
-        response = await client.read_resource(profile_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for profile passed.")
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response
