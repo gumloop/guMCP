@@ -650,11 +650,46 @@ class PipedriveClient:
         return self._make_request("DELETE", f"organizations/{org_id}")
 
     # User Operations
-    def get_all_users(self) -> Dict:
-        """Get all users from Pipedrive."""
-        return self._make_request("GET", "users")
+    def get_user(self, user_id: int) -> Dict:
+        """Get a specific user from Pipedrive."""
+        return self._make_request("GET", f"users/{user_id}")
 
     # Get All Operations
+    def get_all_deals(
+        self,
+        start: int = 0,
+        limit: int = 100,
+        sort: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> Dict:
+        """Get all deals from Pipedrive."""
+        params = {
+            "start": start,
+            "limit": limit,
+        }
+        if sort:
+            params["sort"] = sort
+        if status:
+            params["status"] = status
+
+        return self._make_request("GET", "deals", params=params)
+
+    def get_all_activities(
+        self,
+        start: int = 0,
+        limit: int = 100,
+        sort: Optional[str] = None,
+    ) -> Dict:
+        """Get all activities from Pipedrive."""
+        params = {
+            "start": start,
+            "limit": limit,
+        }
+        if sort:
+            params["sort"] = sort
+
+        return self._make_request("GET", "activities", params=params)
+
     def get_all_leads(
         self,
         start: int = 0,
@@ -674,13 +709,13 @@ class PipedriveClient:
 
         return self._make_request("GET", "leads", params=params)
 
-    def get_all_products(
+    def get_all_notes(
         self,
         start: int = 0,
         limit: int = 100,
         sort: Optional[str] = None,
     ) -> Dict:
-        """Get all products from Pipedrive."""
+        """Get all notes from Pipedrive."""
         params = {
             "start": start,
             "limit": limit,
@@ -688,7 +723,7 @@ class PipedriveClient:
         if sort:
             params["sort"] = sort
 
-        return self._make_request("GET", "products", params=params)
+        return self._make_request("GET", "notes", params=params)
 
     def get_all_persons(
         self,
@@ -722,6 +757,26 @@ class PipedriveClient:
 
         return self._make_request("GET", "organizations", params=params)
 
+    def get_all_products(
+        self,
+        start: int = 0,
+        limit: int = 100,
+        sort: Optional[str] = None,
+    ) -> Dict:
+        """Get all products from Pipedrive."""
+        params = {
+            "start": start,
+            "limit": limit,
+        }
+        if sort:
+            params["sort"] = sort
+
+        return self._make_request("GET", "products", params=params)
+
+    def get_all_users(self) -> Dict:
+        """Get all users from Pipedrive."""
+        return self._make_request("GET", "users")
+
 
 async def create_pipedrive_client(user_id: str, api_key: str) -> PipedriveClient:
     """
@@ -750,11 +805,9 @@ async def create_pipedrive_client(user_id: str, api_key: str) -> PipedriveClient
 def create_server(user_id: str, api_key: str = None) -> Server:
     """
     Initialize and configure the Pipedrive MCP server.
-
     Args:
         user_id (str): The user ID associated with the current session
         api_key (str, optional): Optional API key override
-
     Returns:
         Server: Configured MCP server instance
     """
@@ -1647,6 +1700,158 @@ def create_server(user_id: str, api_key: str = None) -> Server:
             ),
             # User Operations
             types.Tool(
+                name="get_user",
+                description="Get a specific user from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"user_id": {"type": "integer"}},
+                    "required": ["user_id"],
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the user data",
+                    "examples": [
+                        '{"success": true, "data": {"id": 1, "name": "John Doe","email": "john@example.com", "role": "admin"}}'
+                    ],
+                },
+            ),
+            # Get All Operations
+            types.Tool(
+                name="get_all_deals",
+                description="Get all deals from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                        "status": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of deals",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "title": "Deal 1"}, {"id": 2, "title": "Deal 2"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="get_all_activities",
+                description="Get all activities from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of activities",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "subject": "Meeting"}, {"id": 2, "subject": "Call"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="get_all_leads",
+                description="Get all leads from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                        "status": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of leads",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "title": "Lead 1"}, {"id": 2, "title": "Lead 2"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="get_all_notes",
+                description="Get all notes from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of notes",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "content": "Note 1"}, {"id": 2, "content": "Note 2"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="get_all_persons",
+                description="Get all persons from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of persons",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "name": "John Doe"}, {"id": 2, "name": "Jane Smith"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="get_all_organizations",
+                description="Get all organizations from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of organizations",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "name": "Org 1"}, {"id": 2, "name": "Org 2"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="get_all_products",
+                description="Get all products from Pipedrive",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "integer", "default": 0},
+                        "limit": {"type": "integer", "default": 100},
+                        "sort": {"type": "string"},
+                    },
+                },
+                outputSchema={
+                    "type": "string",
+                    "description": "JSON response containing the list of products",
+                    "examples": [
+                        '{"success": true, "data": [{"id": 1, "name": "Product 1"}, {"id": 2, "name": "Product 2"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
                 name="get_all_users",
                 description="Get all users from Pipedrive",
                 inputSchema={"type": "object", "properties": {}},
@@ -1654,7 +1859,7 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "type": "string",
                     "description": "JSON response containing the list of users",
                     "examples": [
-                        '{"id": 2354543, "name": "John Doe", "email": "john@example.com", "lang": 1, "locale": "en_US", "timezone_name": "Asia/Kolkata", "timezone_offset": "+05:30", "default_currency": "USD", "icon_url": null, "active_flag": true, "is_deleted": false, "is_admin": 1, "role_id": 1, "created": "2025-04-30 09:03:50", "has_created_company": true, "is_you": true, "access": [{"app": "sales", "admin": true, "permission_set_id": "08d28770-11f0-8ff0-797a5cc8274d"}, {"app": "global", "admin": true, "permission_set_id": "08d76970-11f0-8ff0-797a5cc8274d"}, {"app": "account_settings", "admin": true, "permission_set_id": "08e12d70-25a2-11f0-797a5cc8274d"}], "phone": null, "modified": "2025-05-01 20:40:54", "last_login": "2025-05-01 20:40:54"}'
+                        '{"success": true, "data": [{"id": 1, "name": "User 1"}, {"id": 2, "name": "User 2"}]}'
                     ],
                 },
             ),
@@ -1755,6 +1960,19 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     visible_to=arguments.get("visible_to", 3),
                     owner_id=arguments.get("owner_id"),
                 )
+            elif name == "get_all_deals":
+                result = pipedrive.get_all_deals(
+                    start=arguments.get("start", 0),
+                    limit=arguments.get("limit", 100),
+                    sort=arguments.get("sort"),
+                    status=arguments.get("status"),
+                )
+            elif name == "get_all_activities":
+                result = pipedrive.get_all_activities(
+                    start=arguments.get("start", 0),
+                    limit=arguments.get("limit", 100),
+                    sort=arguments.get("sort"),
+                )
             elif name == "get_all_leads":
                 result = pipedrive.get_all_leads(
                     start=arguments.get("start", 0),
@@ -1762,12 +1980,32 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     sort=arguments.get("sort"),
                     status=arguments.get("status"),
                 )
+            elif name == "get_all_notes":
+                result = pipedrive.get_all_notes(
+                    start=arguments.get("start", 0),
+                    limit=arguments.get("limit", 100),
+                    sort=arguments.get("sort"),
+                )
+            elif name == "get_all_persons":
+                result = pipedrive.get_all_persons(
+                    start=arguments.get("start", 0),
+                    limit=arguments.get("limit", 100),
+                    sort=arguments.get("sort"),
+                )
+            elif name == "get_all_organizations":
+                result = pipedrive.get_all_organizations(
+                    start=arguments.get("start", 0),
+                    limit=arguments.get("limit", 100),
+                    sort=arguments.get("sort"),
+                )
             elif name == "get_all_products":
                 result = pipedrive.get_all_products(
                     start=arguments.get("start", 0),
                     limit=arguments.get("limit", 100),
                     sort=arguments.get("sort"),
                 )
+            elif name == "get_all_users":
+                result = pipedrive.get_all_users()
             elif name == "get_lead":
                 result = pipedrive.get_lead(arguments["lead_id"])
             elif name == "update_deal":
@@ -1791,8 +2029,6 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     org_id=arguments.get("org_id"),
                     custom_fields=arguments.get("custom_fields"),
                 )
-            elif name == "get_all_users":
-                result = pipedrive.get_all_users()
             elif name == "get_persons":
                 result = pipedrive.get_all_persons(
                     start=arguments.get("start", 0),
@@ -1868,6 +2104,8 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     visible_to=arguments.get("visible_to"),
                     custom_fields=arguments.get("custom_fields"),
                 )
+            elif name == "get_user":
+                result = pipedrive.get_user(arguments["user_id"])
             elif name == "get_organization":
                 result = pipedrive.get_organization(arguments["org_id"])
             elif name == "update_organization":

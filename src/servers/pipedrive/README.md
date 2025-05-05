@@ -132,8 +132,18 @@ This server exposes the following tools for interacting with Pipedrive:
 - `update_organization` – Update organization information
 - `delete_organization` – Delete an organization (soft delete)
 
-#### User Management
-- `get_all_users` – List all users in the account
+#### User details
+- `get_user` – List user details
+
+#### Get tools
+- `get_all_deals` – List all deals from Pipedrive
+- `get_all_activities` – List all activities from Pipedrive
+- `get_all_leads` – List all leads from Pipedrive
+- `get_all_notes` – List all notes from Pipedrive
+- `get_all_persons` – List all persons from Pipedrive
+- `get_all_organizations` – List all organizations from Pipedrive
+- `get_all_products` – List all products from Pipedrive
+- `get_all_users` – List all users from Pipedrive
 
 ---
 

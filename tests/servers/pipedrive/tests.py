@@ -1,5 +1,9 @@
 import pytest
-from tests.utils.test_tools import get_test_id, run_tool_test
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
+
+# Test get user
+# You can only test get user if you have a user id
+user_id = ""  # TODO: Add user id
 
 TOOL_TESTS = [
     # Create Operations
@@ -201,10 +205,67 @@ TOOL_TESTS = [
         "description": "delete a note from Pipedrive",
         "depends_on": ["note_id"],
     },
+    # Get User Operation
+    {
+        "name": "get_user",
+        "args_template": 'with user_id="{user_id}"',
+        "expected_keywords": ["success"],
+        "description": "get a specific user from Pipedrive",
+        "depends_on": ["user_id"],
+    },
+    # Get All Operations
+    {
+        "name": "get_all_deals",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all deals from Pipedrive",
+    },
+    {
+        "name": "get_all_activities",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all activities from Pipedrive",
+    },
+    {
+        "name": "get_all_leads",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all leads from Pipedrive",
+    },
+    {
+        "name": "get_all_notes",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all notes from Pipedrive",
+    },
+    {
+        "name": "get_all_persons",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all persons from Pipedrive",
+    },
+    {
+        "name": "get_all_organizations",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all organizations from Pipedrive",
+    },
+    {
+        "name": "get_all_products",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all products from Pipedrive",
+    },
+    {
+        "name": "get_all_users",
+        "args_template": "",
+        "expected_keywords": ["success"],
+        "description": "get all users from Pipedrive",
+    },
 ]
 
 # Shared context dictionary at module level
-SHARED_CONTEXT = {}
+SHARED_CONTEXT = {"user_id": user_id}
 
 
 @pytest.fixture(scope="module")
@@ -215,78 +276,11 @@ def context():
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
 async def test_pipedrive_tool(client, context, test_config):
-    print(SHARED_CONTEXT)
     return await run_tool_test(client, context, test_config)
 
 
 @pytest.mark.asyncio
-async def test_read_resource(client):
-    """Test reading a Pipedrive resource"""
-    list_response = await client.list_resources()
-    for resource in list_response.resources:
-        print(f"Resource: {resource}")
-
-    person_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("pipedrive://person/")
-    ]
-
-    if len(person_resource_uri) > 0:
-        person_resource_uri = person_resource_uri[0]
-        response = await client.read_resource(person_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for person passed.")
-
-    org_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("pipedrive://organization/")
-    ]
-
-    if len(org_resource_uri) > 0:
-        org_resource_uri = org_resource_uri[0]
-        response = await client.read_resource(org_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for organization passed.")
-
-    deal_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("pipedrive://deal/")
-    ]
-
-    if len(deal_resource_uri) > 0:
-        deal_resource_uri = deal_resource_uri[0]
-        response = await client.read_resource(deal_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for deal passed.")
-
-    lead_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("pipedrive://lead/")
-    ]
-
-    if len(lead_resource_uri) > 0:
-        lead_resource_uri = lead_resource_uri[0]
-        response = await client.read_resource(lead_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for lead passed.")
-
-    product_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("pipedrive://product/")
-    ]
-
-    if len(product_resource_uri) > 0:
-        product_resource_uri = product_resource_uri[0]
-        response = await client.read_resource(product_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for product passed.")
+async def test_resources(client, context):
+    response = await run_resources_test(client)
+    context["first_resource_uri"] = response.resources[0].uri
+    return response
