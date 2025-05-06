@@ -1,594 +1,292 @@
 import uuid
 import pytest
 import time
+import random
+from tests.utils.test_tools import get_test_id, run_tool_test, run_resources_test
+
+
+# Shared context dictionary at module level
+SHARED_CONTEXT = {}
+
+TOOL_TESTS = [
+    {
+        "name": "list_contacts",
+        "args_template": 'with query="*@example.com" limit=3 properties=["email", "firstname", "lastname", "company"]',
+        "expected_keywords": ["contact_id"],
+        "regex_extractors": {"contact_id": r"contact_id:\s*(\d+)"},
+        "description": "list HubSpot contacts with a search query and extract a contact ID",
+    },
+    {
+        "name": "create_contact",
+        "args_template": 'with email="test{random_id}@example.com" firstname="Test" lastname="User {random_id}" company="Test Company" jobtitle="QA Tester"',
+        "expected_keywords": ["created_contact_id"],
+        "regex_extractors": {"created_contact_id": r"created_contact_id:\s*(\d+)"},
+        "description": "create a new HubSpot contact and return its created_contact_id",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "update_contact",
+        "args_template": 'with contact_id="{created_contact_id}" company="Updated Company {random_id}" jobtitle="Senior QA Engineer"',
+        "expected_keywords": ["updated_contact_id"],
+        "regex_extractors": {"updated_contact_id": r"updated_contact_id:\s*(\d+)"},
+        "description": "update an existing HubSpot contact",
+        "depends_on": ["created_contact_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "search_contacts",
+        "args_template": 'with filter_property="email" filter_operator="EQ" filter_value="testadfa5ffa@example.com"',
+        "expected_keywords": ["found_contact_id"],
+        "regex_extractors": {"found_contact_id": r"found_contact_id:\s*(\d+)"},
+        "description": "search for HubSpot contacts with specific criteria",
+    },
+    {
+        "name": "list_companies",
+        "args_template": 'with limit=5 properties=["name", "domain", "industry"]',
+        "expected_keywords": ["company_id"],
+        "regex_extractors": {"company_id": r"company_id:\s*(\d+)"},
+        "description": "list HubSpot companies and extract a company ID",
+    },
+    {
+        "name": "create_company",
+        "args_template": 'with name="Test Company {random_id}" domain="test-company-{random_id}.com" industry="COMPUTER_SOFTWARE" city="Test City" country="Test Country"',
+        "expected_keywords": ["created_company_id"],
+        "regex_extractors": {"created_company_id": r"created_company_id:\s*(\d+)"},
+        "description": "create a new HubSpot company and return its ID",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "update_company",
+        "args_template": 'with company_id="{created_company_id}" description="Updated description {random_id}" industry="COMPUTER_SOFTWARE"',
+        "expected_keywords": ["updated_company_id"],
+        "regex_extractors": {"updated_company_id": r"updated_company_id:\s*(\d+)"},
+        "description": "update an existing HubSpot company",
+        "depends_on": ["created_company_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "list_deals",
+        "args_template": 'with limit=5 properties=["dealname", "amount", "dealstage"]',
+        "expected_keywords": ["deal_id"],
+        "regex_extractors": {"deal_id": r"deal_id:\s*(\d+)"},
+        "description": "list HubSpot deals and extract a deal ID",
+    },
+    {
+        "name": "create_deal",
+        "args_template": 'with dealname="Test Deal {random_id}" amount=5000',
+        "expected_keywords": ["created_deal_id"],
+        "regex_extractors": {"created_deal_id": r"created_deal_id:\s*(\d+)"},
+        "description": "create a new HubSpot deal and return its ID",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "update_deal",
+        "args_template": 'with deal_id="{created_deal_id}" amount=7500 dealstage="qualifiedtobuy"',
+        "expected_keywords": ["updated_deal_id"],
+        "regex_extractors": {"updated_deal_id": r"updated_deal_id:\s*(\d+)"},
+        "description": "update an existing HubSpot deal",
+        "depends_on": ["created_deal_id"],
+    },
+    {
+        "name": "get_engagements",
+        "args_template": 'with contact_id="{created_contact_id}" limit=10',
+        "expected_keywords": ["total", "results"],
+        "description": "get engagement data for a HubSpot contact",
+        "depends_on": ["created_contact_id"],
+    },
+    {
+        "name": "send_email",
+        "args_template": 'with contact_id="{created_contact_id}" subject="Test Email {random_id}" body="This is a test email from the HubSpot integration tests."',
+        "expected_keywords": ["_status_code"],
+        "description": "send an email to a HubSpot contact",
+        "depends_on": ["created_contact_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "create_ticket",
+        "args_template": 'with subject="Test Ticket {random_id}" content="This is a test ticket." hs_ticket_priority="MEDIUM" hs_pipeline_stage="1"',
+        "expected_keywords": ["created_ticket_id"],
+        "regex_extractors": {"created_ticket_id": r"created_ticket_id:\s*(\d+)"},
+        "description": "create a new HubSpot ticket",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "list_tickets",
+        "args_template": 'with limit=5 properties=["subject", "content", "hs_ticket_priority"]',
+        "expected_keywords": ["ticket_id"],
+        "regex_extractors": {"ticket_id": r"ticket_id:\s*(\d+)"},
+        "description": "list HubSpot tickets and return any one of the ticket ids",
+    },
+    {
+        "name": "get_ticket",
+        "args_template": 'with ticket_id="{created_ticket_id}" properties=["subject", "content", "hs_ticket_priority"]',
+        "expected_keywords": ["ticket_id"],
+        "regex_extractors": {"ticket_id": r"ticket_id:\s*(\d+)"},
+        "description": "get details for a specific HubSpot ticket and return the ticket id",
+        "depends_on": ["created_ticket_id"],
+    },
+    {
+        "name": "update_ticket",
+        "args_template": 'with ticket_id="{created_ticket_id}" subject="Updated Ticket {random_id}" hs_ticket_priority="HIGH"',
+        "expected_keywords": ["updated_ticket_id"],
+        "regex_extractors": {"updated_ticket_id": r"updated_ticket_id:\s*(\d+)"},
+        "description": "update an existing HubSpot ticket",
+        "depends_on": ["created_ticket_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "create_ticket",
+        "args_template": 'with subject="Duplicate Ticket {random_id}" content="This ticket will be merged." hs_pipeline_stage="1"',
+        "expected_keywords": ["duplicate_ticket_id"],
+        "regex_extractors": {"duplicate_ticket_id": r"duplicate_ticket_id:\s*(\d+)"},
+        "description": "create a duplicate ticket with subject, content, and hs_pipeline_stage parameters for testing merge",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "merge_tickets",
+        "args_template": 'with primary_ticket_id="{created_ticket_id}" secondary_ticket_id="{duplicate_ticket_id}"',
+        "expected_keywords": ["id"],
+        "description": "merge two HubSpot tickets",
+        "depends_on": ["created_ticket_id", "duplicate_ticket_id"],
+    },
+    {
+        "name": "delete_ticket",
+        "args_template": 'with ticket_id="{created_ticket_id}"',
+        "expected_keywords": ["status_code"],
+        "description": "delete a HubSpot ticket",
+        "depends_on": ["created_ticket_id"],
+    },
+    {
+        "name": "list_products",
+        "args_template": 'with limit=5 properties=["name", "description", "price"]',
+        "expected_keywords": ["product_id"],
+        "regex_extractors": {"product_id": r"product_id:\s*(\d+)"},
+        "description": "list HubSpot products and extract a product ID",
+    },
+    {
+        "name": "create_product",
+        "args_template": 'with name="Test Product {random_id}" description="This is a test product" price=99.99 hs_sku="SKU-{random_id}"',
+        "expected_keywords": ["created_product_id"],
+        "regex_extractors": {"created_product_id": r"created_product_id:\s*(\d+)"},
+        "description": "create a new HubSpot product and return its ID",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "get_product",
+        "args_template": 'with product_id="{created_product_id}" properties=["name", "description", "price", "hs_sku"]',
+        "expected_keywords": ["product_id"],
+        "regex_extractors": {"product_id": r"product_id:\s*(\d+)"},
+        "description": "get details for a specific HubSpot product and return the product id",
+        "depends_on": ["created_product_id"],
+    },
+    {
+        "name": "update_product",
+        "args_template": 'with product_id="{created_product_id}" name="Updated Product {random_id}" price=129.99',
+        "expected_keywords": ["updated_product_id"],
+        "regex_extractors": {"updated_product_id": r"updated_product_id:\s*(\d+)"},
+        "description": "update an existing HubSpot product",
+        "depends_on": ["created_product_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "delete_product",
+        "args_template": 'with product_id="{created_product_id}"',
+        "expected_keywords": ["status_code"],
+        "description": "delete a HubSpot product",
+        "depends_on": ["created_product_id"],
+    },
+    {
+        "name": "create_engagement",
+        "args_template": 'with type="NOTE" metadata_body="Test engagement note {random_id}" timestamp={timestamp} contact_ids=["{created_contact_id}"]',
+        "expected_keywords": ["created_engagement_id"],
+        "regex_extractors": {
+            "created_engagement_id": r"created_engagement_id:\s*(\d+)"
+        },
+        "description": "create a new HubSpot engagement",
+        "setup": lambda context: {
+            "random_id": str(uuid.uuid4())[:8],
+            "timestamp": int(time.time() * 1000),
+        },
+        "depends_on": ["created_contact_id"],
+    },
+    {
+        "name": "get_engagement",
+        "args_template": 'with engagement_id="{created_engagement_id}"',
+        "expected_keywords": ["engagement_id"],
+        "regex_extractors": {"engagement_id": r"engagement_id:\s*(\d+)"},
+        "description": "get a specific HubSpot engagement",
+        "depends_on": ["created_engagement_id"],
+    },
+    {
+        "name": "list_engagements",
+        "args_template": "with limit=5",
+        "expected_keywords": ["total"],
+        "description": "list HubSpot engagements",
+    },
+    {
+        "name": "get_call_dispositions",
+        "args_template": "",
+        "expected_keywords": ["id", "label"],
+        "description": "get all possible dispositions for sales calls",
+    },
+    {
+        "name": "update_engagement",
+        "args_template": 'with engagement_id="{created_engagement_id}" metadata_body="Updated engagement note {random_id}"',
+        "expected_keywords": ["updated_engagement_id"],
+        "regex_extractors": {
+            "updated_engagement_id": r"updated_engagement_id:\s*(\d+)"
+        },
+        "description": "update an existing HubSpot engagement",
+        "depends_on": ["created_engagement_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "delete_engagement",
+        "args_template": 'with engagement_id="{created_engagement_id}"',
+        "expected_keywords": ["status_code"],
+        "description": "delete a HubSpot engagement",
+        "depends_on": ["created_engagement_id"],
+    },
+    {
+        "name": "create_contact",
+        "args_template": 'with email="test{random_id}@example.com" firstname="Test" lastname="User {random_id}" company="Test Company" jobtitle="QA Tester"',
+        "expected_keywords": ["secondary_contact_id"],
+        "regex_extractors": {"secondary_contact_id": r"secondary_contact_id:\s*(\d+)"},
+        "description": "create a second hubspot contact and return its secondary_contact_id",
+    },
+    {
+        "name": "merge_contacts",
+        "args_template": 'with primary_contact_id="{created_contact_id}" secondary_contact_id="{secondary_contact_id}"',
+        "expected_keywords": ["id", "status_code"],
+        "description": "merge two HubSpot contacts",
+        "depends_on": ["created_contact_id", "secondary_contact_id"],
+    },
+    {
+        "name": "gdpr_delete_contact",
+        "args_template": 'with contact_id="{created_contact_id}"',
+        "expected_keywords": ["status_code"],
+        "description": "permanently delete a HubSpot contact (GDPR-compliant)",
+        "depends_on": ["created_contact_id"],
+    },
+]
+
+
+@pytest.fixture(scope="module")
+def context():
+    return SHARED_CONTEXT
+
+
+@pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
+@pytest.mark.asyncio
+async def test_hubspot_tool(client, context, test_config):
+    return await run_tool_test(client, context, test_config)
 
 
 @pytest.mark.asyncio
-async def test_list_resources(client):
-    """Test listing HubSpot contacts as resources"""
-    response = await client.list_resources()
-    assert response and hasattr(
-        response, "resources"
-    ), f"Invalid list resources response: {response}"
+async def test_resources(client, context):
+    response = await run_resources_test(client)
 
-    print("HubSpot contact lists found:")
-    for resource in response.resources:
-        print(f"  - {resource.name} ({resource.uri}) - Type: {resource.mimeType}")
+    if response and hasattr(response, "resources") and len(response.resources) > 0:
+        context["first_resource_uri"] = response.resources[0].uri
 
-    print("✅ Successfully listed HubSpot contacts")
-
-
-@pytest.mark.asyncio
-async def test_read_contact(client):
-    """Test reading a HubSpot contact"""
-    # First list contacts to get a valid contact ID
-    response = await client.list_resources()
-
-    assert response and hasattr(
-        response, "resources"
-    ), f"Invalid list resources response: {response}"
-
-    resources = response.resources
-
-    # Skip test if no contacts found
-    if not resources:
-        print("⚠️ No HubSpot contacts found to test reading")
-        pytest.skip("No HubSpot contacts available for testing")
-        return
-
-    # Test with the first contact
-    contact_resource = resources[0]
-    response = await client.read_resource(contact_resource.uri)
-
-    assert response is not None, f"Response should not be None: {response}"
-    assert hasattr(
-        response, "contents"
-    ), f"Response should have contents attribute: {response}"
-    assert (
-        len(response.contents) > 0
-    ), "Response should contain at least one content item"
-
-    content_item = response.contents[0]
-    assert hasattr(
-        content_item, "text"
-    ), f"Content item should have text attribute: {content_item}"
-    assert content_item.text, "Text content should not be empty"
-
-    print("Contact read:")
-    print(f"  - {contact_resource.name}: {content_item.text[:100]}...")
-
-    print("✅ Successfully read HubSpot contact")
-
-
-@pytest.mark.asyncio
-async def test_list_contacts(client):
-    """Test listing HubSpot contacts using the list_contacts tool"""
-    # Test with specific properties and a search query
-    search_query = "*@example.com"
-    response = await client.process_query(
-        f"Use the list_contacts tool to search for HubSpot contacts with the query '{search_query}'. "
-        f"Limit to 3 results and include only the email, firstname, lastname, and company properties. "
-        f"If successful, start your response with 'CONTACTS_FOUND:' followed by the results."
-    )
-
-    # Verify the response contains expected content
-    assert (
-        "CONTACTS_FOUND:" in response
-    ), f"List contacts operation not performed: {response}"
-
-    print("List contacts tool results:")
-    print(f"{response}")
-
-    print("✅ List contacts tool working")
-
-
-@pytest.mark.asyncio
-async def test_create_contact(client):
-    """Test creating a new HubSpot contact with standard properties"""
-    # Generate a unique email with timestamp to avoid conflicts
-    unique_id = str(uuid.uuid4())[:8]
-    test_email = f"test{unique_id}@example.com"
-    first_name = "Test"
-    last_name = f"User {unique_id}"
-
-    response = await client.process_query(
-        f"Use the create_contact tool to create a new HubSpot contact with the following details:\n"
-        f"- Email: {test_email}\n"
-        f"- First name: {first_name}\n"
-        f"- Last name: {last_name}\n"
-        f"- Company: Test Company\n"
-        f"- Job title: QA Tester\n"
-        f"If successful, start your response with 'CONTACT_CREATED:' followed by the contact ID."
-    )
-
-    # Verify that a contact was created - check for success prefix
-    assert "CONTACT_CREATED:" in response, f"Contact creation failed: {response}"
-
-    # Extract the contact ID for future reference
-    import re
-
-    contact_id_match = re.search(r"CONTACT_CREATED: ([a-zA-Z0-9]+)", response)
-    if not contact_id_match:
-        contact_id_match = re.search(r"ID: ([a-zA-Z0-9]+)", response)
-    if not contact_id_match:
-        contact_id_match = re.search(r"id ([a-zA-Z0-9]+)", response.lower())
-
-    contact_id = contact_id_match.group(1) if contact_id_match else None
-
-    print(f"Created contact with ID: {contact_id}")
-    print("✅ Contact creation successful")
-
-    return contact_id
-
-
-@pytest.mark.asyncio
-async def test_update_contact(client):
-    """Test updating an existing HubSpot contact"""
-    # First create a contact to update
-    contact_id = await test_create_contact(client)
-    assert contact_id, "Failed to create contact for update test"
-
-    # Wait a moment for the contact to be available
-    time.sleep(2)
-
-    # Now update the contact with new information
-    new_company = f"Updated Company {uuid.uuid4()}"
-    new_title = "Senior QA Engineer"
-
-    response = await client.process_query(
-        f"Use the update_contact tool to update the contact with ID {contact_id}. "
-        f"Change the company to '{new_company}' and the job title to '{new_title}'. "
-        f"If successful, start your response with 'CONTACT_UPDATED:' followed by the contact ID."
-    )
-
-    # Verify the update was successful
-    assert "CONTACT_UPDATED:" in response, f"Contact update failed: {response}"
-
-    print(f"Updated contact with ID: {contact_id}")
-    print("✅ Contact update successful")
-
-    return contact_id
-
-
-@pytest.mark.asyncio
-async def test_search_contacts(client):
-    """Test searching for HubSpot contacts with advanced filters"""
-    # Create a contact with a unique attribute to search for
-    unique_id = str(uuid.uuid4())[:8]
-    test_email = f"search{unique_id}@example.com"
-
-    # First create the contact
-    create_response = await client.process_query(
-        f"Create a new HubSpot contact with email {test_email} and company 'SearchCorp'. "
-        f"If successful, start your response with 'CONTACT_CREATED:' followed by the contact ID."
-    )
-
-    # Check that contact was created
-    assert (
-        "CONTACT_CREATED:" in create_response
-    ), f"Contact creation failed: {create_response}"
-
-    # Wait a moment for the contact to be available in search
-    time.sleep(2)
-
-    # Now search for this contact using the search_contacts tool with EQ operator
-    search_response = await client.process_query(
-        f"Use the search_contacts tool to search for contacts where the email property equals '{test_email}'. "
-        f"Use the EQ operator and return all available properties. "
-        f"If contacts are found, start your response with 'CONTACTS_FOUND:' followed by the results."
-    )
-
-    # Verify the search was successful
-    assert (
-        "CONTACTS_FOUND:" in search_response
-    ), f"Search did not find the contact: {search_response}"
-
-    print("✅ Contact search successful")
-    return test_email
-
-
-@pytest.mark.asyncio
-async def test_list_companies(client):
-    """Test listing HubSpot companies"""
-    response = await client.process_query(
-        "Use the list_companies tool to list up to 5 HubSpot companies. "
-        "Include the name, domain, and industry properties. "
-        "If companies are found, start your response with 'COMPANIES_FOUND:' followed by the results."
-    )
-
-    # Verify the response mentions companies or indicates none were found
-    assert (
-        "COMPANIES_FOUND:" in response
-    ), f"List companies operation failed: {response}"
-
-    print("List companies tool results:")
-    print(f"{response}")
-
-    print("✅ List companies tool working")
-
-
-@pytest.mark.asyncio
-async def test_create_company(client):
-    """Test creating a new HubSpot company"""
-    # Generate a unique company name to avoid conflicts
-    unique_id = str(uuid.uuid4())[:8]
-    company_name = f"Test Company {unique_id}"
-    domain = f"test-company-{unique_id.lower()}.com"
-
-    response = await client.process_query(
-        f"Use the create_company tool to create a new HubSpot company with the following details:\n"
-        f"- Name: {company_name}\n"
-        f"- Domain: {domain}\n"
-        f"- Industry: COMPUTER_SOFTWARE\n"
-        f"- City: Test City\n"
-        f"- Country: Test Country\n"
-        f"If successful, start your response with 'COMPANY_CREATED:' followed by the company ID."
-    )
-
-    # Verify that a company was created
-    assert "COMPANY_CREATED:" in response, f"Company creation failed: {response}"
-
-    # Extract the company ID for future reference
-    import re
-
-    company_id_match = re.search(r"COMPANY_CREATED: ([a-zA-Z0-9]+)", response)
-    if not company_id_match:
-        company_id_match = re.search(r"ID: ([a-zA-Z0-9]+)", response)
-    if not company_id_match:
-        company_id_match = re.search(r"id ([a-zA-Z0-9]+)", response.lower())
-
-    company_id = company_id_match.group(1) if company_id_match else None
-
-    print(f"Created company with ID: {company_id}")
-    print("✅ Company creation successful")
-
-    return company_id
-
-
-@pytest.mark.asyncio
-async def test_update_company(client):
-    """Test updating an existing HubSpot company"""
-    # First create a company to update
-    company_id = await test_create_company(client)
-    assert company_id, "Failed to create company for update test"
-
-    # Wait a moment for the company to be available
-    time.sleep(2)
-
-    # Now update the company with new information
-    new_description = f"Updated description {uuid.uuid4()}"
-    new_industry = "Accounting"
-
-    response = await client.process_query(
-        f"Use the update_company tool to update the company with ID {company_id}. "
-        f"Change the description to '{new_description}' and the industry to '{new_industry}'. "
-        f"If successful, start your response with 'COMPANY_UPDATED:' followed by the company ID."
-    )
-
-    # Verify the update was successful
-    assert "COMPANY_UPDATED:" in response, f"Company update failed: {response}"
-
-    print(f"Updated company with ID: {company_id}")
-    print("✅ Company update successful")
-
-    return company_id
-
-
-@pytest.mark.asyncio
-async def test_list_deals(client):
-    """Test listing HubSpot deals"""
-    response = await client.process_query(
-        "Use the list_deals tool to list up to 5 HubSpot deals. "
-        "Include the dealname, amount, and dealstage properties. "
-        "If deals are found, start your response with 'DEALS_FOUND:' followed by the results."
-    )
-
-    # Verify the response mentions deals or indicates none were found
-    assert "DEALS_FOUND:" in response, f"List deals operation failed: {response}"
-
-    print("List deals tool results:")
-    print(f"{response}")
-
-    print("✅ List deals tool working")
-
-
-@pytest.mark.asyncio
-async def test_create_deal(client):
-    """Test creating a new HubSpot deal"""
-    # First create a contact to associate with the deal
-    contact_id = await test_create_contact(client)
-    assert contact_id, "Failed to create contact for deal test"
-
-    # Generate a unique deal name
-    unique_id = str(uuid.uuid4())[:8]
-    deal_name = f"Test Deal {unique_id}"
-    amount = 5000
-
-    response = await client.process_query(
-        f"Use the create_deal tool to create a new HubSpot deal with the following details:\n"
-        f"- Deal name: {deal_name}\n"
-        f"- Amount: {amount}\n"
-        f"- Contact ID: {contact_id}\n"
-        f"If successful, start your response with 'DEAL_CREATED:' followed by the deal ID."
-    )
-
-    # Verify that a deal was created
-    assert "DEAL_CREATED:" in response, f"Deal creation failed: {response}"
-
-    # Extract the deal ID for future reference
-    import re
-
-    deal_id_match = re.search(r"DEAL_CREATED: ([a-zA-Z0-9]+)", response)
-    if not deal_id_match:
-        deal_id_match = re.search(r"ID: ([a-zA-Z0-9]+)", response)
-    if not deal_id_match:
-        deal_id_match = re.search(r"id ([a-zA-Z0-9]+)", response.lower())
-
-    deal_id = deal_id_match.group(1) if deal_id_match else None
-
-    print(f"Created deal with ID: {deal_id}")
-    print("✅ Deal creation successful")
-
-    return deal_id
-
-
-@pytest.mark.asyncio
-async def test_update_deal(client):
-    """Test updating an existing HubSpot deal"""
-    # First create a deal to update
-    deal_id = await test_create_deal(client)
-    assert deal_id, "Failed to create deal for update test"
-
-    # Wait a moment for the deal to be available
-    time.sleep(2)
-
-    # Now update the deal with new information
-    new_amount = 7500
-    new_dealstage = "qualifiedtobuy"
-
-    response = await client.process_query(
-        f"Use the update_deal tool to update the deal with ID {deal_id}. "
-        f"Change the amount to {new_amount} and the dealstage to '{new_dealstage}'. "
-        f"If successful, start your response with 'DEAL_UPDATED:' followed by the deal ID."
-    )
-
-    # Verify the update was successful
-    assert "DEAL_UPDATED:" in response, f"Deal update failed: {response}"
-
-    print(f"Updated deal with ID: {deal_id}")
-    print("✅ Deal update successful")
-
-    return deal_id
-
-
-@pytest.mark.asyncio
-async def test_get_engagements(client):
-    """Test getting engagement data for a contact"""
-    # First create a contact to get engagements for
-    contact_id = await test_create_contact(client)
-    assert contact_id, "Failed to create contact for engagements test"
-
-    # Wait a moment for the contact to be available
-    time.sleep(2)
-
-    response = await client.process_query(
-        f"Use the get_engagements tool to get engagement data for the contact with ID {contact_id}. "
-        f"Limit to 10 engagements. "
-        f"If successful, start your response with 'ENGAGEMENTS_FOUND:' followed by the results."
-    )
-
-    # Verify the response mentions engagements or indicates none were found
-    assert (
-        "ENGAGEMENTS_FOUND:" in response
-    ), f"Get engagements operation failed: {response}"
-
-    print("Get engagements tool results:")
-    print(f"{response}")
-
-    print("✅ Get engagements tool working")
-
-
-@pytest.mark.asyncio
-async def test_send_email(client):
-    """Test sending an email to a HubSpot contact"""
-    # First create a contact to send an email to
-    contact_id = await test_create_contact(client)
-    assert contact_id, "Failed to create contact for email test"
-
-    # Wait a moment for the contact to be available
-    time.sleep(2)
-
-    # Prepare email content
-    subject = f"Test Email {uuid.uuid4()}"
-    body = "This is a test email from the HubSpot integration tests."
-
-    response = await client.process_query(
-        f"Use the send_email tool to send an email to the contact with ID {contact_id}. "
-        f"Use the subject '{subject}' and the following body: '{body}'. "
-        f"If successful, start your response with 'EMAIL_SENT:' followed by any confirmation details."
-    )
-
-    # Verify the response indicates the email was sent or recorded
-    assert "EMAIL_SENT:" in response, f"Send email operation failed: {response}"
-
-    print("Send email tool results:")
-    print(f"{response}")
-
-    print("✅ Send email tool working")
-
-
-@pytest.mark.asyncio
-async def test_company_workflow(client):
-    """Test a workflow involving companies: create, update, and list"""
-    # Create a company
-    company_id = await test_create_company(client)
-    assert company_id, "Failed to create company for workflow test"
-
-    # Wait a moment for the company to be available
-    time.sleep(2)
-
-    # Update the company
-    update_response = await client.process_query(
-        f"Update the HubSpot company with ID {company_id}. "
-        f"Set the description to 'Workflow Test Company' and the phone to '555-1234'. "
-        f"If successful, start your response with 'COMPANY_UPDATED:' followed by the company ID."
-    )
-
-    assert (
-        "COMPANY_UPDATED:" in update_response
-    ), f"Company update failed: {update_response}"
-
-    # Wait a moment for the update to be available
-    time.sleep(2)
-
-    # List companies and make sure our company appears
-    list_response = await client.process_query(
-        f"List HubSpot companies and include the name, description, and phone properties. "
-        f"If companies are found, start your response with 'COMPANIES_FOUND:' followed by the results."
-    )
-
-    assert (
-        "COMPANIES_FOUND:" in list_response
-    ), f"List companies did not work in workflow: {list_response}"
-
-    print("✅ Company workflow test successful")
-
-
-@pytest.mark.asyncio
-async def test_deal_workflow(client):
-    """Test a workflow involving deals and contacts"""
-    # Create a contact
-    contact_id = await test_create_contact(client)
-    assert contact_id, "Failed to create contact for deal workflow test"
-
-    # Create a company
-    company_id = await test_create_company(client)
-    assert company_id, "Failed to create company for deal workflow test"
-
-    # Wait a moment for them to be available
-    time.sleep(2)
-
-    # Create a deal associated with both the contact and company
-    unique_id = str(uuid.uuid4())[:8]
-    deal_name = f"Workflow Deal {unique_id}"
-
-    create_response = await client.process_query(
-        f"Create a new HubSpot deal named '{deal_name}' with an amount of 10000. "
-        f"Associate it with contact ID {contact_id} and company ID {company_id}. "
-        f"If successful, start your response with 'DEAL_CREATED:' followed by the deal ID."
-    )
-
-    assert (
-        "DEAL_CREATED:" in create_response
-    ), f"Deal creation failed in workflow: {create_response}"
-
-    # Extract deal ID
-    import re
-
-    deal_id_match = re.search(r"DEAL_CREATED: ([a-zA-Z0-9]+)", create_response)
-    if not deal_id_match:
-        deal_id_match = re.search(r"ID: ([a-zA-Z0-9]+)", create_response)
-    if not deal_id_match:
-        deal_id_match = re.search(r"id ([a-zA-Z0-9]+)", create_response.lower())
-
-    deal_id = deal_id_match.group(1) if deal_id_match else None
-    assert deal_id, "Failed to extract deal ID from creation response"
-
-    # Wait a moment for the deal to be available
-    time.sleep(2)
-
-    # Update the deal
-    update_response = await client.process_query(
-        f"Update the HubSpot deal with ID {deal_id}. "
-        f"Change the amount to 15000 and set the dealstage to 'presentationscheduled'. "
-        f"If successful, start your response with 'DEAL_UPDATED:' followed by the deal ID."
-    )
-
-    assert (
-        "DEAL_UPDATED:" in update_response
-    ), f"Deal update failed in workflow: {update_response}"
-
-    # List deals and make sure our deal appears
-    list_response = await client.process_query(
-        f"List HubSpot deals and include the dealname and amount properties. "
-        f"If deals are found, start your response with 'DEALS_FOUND:' followed by the results."
-    )
-
-    assert (
-        "DEALS_FOUND:" in list_response
-    ), f"List deals did not work in workflow: {list_response}"
-
-    print("✅ Deal workflow test successful")
-
-
-@pytest.mark.asyncio
-async def test_full_workflow(client):
-    """Test a full workflow: create, update, and search a contact"""
-    # First create a contact
-    unique_id = str(uuid.uuid4())[:8]
-    test_email = f"workflow{unique_id}@example.com"
-    first_name = "Workflow"
-    last_name = f"Test {unique_id}"
-
-    # Create the contact
-    create_response = await client.process_query(
-        f"Create a new HubSpot contact with email {test_email}, "
-        f"first name {first_name}, and last name {last_name}. "
-        f"If successful, start your response with 'CONTACT_CREATED:' followed by the contact ID."
-    )
-
-    # More flexible assertion
-    assert (
-        "CONTACT_CREATED:" in create_response
-    ), f"Contact creation failed: {create_response}"
-
-    # Extract the contact ID for update
-    import re
-
-    contact_id_match = re.search(r"CONTACT_CREATED: ([a-zA-Z0-9]+)", create_response)
-    if not contact_id_match:
-        contact_id_match = re.search(r"ID: ([a-zA-Z0-9]+)", create_response)
-    if not contact_id_match:
-        contact_id_match = re.search(r"id ([a-zA-Z0-9]+)", create_response.lower())
-
-    contact_id = contact_id_match.group(1) if contact_id_match else None
-    assert contact_id, "Failed to extract contact ID from creation response"
-
-    # Wait a moment to ensure the contact is available
-    time.sleep(2)
-
-    # Update the contact
-    update_response = await client.process_query(
-        f"Update the HubSpot contact with ID {contact_id}. "
-        f"Set the company to 'Workflow Company' and the job title to 'Workflow Tester'. "
-        f"If successful, start your response with 'CONTACT_UPDATED:' followed by the contact ID."
-    )
-
-    # More flexible assertion for update
-    assert (
-        "CONTACT_UPDATED:" in update_response
-    ), f"Contact update failed: {update_response}"
-
-    # Wait a moment for the update to be available
-    time.sleep(2)
-
-    # Search for the contact by email
-    search_response = await client.process_query(
-        f"Search for HubSpot contacts where the email equals '{test_email}'. "
-        f"If contacts are found, start your response with 'CONTACTS_FOUND:' followed by the results."
-    )
-
-    # Verify that the contact was found with the updated information
-    assert (
-        "CONTACTS_FOUND:" in search_response
-    ), f"Created contact not found: {search_response}"
-
-    # List contacts and make sure our contact appears
-    list_response = await client.process_query(
-        f"List HubSpot contacts and include the email property. "
-        f"If contacts are found, start your response with 'CONTACTS_FOUND:' followed by the results."
-    )
-
-    assert "CONTACTS_FOUND:" in list_response, "List contacts did not work in workflow"
-
-    print("✅ Full workflow test successful")
+    return response

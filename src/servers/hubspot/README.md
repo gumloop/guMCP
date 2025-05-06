@@ -18,6 +18,13 @@ The following OAuth scopes are required for the server to function:
 - `crm.objects.companies.write` - Write access to companies
 - `crm.objects.deals.read` - Read access to deals
 - `crm.objects.deals.write` - Write access to deals
+- `tickets` - Access to tickets
+- `crm.objects.line_items.read` - Read access to line items
+- `crm.objects.line_items.write` - Write access to line items
+- `crm.objects.quotes.read` - Read access to quotes
+- `crm.objects.quotes.write` - Write access to quotes
+- `crm.lists.read` - Read access to contact lists
+- `e-commerce` - Access to e-commerce functionality
 
 ### Local Authentication
 
