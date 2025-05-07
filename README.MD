@@ -195,6 +195,7 @@ The following table provides an overview of the current servers implemented in g
 | GitHub                  | OAuth 2.0 | ⚠️ Coming soon                                                           | ⚠️ Requires GitHub OAuth application                 | [GitHub Docs](/src/servers/github/README.md)                    |
 | Browserbase             | API Key   | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/browserbase) | ✅ Easy - Simple API key setup                       | [Browserbase Docs](/src/servers/browserbase/README.md)          |
 | Snowflake               | OAuth 2.0 | [✅ Seamless with Gumloop auth](https://www.gumloop.com/mcp/snowflake)   | ⚠️ Requires Snowflake Security Integration for OAuth | [Snowflake Docs](/src/servers/snowflake/README.md)              |
+| Supabase                | OAuth 2.0 | ⚠️ Coming soon                                                           | ⚠️ Requires Supabase OAuth App                       | [Supabase Docs](/src/servers/supabase/README.md)                |
 | Simple Tools Server     | None      | ✅ No auth required                                                      | ✅ No auth required                                  | [Simple Tools Docs](/src/servers/simple-tools-server/README.md) |
 
 ## Contributing
