@@ -262,3 +262,236 @@ query GetVariantInventoryItem($variantId: ID!) {
   }
 }
 """
+
+CANCEL_ORDER_GRAPHQL_MUTATION = """
+mutation cancelOrder($id: ID!, $refund: Boolean!, $restock: Boolean!, $staffNote: String!, $reason: OrderCancelReason!) {
+  orderCancel(orderId: $id, refund: $refund, restock: $restock, staffNote: $staffNote, reason: $reason) {
+    userErrors {
+      field
+      message
+    }
+  }
+}
+"""
+
+GET_CONTACT_BY_EMAIL_GRAPHQL_QUERY = """
+query($email: String!) {
+  customers(first: 1, query: $email) {
+    edges {
+      node {
+        id
+        firstName
+        lastName
+        email
+        phone
+      }
+    }
+  }
+}
+"""
+
+GET_CONTACT_BY_ID_GRAPHQL_QUERY = """
+query($id: ID!) {
+  customer(id: $id) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    createdAt
+    updatedAt
+    defaultAddress {
+      address1
+      address2
+      city
+      province
+      country
+      zip
+    }
+  }
+}
+"""
+
+GET_CONTACT_BY_PHONE_GRAPHQL_QUERY = """
+query($phone: String!) {
+  customers(first: 1, query: $phone) {
+    edges {
+      node {
+        id
+        firstName
+        lastName
+        email
+        phone
+      }
+    }
+  }
+}
+"""
+
+# Requires api_version: 2024-10
+GET_ORDER_BY_NUMBER_GRAPHQL_QUERY = """
+query($name: String!) {
+  orders(first: 1, query: $name) {
+    edges {
+      node {
+        id
+        name
+        confirmationNumber
+        statusPageUrl
+        displayFulfillmentStatus
+        displayFinancialStatus
+        phone
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        customer {
+          id
+        }
+        createdAt
+        closedAt
+        cancelledAt
+        lineItems(first: 100) {
+          edges {
+            node {
+              id
+              quantity
+              title
+              originalTotalSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              variant {
+                id
+                title
+                price 
+                product {
+                  id
+                  title
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+# Requires api_version: 2024-10
+GET_RECENT_ORDERS_GRAPHQL_QUERY = """
+query getRecentOrders($limit: Int!, $customerId: ID!) {
+  customer(id: $customerId) {
+    orders(first: $limit, sortKey: CREATED_AT, reverse: true) {
+      edges {
+        node {
+          id
+          name
+          confirmationNumber
+          statusPageUrl
+          displayFulfillmentStatus
+          displayFinancialStatus
+          phone
+          totalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          customer {
+            id
+          }
+          createdAt
+          closedAt
+          cancelledAt
+          paymentGatewayNames
+          lineItems(first: 100) {
+            edges {
+              node {
+                id
+                quantity
+                title
+                originalTotalSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+                variant {
+                  id
+                  title
+                  price 
+                  product {
+                    id
+                    title
+                  }
+                  image {
+                    url
+                  }
+                }
+                fulfillmentStatus
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+LOCATIONS_GRAPHQL_QUERY = """
+query($first: Int!) {
+  locations(first: $first) {
+    edges {
+      node {
+        id
+      }
+    }
+  }
+}
+"""
+
+REFUND_CREATE_GRAPHQL_MUTATION = """
+mutation refundCreate($input: RefundInput!) {
+  refundCreate(input: $input) {
+    refund {
+      id
+      note
+      refundLineItems(first: 1) {
+        edges {
+          node {
+            id
+            lineItem {
+              id
+            }
+            quantity
+            restockType
+            priceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+          }
+        }
+      }
+      totalRefundedSet {
+        shopMoney {
+          amount
+          currencyCode
+        }
+      }
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+"""

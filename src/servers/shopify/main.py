@@ -1,9 +1,11 @@
+import inspect
+import json
 import os
 import sys
-import json
-import httpx
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 project_root = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -11,28 +13,36 @@ project_root = os.path.abspath(
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
+from mcp.server import NotificationOptions, Server
+from mcp.server.models import InitializationOptions
 from mcp.types import (
+    EmbeddedResource,
+    ImageContent,
     Resource,
     TextContent,
     Tool,
-    ImageContent,
-    EmbeddedResource,
 )
-from mcp.server import NotificationOptions, Server
-from mcp.server.models import InitializationOptions
 
-from src.utils.shopify.util import get_credentials, get_service_config
 from src.utils.shopify.graphql_schemas import (
-    PRODUCTS_GRAPHQL_QUERY,
-    PRODUCT_GRAPHQL_QUERY,
-    SHOP_DETAILS_GRAPHQL_QUERY,
-    PRODUCT_CREATE_GRAPHQL_MUTATION,
-    PRODUCT_DELETE_GRAPHQL_MUTATION,
-    INVENTORY_LEVEL_GRAPHQL_QUERY,
+    CANCEL_ORDER_GRAPHQL_MUTATION,
+    GET_CONTACT_BY_EMAIL_GRAPHQL_QUERY,
+    GET_CONTACT_BY_ID_GRAPHQL_QUERY,
+    GET_CONTACT_BY_PHONE_GRAPHQL_QUERY,
+    GET_ORDER_BY_NUMBER_GRAPHQL_QUERY,
+    GET_RECENT_ORDERS_GRAPHQL_QUERY,
     INVENTORY_ADJUST_GRAPHQL_MUTATION,
     INVENTORY_ITEM_UPDATE_GRAPHQL_MUTATION,
+    INVENTORY_LEVEL_GRAPHQL_QUERY,
+    LOCATIONS_GRAPHQL_QUERY,
+    PRODUCT_CREATE_GRAPHQL_MUTATION,
+    PRODUCT_DELETE_GRAPHQL_MUTATION,
+    PRODUCT_GRAPHQL_QUERY,
+    PRODUCTS_GRAPHQL_QUERY,
+    REFUND_CREATE_GRAPHQL_MUTATION,
+    SHOP_DETAILS_GRAPHQL_QUERY,
     VARIANT_INVENTORY_ITEM_GRAPHQL_QUERY,
 )
+from src.utils.shopify.util import get_credentials, get_service_config
 
 SERVICE_NAME = Path(__file__).parent.name
 
@@ -84,10 +94,80 @@ async def execute_graphql_query(user_id, query, variables=None, api_key=None):
         try:
             response_data = response.json()
             result.update(response_data)
-        except:
+        except Exception:
             result["text"] = response.text
 
         return result
+
+
+async def calculate_refund(variables: Dict[str, Any]):
+    """
+    Calculate refund details using Shopify's REST API
+    Returns calculated refund information including transaction amounts
+    """
+    user_id = variables["user_id"]
+    order_id = variables["order_id"]
+    line_item_id = str(variables["line_item_id"])
+    quantity = variables["quantity"]
+    restock_type = variables["restock_type"]
+    api_key = variables["api_key"]
+
+    access_token = await get_credentials(user_id, SERVICE_NAME, api_key)
+
+    config = await get_service_config(user_id, SERVICE_NAME, api_key)
+    custom_subdomain = config.get("custom_subdomain")
+    api_version = config.get("api_version", "2023-10")
+
+    if not custom_subdomain:
+        raise ValueError("Missing custom_subdomain in Shopify configuration")
+
+    calculate_refund_url = f"https://{custom_subdomain}.myshopify.com/admin/api/{api_version}/orders/{order_id}/refunds/calculate.json"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": access_token,
+    }
+
+    # Convert restock_type to lowercase for the REST API
+    restock_type_lower = restock_type.lower()
+
+    payload = {
+        "refund": {
+            "shipping": {
+                "full_refund": True,
+            },
+            "refund_line_items": [
+                {
+                    "line_item_id": line_item_id,
+                    "quantity": quantity,
+                    "restock_type": restock_type_lower,
+                }
+            ],
+        }
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            calculate_refund_url, json=payload, headers=headers, timeout=30.0
+        )
+
+        if response.status_code != 200:
+            return {
+                "_status_code": response.status_code,
+                "error": f"Failed to calculate refund: {response.text}",
+            }
+
+        try:
+            response_data = response.json()
+            return {
+                "_status_code": response.status_code,
+                **response_data,
+            }
+        except Exception:
+            return {
+                "_status_code": response.status_code,
+                "error": f"Failed to parse response: {response.text}",
+            }
 
 
 def format_shopify_id(id_value, resource_type):
@@ -386,6 +466,219 @@ def create_server(user_id, api_key=None):
                     "required": ["variant_id"],
                 },
             ),
+            Tool(
+                name="cancel_order",
+                description="Cancels an order in Shopify with options for refund and restocking",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "ID of the order to cancel",
+                        },
+                        "refund": {
+                            "type": "boolean",
+                            "description": "Whether to refund the order",
+                        },
+                        "restock": {
+                            "type": "boolean",
+                            "description": "Whether to restock the items",
+                        },
+                        "staffNote": {
+                            "type": "string",
+                            "description": "Staff note explaining the cancellation",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "enum": [
+                                "CUSTOMER",
+                                "INVENTORY",
+                                "FRAUD",
+                                "DECLINED",
+                                "OTHER",
+                                "STAFF",
+                            ],
+                            "description": "Reason for cancellation",
+                        },
+                    },
+                    "required": ["id", "refund", "restock", "staffNote", "reason"],
+                },
+            ),
+            Tool(
+                name="get_contact_by_email",
+                description="Retrieves a customer by their email address",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "description": "Email address of the customer to retrieve",
+                        },
+                    },
+                    "required": ["email"],
+                },
+            ),
+            Tool(
+                name="get_contact_by_id",
+                description="Retrieves a customer by their Shopify ID",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "ID of the customer to retrieve",
+                        },
+                    },
+                    "required": ["id"],
+                },
+            ),
+            Tool(
+                name="get_contact_by_phone",
+                description="Retrieves a customer by their phone number",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "phone": {
+                            "type": "string",
+                            "description": "Phone number of the customer to retrieve",
+                        },
+                    },
+                    "required": ["phone"],
+                },
+            ),
+            Tool(
+                name="get_order_by_number",
+                description="Retrieves an order by its order number",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Order number (e.g. #1001)",
+                        },
+                    },
+                    "required": ["name"],
+                },
+            ),
+            Tool(
+                name="get_recent_orders",
+                description="Retrieves recent orders for a specific customer",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "customerId": {
+                            "type": "string",
+                            "description": "ID of the customer whose orders to retrieve",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of orders to retrieve",
+                        },
+                    },
+                    "required": ["customerId", "limit"],
+                },
+            ),
+            Tool(
+                name="get_locations",
+                description="Retrieves a list of locations from the Shopify store",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "first": {
+                            "type": "integer",
+                            "description": "Number of locations to retrieve (defaults to 10)",
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="calculate_refund",
+                description="Calculates refund details for a line item in an order",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "orderId": {
+                            "type": "string",
+                            "description": "ID of the order to calculate refund for",
+                        },
+                        "lineItemId": {
+                            "type": "string",
+                            "description": "ID of the line item to refund",
+                        },
+                        "quantity": {
+                            "type": "integer",
+                            "description": "Quantity to refund (defaults to 1)",
+                        },
+                        "restockType": {
+                            "type": "string",
+                            "enum": ["NO_RESTOCK", "CANCEL", "RETURN"],
+                            "description": "How to handle inventory restocking",
+                        },
+                    },
+                    "required": ["orderId", "lineItemId", "restockType"],
+                },
+            ),
+            Tool(
+                name="create_refund",
+                description="Creates a refund for a specific line item in an order",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "orderId": {
+                            "type": "string",
+                            "description": "ID of the order to refund",
+                        },
+                        "lineItemId": {
+                            "type": "string",
+                            "description": "ID of the line item to refund",
+                        },
+                        "quantity": {
+                            "type": "integer",
+                            "description": "Quantity to refund (defaults to 1)",
+                        },
+                        "restockType": {
+                            "type": "string",
+                            "enum": ["NO_RESTOCK", "CANCEL", "RETURN"],
+                            "description": "How to handle inventory restocking",
+                        },
+                        "locationId": {
+                            "type": "string",
+                            "description": "ID of the location to restock inventory (required if restockType is not NO_RESTOCK)",
+                        },
+                        "note": {
+                            "type": "string",
+                            "description": "Note for the refund",
+                        },
+                        "transactionAmount": {
+                            "type": "string",
+                            "description": "Amount to refund (must match the amount calculated by Shopify)",
+                        },
+                        "transactionGateway": {
+                            "type": "string",
+                            "description": "Payment gateway for the refund",
+                        },
+                        "transactionKind": {
+                            "type": "string",
+                            "enum": ["REFUND", "VOID"],
+                            "description": "Type of transaction",
+                        },
+                        "transactionParentId": {
+                            "type": "string",
+                            "description": "ID of the parent transaction",
+                        },
+                    },
+                    "required": [
+                        "orderId",
+                        "lineItemId",
+                        "restockType",
+                        "note",
+                        "transactionAmount",
+                        "transactionGateway",
+                        "transactionKind",
+                        "transactionParentId",
+                    ],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -468,6 +761,102 @@ def create_server(user_id, api_key=None):
                     "variantId": format_shopify_id(args["variant_id"], "ProductVariant")
                 },
             },
+            "cancel_order": {
+                "query": CANCEL_ORDER_GRAPHQL_MUTATION,
+                "variables": lambda args: {
+                    "id": format_shopify_id(args["id"], "Order"),
+                    "refund": args["refund"],
+                    "restock": args["restock"],
+                    "staffNote": args["staffNote"],
+                    "reason": args["reason"],
+                },
+            },
+            "get_contact_by_email": {
+                "query": GET_CONTACT_BY_EMAIL_GRAPHQL_QUERY,
+                "variables": lambda args: {
+                    "email": args["email"],
+                },
+            },
+            "get_contact_by_id": {
+                "query": GET_CONTACT_BY_ID_GRAPHQL_QUERY,
+                "variables": lambda args: {
+                    "id": format_shopify_id(args["id"], "Customer"),
+                },
+            },
+            "get_contact_by_phone": {
+                "query": GET_CONTACT_BY_PHONE_GRAPHQL_QUERY,
+                "variables": lambda args: {
+                    "phone": args["phone"],
+                },
+            },
+            "get_order_by_number": {
+                "query": GET_ORDER_BY_NUMBER_GRAPHQL_QUERY,
+                "variables": lambda args: {
+                    "name": args["name"],
+                },
+            },
+            "get_recent_orders": {
+                "query": GET_RECENT_ORDERS_GRAPHQL_QUERY,
+                "variables": lambda args: {
+                    "customerId": format_shopify_id(args["customerId"], "Customer"),
+                    "limit": args["limit"],
+                },
+            },
+            "get_locations": {
+                "query": LOCATIONS_GRAPHQL_QUERY,
+                "variables": lambda args: {
+                    "first": args.get("first", 10),
+                },
+            },
+            "calculate_refund": {
+                "fn": calculate_refund,
+                "variables": lambda args: {
+                    "user_id": server.user_id,
+                    "order_id": args["orderId"],
+                    "line_item_id": args["lineItemId"],
+                    "quantity": args.get("quantity", 1),
+                    "restock_type": args["restockType"],
+                    "api_key": server.api_key,
+                },
+            },
+            "create_refund": {
+                "query": REFUND_CREATE_GRAPHQL_MUTATION,
+                "variables": lambda args: {
+                    "input": {
+                        "orderId": format_shopify_id(args["orderId"], "Order"),
+                        "note": args["note"],
+                        "refundLineItems": [
+                            {
+                                "lineItemId": format_shopify_id(
+                                    args["lineItemId"], "LineItem"
+                                ),
+                                "quantity": args.get("quantity", 1),
+                                "restockType": args["restockType"],
+                                **(
+                                    {
+                                        "locationId": format_shopify_id(
+                                            args["locationId"], "Location"
+                                        ),
+                                    }
+                                    if "locationId" in args
+                                    else {}
+                                ),
+                            }
+                        ],
+                        "transactions": [
+                            {
+                                "amount": args["transactionAmount"],
+                                "gateway": args["transactionGateway"],
+                                "kind": args["transactionKind"],
+                                "orderId": format_shopify_id(args["orderId"], "Order"),
+                                "parentId": format_shopify_id(
+                                    args["transactionParentId"], "OrderTransaction"
+                                ),
+                            }
+                        ],
+                    }
+                },
+            },
         }
 
         arguments = arguments or {}
@@ -475,10 +864,6 @@ def create_server(user_id, api_key=None):
         if name in endpoints:
             endpoint_info = endpoints[name]
             try:
-                query = endpoint_info["query"]
-                if callable(query):
-                    query = query(arguments)
-
                 variables_func = endpoint_info["variables"]
                 variables = (
                     variables_func(arguments)
@@ -486,9 +871,22 @@ def create_server(user_id, api_key=None):
                     else variables_func
                 )
 
-                result = await execute_graphql_query(
-                    server.user_id, query, variables=variables, api_key=server.api_key
-                )
+                if "query" in endpoint_info:
+                    query = endpoint_info["query"]
+
+                    result = await execute_graphql_query(
+                        server.user_id,
+                        query,
+                        variables=variables,
+                        api_key=server.api_key,
+                    )
+                else:
+                    fn = endpoint_info["fn"]
+                    result = (
+                        await fn(variables)
+                        if inspect.iscoroutinefunction(fn)
+                        else fn(variables)
+                    )
 
                 if (
                     result.get("_status_code") >= 200
