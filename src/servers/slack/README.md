@@ -10,6 +10,16 @@ guMCP server implementation for interacting with Slack.
   - channels:read
   - chat:write
   - chat:write.customize
+  - groups:read
+  - groups:write
+  - groups:history
+  - pins:read
+  - pins:write
+  - reactions:write
+  - files:read
+  - files:write
+  - im:read
+  - channels:manage
   - users:read
 
 ### Local Authentication
