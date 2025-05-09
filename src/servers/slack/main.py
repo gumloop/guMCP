@@ -199,57 +199,15 @@ def create_server(user_id, api_key=None):
                 )
                 resources.append(resource)
 
-                # Add channel_details resource
-                resource = Resource(
-                    uri=f"slack://channel_details/{channel_id}",
-                    mimeType="application/json",
-                    name=f"#{channel_name} Details",
-                    description=f"Details for {'private' if is_private else 'public'} Slack channel: #{channel_name}",
-                )
-                resources.append(resource)
-
                 # Add users_in_channel resource
                 resource = Resource(
-                    uri=f"slack://users_in_channel/{channel_id}",
+                    uri=f"slack://users/{channel_id}",
                     mimeType="application/json",
                     name=f"Users in #{channel_name}",
                     description=f"List of users in {'private' if is_private else 'public'} Slack channel: #{channel_name}",
                 )
                 resources.append(resource)
 
-            # Get list of users
-            cursor_users = None
-            user_resources = []
-
-            while True:
-                users_response = slack_client.users_list(
-                    limit=100, cursor=cursor_users or None
-                )
-                users = users_response.get("members", [])
-
-                for user in users:
-                    user_id = user.get("id")
-                    user_name = user.get("real_name") or user.get("name", "Unknown")
-
-                    # Add user profile resource
-                    resource = Resource(
-                        uri=f"slack://user/{user_id}",
-                        mimeType="application/json",
-                        name=f"{user_name}'s Profile",
-                        description=f"Profile information for {user_name}",
-                    )
-                    user_resources.append(resource)
-
-                # Check if there are more users to fetch
-                cursor_users = users_response.get("response_metadata", {}).get(
-                    "next_cursor"
-                )
-                if not cursor_users:
-                    break
-
-            resources.extend(user_resources)
-
-            # Return resources with cursor if present
             return resources
 
         except SlackApiError as e:
@@ -296,46 +254,7 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif resource_type == "channel_details":
-                # Get channel details
-                response = slack_client.conversations_info(channel=resource_id)
-                channel = response.get("channel", {})
-
-                # Extract relevant channel details
-                channel_details = {
-                    "id": channel.get("id"),
-                    "name": channel.get("name"),
-                    "is_private": channel.get("is_private", False),
-                    "creator": channel.get("creator"),
-                    "created": channel.get("created"),
-                    "topic": channel.get("topic", {}),
-                    "purpose": channel.get("purpose", {}),
-                    "num_members": channel.get("num_members"),
-                    "is_archived": channel.get("is_archived", False),
-                }
-
-                # Get creator info if available
-                if channel_details["creator"]:
-                    try:
-                        creator_info = slack_client.users_info(
-                            user=channel_details["creator"]
-                        )
-                        if creator_info["ok"]:
-                            user_data = creator_info["user"]
-                            channel_details["creator_name"] = user_data.get(
-                                "real_name"
-                            ) or user_data.get("name", "Unknown")
-                    except SlackApiError:
-                        channel_details["creator_name"] = "Unknown"
-
-                return [
-                    ReadResourceContents(
-                        content=json.dumps(channel_details, indent=2),
-                        mime_type="application/json",
-                    )
-                ]
-
-            elif resource_type == "users_in_channel":
+            elif resource_type == "users":
                 # Get channel members
                 response = slack_client.conversations_members(channel=resource_id)
                 member_ids = response.get("members", [])
@@ -374,45 +293,6 @@ def create_server(user_id, api_key=None):
                         mime_type="application/json",
                     )
                 ]
-
-            elif resource_type == "user":
-                # Get user profile information
-                response = slack_client.users_info(user=resource_id)
-
-                if response["ok"]:
-                    user_data = response["user"]
-                    profile = user_data.get("profile", {})
-
-                    user_profile = {
-                        "id": user_data.get("id"),
-                        "name": user_data.get("name"),
-                        "real_name": user_data.get("real_name"),
-                        "display_name": profile.get("display_name"),
-                        "email": profile.get("email"),
-                        "phone": profile.get("phone"),
-                        "title": profile.get("title"),
-                        "team": user_data.get("team_id"),
-                        "is_admin": user_data.get("is_admin", False),
-                        "is_owner": user_data.get("is_owner", False),
-                        "is_bot": user_data.get("is_bot", False),
-                        "updated": user_data.get("updated"),
-                        "status_text": profile.get("status_text"),
-                        "status_emoji": profile.get("status_emoji"),
-                    }
-
-                    return [
-                        ReadResourceContents(
-                            content=json.dumps(user_profile, indent=2),
-                            mime_type="application/json",
-                        )
-                    ]
-                else:
-                    return [
-                        ReadResourceContents(
-                            content=json.dumps({"error": "User not found"}, indent=2),
-                            mime_type="application/json",
-                        )
-                    ]
 
             else:
                 raise ValueError(f"Unknown resource type: {resource_type}")
