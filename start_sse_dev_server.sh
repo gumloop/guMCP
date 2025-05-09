@@ -15,14 +15,18 @@ fi
 export GUMCP_HOST=${GUMCP_HOST:-"0.0.0.0"}
 export GUMCP_PORT=${GUMCP_PORT:-"8000"}
 
-# Kill any process running on the specified port
-echo "Checking for processes running on port $GUMCP_PORT..."
-if lsof -i :$GUMCP_PORT > /dev/null; then
-    echo "Killing process running on port $GUMCP_PORT"
-    lsof -ti :$GUMCP_PORT | xargs kill -9
-    sleep 1
-fi
+# Function to kill server process
+kill_server() {
+    echo "Checking for processes running on port $GUMCP_PORT..."
+    if lsof -i :$GUMCP_PORT > /dev/null; then
+        echo "Killing process running on port $GUMCP_PORT"
+        lsof -ti :$GUMCP_PORT | xargs kill -9
+        sleep 1
+    fi
+}
 
-echo "Starting guMCP development server on $GUMCP_HOST:$GUMCP_PORT"
+# Kill any existing server process
+kill_server
 
-python src/servers/main.py
+echo "Starting guMCP development server on $GUMCP_HOST:$GUMCP_PORT with hot reloading"
+python scripts/server_watcher.py
