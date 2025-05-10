@@ -4,7 +4,7 @@ import httpx
 import logging
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterable
 
 project_root = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -18,6 +18,7 @@ from mcp.types import (
     Tool,
     ImageContent,
     EmbeddedResource,
+    AnyUrl,
 )
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server import NotificationOptions, Server
@@ -78,9 +79,7 @@ async def get_beehiiv_credentials(user_id, api_key=None):
     return api_key
 
 
-async def make_beehiiv_request(
-    method, endpoint, data=None, api_key=None, params=None
-):
+async def make_beehiiv_request(method, endpoint, data=None, api_key=None, params=None):
     """Make a request to the BeehiiV API"""
     if not api_key:
         raise ValueError("BeehiiV API key is required")
@@ -152,7 +151,77 @@ def create_server(user_id, api_key=None):
     async def handle_list_resources(
         cursor: Optional[str] = None,
     ) -> list[Resource]:
-        return []
+        api_key = await get_beehiiv_credentials(server.user_id, server.api_key)
+        resources = []
+
+        try:
+            # Get publications
+            publications_response = await make_beehiiv_request(
+                "get", "publications", api_key=api_key, params={"expand": ["stats"]}
+            )
+
+            for publication in publications_response.get("data", []):
+                pub_id = publication.get("id")
+                if pub_id:
+                    pub_name = publication.get("name", f"Publication {pub_id}")
+                    resources.append(
+                        Resource(
+                            uri=f"beehiiv://publication/{pub_id}",
+                            mimeType="application/json",
+                            name=pub_name,
+                            description=f"BeehiiV publication: {pub_name}",
+                        )
+                    )
+
+            return resources
+        except Exception as e:
+            logger.error(f"Error fetching resources: {str(e)}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        api_key = await get_beehiiv_credentials(server.user_id, server.api_key)
+
+        try:
+            # Parse URI to get resource type and ID
+            uri_str = str(uri)
+            if not uri_str.startswith("beehiiv://"):
+                raise ValueError(f"Unsupported URI format: {uri_str}")
+
+            parts = uri_str.replace("beehiiv://", "").split("/")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid URI format: {uri_str}")
+
+            resource_type = parts[0]
+            resource_id = parts[1]
+
+            # Handle publication resources
+            if resource_type == "publication":
+                # Get publication details
+                publication = await make_beehiiv_request(
+                    "get",
+                    f"publications/{resource_id}",
+                    api_key=api_key,
+                    params={"expand": ["stats"]},
+                )
+
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(publication, indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+            else:
+                raise ValueError(f"Unsupported resource type: {resource_type}")
+
+        except Exception as e:
+            logger.error(f"Error reading resource {uri}: {str(e)}")
+            return [
+                ReadResourceContents(
+                    content=json.dumps({"error": str(e)}, indent=2),
+                    mime_type="application/json",
+                )
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
@@ -242,7 +311,11 @@ def create_server(user_id, api_key=None):
                             "description": "The prefixed ID of the automation journey (e.g., aj_00000000-0000-0000-0000-000000000000)",
                         },
                     },
-                    "required": ["publication_id", "automation_id", "automation_journey_id"],
+                    "required": [
+                        "publication_id",
+                        "automation_id",
+                        "automation_journey_id",
+                    ],
                 },
             ),
             Tool(
@@ -261,23 +334,19 @@ def create_server(user_id, api_key=None):
                         },
                         "email": {
                             "type": "string",
-                            "description": "The email address associated with the subscription",
+                            "description": "The email address associated with the subscription (provide either email or subscription_id)",
                         },
                         "subscription_id": {
                             "type": "string",
-                            "description": "The prefixed ID of the subscription (e.g., sub_00000000-0000-0000-0000-000000000000)",
+                            "description": "The prefixed ID of the subscription (e.g., sub_00000000-0000-0000-0000-000000000000) (provide either email or subscription_id)",
                         },
                         "double_opt_override": {
                             "type": "string",
                             "description": "Override publication double-opt settings for this subscription",
-                            "enum": ["on", "off"]
+                            "enum": ["on", "off"],
                         },
                     },
                     "required": ["publication_id", "automation_id"],
-                    "oneOf": [
-                        {"required": ["email"]},
-                        {"required": ["subscription_id"]}
-                    ]
                 },
             ),
             Tool(
@@ -409,7 +478,15 @@ def create_server(user_id, api_key=None):
                         "kind": {
                             "type": "string",
                             "description": "The type of value being stored in the custom field",
-                            "enum": ["string", "integer", "boolean", "date", "datetime", "list", "double"],
+                            "enum": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "date",
+                                "datetime",
+                                "list",
+                                "double",
+                            ],
                         },
                         "display": {
                             "type": "string",
@@ -460,28 +537,6 @@ def create_server(user_id, api_key=None):
                 },
             ),
             Tool(
-                name="update_custom_field",
-                description="Update a custom field on a BeehiiV publication",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "publication_id": {
-                            "type": "string",
-                            "description": "The prefixed ID of the publication (e.g., pub_00000000-0000-0000-0000-000000000000)",
-                        },
-                        "custom_field_id": {
-                            "type": "string",
-                            "description": "The ID of the custom field",
-                        },
-                        "display": {
-                            "type": "string",
-                            "description": "The new display name of the custom field",
-                        },
-                    },
-                    "required": ["publication_id", "custom_field_id", "display"],
-                },
-            ),
-            Tool(
                 name="delete_custom_field",
                 description="Delete a custom field from a BeehiiV publication",
                 inputSchema={
@@ -497,67 +552,6 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["publication_id", "custom_field_id"],
-                },
-            ),
-            Tool(
-                name="list_publications",
-                description="Retrieve all publications associated with your API key",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "expand": {
-                            "type": "array",
-                            "description": "Optionally expand the results with additional information",
-                            "items": {
-                                "type": "string",
-                                "enum": ["stats", "stat_active_subscriptions", "stat_active_premium_subscriptions", 
-                                         "stat_active_free_subscriptions", "stat_average_open_rate", "stat_average_click_rate", 
-                                         "stat_total_sent", "stat_total_unique_opened", "stat_total_clicked"]
-                            }
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "description": "A limit on the number of objects to be returned (1-100)",
-                        },
-                        "page": {
-                            "type": "integer",
-                            "description": "Page number for paginated results",
-                        },
-                        "direction": {
-                            "type": "string",
-                            "description": "The direction to sort results",
-                            "enum": ["asc", "desc"]
-                        },
-                        "order_by": {
-                            "type": "string",
-                            "description": "The field to sort by",
-                            "enum": ["created", "name"]
-                        }
-                    },
-                },
-            ),
-            Tool(
-                name="get_publication",
-                description="Retrieve a single publication by ID",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "publication_id": {
-                            "type": "string",
-                            "description": "The prefixed ID of the publication (e.g., pub_00000000-0000-0000-0000-000000000000)",
-                        },
-                        "expand": {
-                            "type": "array",
-                            "description": "Optionally expand the results with additional information",
-                            "items": {
-                                "type": "string",
-                                "enum": ["stats", "stat_active_subscriptions", "stat_active_premium_subscriptions", 
-                                         "stat_active_free_subscriptions", "stat_average_open_rate", "stat_average_click_rate", 
-                                         "stat_total_sent", "stat_total_unique_opened", "stat_total_clicked"]
-                            }
-                        },
-                    },
-                    "required": ["publication_id"],
                 },
             ),
             Tool(
@@ -597,31 +591,35 @@ def create_server(user_id, api_key=None):
                             "description": "Optionally expand the results with additional information",
                             "items": {
                                 "type": "string",
-                                "enum": ["stats", "free_web_content", "free_email_content", 
-                                         "free_rss_content", "premium_web_content", "premium_email_content"]
-                            }
+                                "enum": [
+                                    "stats",
+                                    "free_web_content",
+                                    "free_email_content",
+                                    "free_rss_content",
+                                    "premium_web_content",
+                                    "premium_email_content",
+                                ],
+                            },
                         },
                         "audience": {
                             "type": "string",
                             "description": "Filter results by audience",
-                            "enum": ["free", "premium", "all"]
+                            "enum": ["free", "premium", "all"],
                         },
                         "platform": {
                             "type": "string",
                             "description": "Filter results by platform",
-                            "enum": ["web", "email", "both", "all"]
+                            "enum": ["web", "email", "both", "all"],
                         },
                         "status": {
                             "type": "string",
                             "description": "Filter results by status",
-                            "enum": ["draft", "confirmed", "archived", "all"]
+                            "enum": ["draft", "confirmed", "archived", "all"],
                         },
                         "content_tags": {
                             "type": "array",
                             "description": "Filter posts by content tags",
-                            "items": {
-                                "type": "string"
-                            }
+                            "items": {"type": "string"},
                         },
                         "limit": {
                             "type": "integer",
@@ -634,18 +632,18 @@ def create_server(user_id, api_key=None):
                         "order_by": {
                             "type": "string",
                             "description": "The field to sort by",
-                            "enum": ["created", "publish_date", "displayed_date"]
+                            "enum": ["created", "publish_date", "displayed_date"],
                         },
                         "direction": {
                             "type": "string",
                             "description": "The direction to sort results",
-                            "enum": ["asc", "desc"]
+                            "enum": ["asc", "desc"],
                         },
                         "hidden_from_feed": {
                             "type": "string",
                             "description": "Filter by hidden_from_feed attribute",
-                            "enum": ["all", "true", "false"]
-                        }
+                            "enum": ["all", "true", "false"],
+                        },
                     },
                     "required": ["publication_id"],
                 },
@@ -669,9 +667,15 @@ def create_server(user_id, api_key=None):
                             "description": "Optionally expand the results with additional information",
                             "items": {
                                 "type": "string",
-                                "enum": ["stats", "free_web_content", "free_email_content", 
-                                         "free_rss_content", "premium_web_content", "premium_email_content"]
-                            }
+                                "enum": [
+                                    "stats",
+                                    "free_web_content",
+                                    "free_email_content",
+                                    "free_rss_content",
+                                    "premium_web_content",
+                                    "premium_email_content",
+                                ],
+                            },
                         },
                     },
                     "required": ["publication_id", "post_id"],
@@ -708,12 +712,18 @@ def create_server(user_id, api_key=None):
                         "type": {
                             "type": "string",
                             "description": "Filter results by segment type",
-                            "enum": ["dynamic", "static", "manual", "all"]
+                            "enum": ["dynamic", "static", "manual", "all"],
                         },
                         "status": {
                             "type": "string",
                             "description": "Filter results by segment status",
-                            "enum": ["pending", "processing", "completed", "failed", "all"]
+                            "enum": [
+                                "pending",
+                                "processing",
+                                "completed",
+                                "failed",
+                                "all",
+                            ],
                         },
                         "limit": {
                             "type": "integer",
@@ -726,20 +736,17 @@ def create_server(user_id, api_key=None):
                         "order_by": {
                             "type": "string",
                             "description": "The field to sort by",
-                            "enum": ["created", "last_calculated"]
+                            "enum": ["created", "last_calculated"],
                         },
                         "direction": {
                             "type": "string",
                             "description": "The direction to sort results",
-                            "enum": ["asc", "desc"]
+                            "enum": ["asc", "desc"],
                         },
                         "expand": {
                             "type": "array",
                             "description": "Optionally expand the results with additional information",
-                            "items": {
-                                "type": "string",
-                                "enum": ["stats"]
-                            }
+                            "items": {"type": "string", "enum": ["stats"]},
                         },
                     },
                     "required": ["publication_id"],
@@ -762,10 +769,7 @@ def create_server(user_id, api_key=None):
                         "expand": {
                             "type": "array",
                             "description": "Optionally expand the results with additional information",
-                            "items": {
-                                "type": "string",
-                                "enum": ["stats"]
-                            }
+                            "items": {"type": "string", "enum": ["stats"]},
                         },
                     },
                     "required": ["publication_id", "segment_id"],
@@ -1151,71 +1155,6 @@ def create_server(user_id, api_key=None):
                 },
             ),
             Tool(
-                name="create_tier",
-                description="Create a new tier for a BeehiiV publication",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "publication_id": {
-                            "type": "string",
-                            "description": "The prefixed ID of the publication (e.g., pub_00000000-0000-0000-0000-000000000000)",
-                        },
-                        "name": {
-                            "type": "string",
-                            "description": "Name of the tier",
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Description of the tier",
-                        },
-                        "prices_attributes": {
-                            "type": "array",
-                            "description": "Price attributes for the tier",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "currency": {
-                                        "type": "string",
-                                        "description": "Currency for the price",
-                                        "enum": ["usd", "gbp", "eur", "aud", "cad", "nzd"],
-                                    },
-                                    "amount_cents": {
-                                        "type": "integer",
-                                        "description": "Amount in cents",
-                                    },
-                                    "interval": {
-                                        "type": "string",
-                                        "description": "Billing interval",
-                                        "enum": ["month", "year"],
-                                    },
-                                    "enabled": {
-                                        "type": "boolean",
-                                        "description": "Whether the price is enabled",
-                                    },
-                                    "interval_display": {
-                                        "type": "string",
-                                        "description": "Display text for the interval (e.g., 'Monthly')",
-                                    },
-                                    "cta": {
-                                        "type": "string",
-                                        "description": "Call to action text",
-                                    },
-                                    "features": {
-                                        "type": "array",
-                                        "description": "Features included with this price",
-                                        "items": {
-                                            "type": "string",
-                                        },
-                                    },
-                                },
-                                "required": ["currency", "amount_cents", "interval"],
-                            },
-                        },
-                    },
-                    "required": ["publication_id", "name"],
-                },
-            ),
-            Tool(
                 name="list_tiers",
                 description="List tiers for a BeehiiV publication",
                 inputSchema={
@@ -1311,7 +1250,14 @@ def create_server(user_id, api_key=None):
                                     "currency": {
                                         "type": "string",
                                         "description": "Currency for the price",
-                                        "enum": ["usd", "gbp", "eur", "aud", "cad", "nzd"],
+                                        "enum": [
+                                            "usd",
+                                            "gbp",
+                                            "eur",
+                                            "aud",
+                                            "cad",
+                                            "nzd",
+                                        ],
                                     },
                                     "amount_cents": {
                                         "type": "integer",
@@ -1438,7 +1384,7 @@ def create_server(user_id, api_key=None):
                     },
                 },
                 "update_custom_field": {
-                    "method": "put",
+                    "method": "patch",
                     "endpoint": lambda args: f"publications/{args['publication_id']}/custom_fields/{args['custom_field_id']}",
                     "data": lambda args: {
                         "display": args.get("display"),
@@ -1447,24 +1393,6 @@ def create_server(user_id, api_key=None):
                 "delete_custom_field": {
                     "method": "delete",
                     "endpoint": lambda args: f"publications/{args['publication_id']}/custom_fields/{args['custom_field_id']}",
-                },
-                "list_publications": {
-                    "method": "get",
-                    "endpoint": lambda args: "publications",
-                    "params": lambda args: {
-                        "expand": args.get("expand"),
-                        "limit": args.get("limit", 10),
-                        "page": args.get("page", 1),
-                        "direction": args.get("direction"),
-                        "order_by": args.get("order_by"),
-                    },
-                },
-                "get_publication": {
-                    "method": "get",
-                    "endpoint": lambda args: f"publications/{args['publication_id']}",
-                    "params": lambda args: {
-                        "expand": args.get("expand"),
-                    },
                 },
                 "get_referral_program": {
                     "method": "get",
@@ -1590,7 +1518,7 @@ def create_server(user_id, api_key=None):
                     },
                 },
                 "update_subscription": {
-                    "method": "put",
+                    "method": "patch",
                     "endpoint": lambda args: f"publications/{args['publication_id']}/subscriptions/{args['subscription_id']}",
                     "data": lambda args: {
                         "tier": args.get("tier"),
@@ -1608,15 +1536,6 @@ def create_server(user_id, api_key=None):
                     "endpoint": lambda args: f"publications/{args['publication_id']}/subscriptions/{args['subscription_id']}/tags",
                     "data": lambda args: {
                         "tags": args.get("tags"),
-                    },
-                },
-                "create_tier": {
-                    "method": "post",
-                    "endpoint": lambda args: f"publications/{args['publication_id']}/tiers",
-                    "data": lambda args: {
-                        "name": args.get("name"),
-                        "description": args.get("description"),
-                        "prices_attributes": args.get("prices_attributes"),
                     },
                 },
                 "list_tiers": {
@@ -1660,25 +1579,33 @@ def create_server(user_id, api_key=None):
             tool_config = tool_endpoints[name]
             method = tool_config["method"]
             endpoint = tool_config["endpoint"](arguments)
-            
+
             # Get request params and data
-            params = tool_config.get("params", lambda args: None)(arguments) if "params" in tool_config else None
-            data = tool_config.get("data", lambda args: None)(arguments) if "data" in tool_config else None
-            
+            params = (
+                tool_config.get("params", lambda args: None)(arguments)
+                if "params" in tool_config
+                else None
+            )
+            data = (
+                tool_config.get("data", lambda args: None)(arguments)
+                if "data" in tool_config
+                else None
+            )
+
             # Clean up None values from data and params
             if data:
                 data = {k: v for k, v in data.items() if v is not None}
             if params:
                 params = {k: v for k, v in params.items() if v is not None}
-            
+
             # Make the API request
             response = await make_beehiiv_request(
                 method, endpoint, data=data, api_key=api_key, params=params
             )
-            
+
             # Return the response
             return [TextContent(type="text", text=json.dumps(response, indent=2))]
-            
+
         except Exception as e:
             logger.error(f"Error in tool {name}: {str(e)}")
             return [TextContent(type="text", text=f"Error using {name} tool: {str(e)}")]
