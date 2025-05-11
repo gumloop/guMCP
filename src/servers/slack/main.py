@@ -325,6 +325,7 @@ def create_server(user_id, api_key=None):
                         "blocks": {
                             "type": "array",
                             "description": "Array of Slack block kit elements as JSON objects",
+                            "items": {"type": "object"},
                         },
                         "thread_ts": {
                             "type": "string",
