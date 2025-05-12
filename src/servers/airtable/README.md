@@ -10,6 +10,7 @@ guMCP server implementation for interacting with Airtable.
   - data.records:read
   - data.records:write
   - schema.bases:read
+  - schema.bases:write
 
 ### Local Authentication
 

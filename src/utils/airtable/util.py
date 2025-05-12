@@ -29,7 +29,7 @@ def build_airtable_auth_params(
     return {
         "client_id": oauth_config.get("client_id"),
         "response_type": "code",
-        "scope": "data.records:read data.records:write schema.bases:read",
+        "scope": " ".join(scopes),
         "state": f'{{"code_verifier":"{code_verifier}"}}',
         "redirect_uri": redirect_uri,
         "code_challenge": code_challenge,
@@ -103,11 +103,11 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         user_id=user_id,
         service_name=service_name,
         token_url=AIRTABLE_OAUTH_TOKEN_URL,
-        token_data_builder=lambda oauth_config, refresh_token, _: {
+        token_data_builder=lambda oauth_config, refresh_token, scopes: {
             "client_id": oauth_config["client_id"],
             "refresh_token": refresh_token,
             "grant_type": "refresh_token",
-            "scope": "data.records:read data.records:write schema.bases:read",
+            "scope": " ".join(scopes),
         },
         token_header_builder=build_airtable_token_headers,
         api_key=api_key,

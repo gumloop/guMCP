@@ -196,7 +196,10 @@ def create_server(user_id, api_key=None):
                     "properties": {
                         "spreadsheet_url": {"type": "string"},
                         "range": {"type": "string"},
-                        "values": {"type": "array", "items": {"type": "array"}},
+                        "values": {
+                            "type": "array",
+                            "items": {"type": "array", "items": {"type": "string"}},
+                        },
                     },
                     "required": ["spreadsheet_url", "range", "values"],
                 },
