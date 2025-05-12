@@ -2,6 +2,11 @@ name: "ClickUp guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with ClickUp task management and project tracking"
 documentation_path: "README.md"
+resources:
+  - name: "workspaces"
+    description: "ClickUp workspaces/teams that the user has access to"
+  - name: "spaces"
+    description: "Project spaces organized within workspaces"
 tools:
   - name: "get_authenticated_user"
     description: "Get information about the authenticated user"

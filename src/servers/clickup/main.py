@@ -148,24 +148,6 @@ def create_server(user_id, api_key=None):
                         )
                     )
 
-                    # Get lists for this space
-                    lists_result = await make_clickup_request(
-                        f"space/{space_id}/list", access_token=access_token
-                    )
-                    lists = lists_result.get("lists", [])
-
-                    for list_item in lists:
-                        list_id = list_item["id"]
-                        list_name = list_item["name"]
-
-                        resources.append(
-                            Resource(
-                                uri=f"clickup://list/{list_id}",
-                                mimeType="application/json",
-                                name=f"List: {list_name} (in {space_name})",
-                            )
-                        )
-
             return resources
 
         except Exception as e:
@@ -211,32 +193,6 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            elif uri_str.startswith("clickup://list/"):
-                # Handle list resource
-                list_id = uri_str.replace("clickup://list/", "")
-
-                list_result = await make_clickup_request(
-                    f"list/{list_id}", access_token=access_token
-                )
-
-                # Get tasks in this list
-                tasks_result = await make_clickup_request(
-                    f"list/{list_id}/task", access_token=access_token
-                )
-
-                # Combine list details with its tasks
-                combined_result = {
-                    "list": list_result,
-                    "tasks": tasks_result.get("tasks", []),
-                }
-
-                formatted_content = json.dumps(combined_result, indent=2)
-                return [
-                    ReadResourceContents(
-                        content=formatted_content, mime_type="application/json"
-                    )
-                ]
-
             raise ValueError(f"Unsupported resource URI: {uri_str}")
 
         except Exception as e:
@@ -256,6 +212,14 @@ def create_server(user_id, api_key=None):
                     "properties": {},
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the authenticated user",
+                    "examples": [
+                        '{"user": {"id": 123456, "username": "Example User", "email": "user@example.com", "profilePicture": null, "initials": "EU", "timezone": "America/Los_Angeles"}}'
+                    ],
+                },
             ),
             Tool(
                 name="get_workspaces",
@@ -264,6 +228,14 @@ def create_server(user_id, api_key=None):
                     "type": "object",
                     "properties": {},
                     "required": [],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of workspaces/teams with their details, each workspace returned as an individual item",
+                    "examples": [
+                        '{"id": "90000000000", "name": "Example Team", "color": "#40BC86", "avatar": null, "members": [{"user": {"id": 123456, "username": "Example User", "email": "user@example.com", "role": 1}}]}'
+                    ],
                 },
             ),
             Tool(
@@ -283,6 +255,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["workspace_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of spaces in the workspace, each space returned as an individual item",
+                    "examples": [
+                        '{"id": "90000000000", "name": "Example Space", "color": "#03A2FD", "private": false, "avatar": null, "statuses": [{"id": "p123_abc", "status": "to do", "type": "open", "orderindex": 0, "color": "#87909e"}], "multiple_assignees": true, "features": {"due_dates": {"enabled": true}, "time_tracking": {"enabled": true}}, "archived": false}'
+                    ],
+                },
             ),
             Tool(
                 name="get_folders",
@@ -300,6 +280,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["space_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of folders in the space, each folder returned as an individual item",
+                    "examples": [
+                        '{"id": "90000000000", "name": "Example Folder", "orderindex": 0, "override_statuses": false, "hidden": false, "space": {"id": "90000000000", "name": "Example Space"}, "task_count": "0", "archived": false, "lists": [{"id": "90000000000", "name": "Example List", "orderindex": 0}], "permission_level": "create"}'
+                    ],
                 },
             ),
             Tool(
@@ -321,6 +309,14 @@ def create_server(user_id, api_key=None):
                             "description": "Whether to include archived lists",
                         },
                     },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Lists in the folder or space, each list returned as an individual item",
+                    "examples": [
+                        '{"id": "90000000000", "name": "Example List", "orderindex": 0, "status": null, "priority": null, "assignee": null, "task_count": 0, "due_date": null, "start_date": null, "folder": {"id": "90000000000", "name": "Example Folder", "hidden": false, "access": true}, "space": {"id": "90000000000", "name": "Example Space", "access": true}, "archived": false, "permission_level": "create"}'
+                    ],
                 },
             ),
             Tool(
@@ -352,6 +348,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["list_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Tasks in the specified list, each task returned as an individual item",
+                    "examples": [
+                        '{"id": "abc123", "name": "Example Task", "status": {"status": "to do"}, "orderindex": "123", "date_created": "1600000000000", "date_updated": "1600000000000", "creator": {"id": 123456, "username": "Example User"}, "assignees": [], "tags": [], "priority": null, "time_estimate": null, "time_spent": 0}'
+                    ],
+                },
             ),
             Tool(
                 name="get_task_by_id",
@@ -373,6 +377,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["task_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about the specified task",
+                    "examples": [
+                        '{"id": "abc123", "name": "Example Task", "text_content": "Task description", "status": {"status": "to do"}, "orderindex": "123", "date_created": "1600000000000", "date_updated": "1600000000000", "creator": {"id": 123456, "username": "Example User"}, "assignees": [], "checklists": [], "tags": [], "priority": null, "due_date": null, "time_estimate": null, "time_spent": 0, "list": {"id": "90000000000", "name": "Example List", "access": true}}'
+                    ],
                 },
             ),
             Tool(
@@ -422,6 +434,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["list_id", "name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created task",
+                    "examples": [
+                        '{"id": "abc123", "name": "New Task", "text_content": "Task description", "status": {"status": "to do"}, "orderindex": "123", "date_created": "1600000000000", "date_updated": "1600000000000", "creator": {"id": 123456, "username": "Example User"}, "assignees": [], "tags": [], "url": "https://app.clickup.com/t/abc123"}'
+                    ],
+                },
             ),
             Tool(
                 name="update_task",
@@ -468,6 +488,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["task_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the updated task",
+                    "examples": [
+                        '{"id": "abc123", "name": "Updated Task", "description": "Updated description", "status": {"status": "in progress"}, "priority": {"priority": "high", "color": "#f8ae00"}, "date_updated": "1600000000000", "assignees": [], "tags": [], "due_date": null}'
+                    ],
+                },
             ),
             Tool(
                 name="add_comment",
@@ -497,6 +525,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["task_id", "comment_text"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the added comment",
+                    "examples": [
+                        '{"id": 90000000000, "hist_id": "1234567890", "date": 1600000000000, "version": {"object_type": "comment", "object_id": "90000000000", "workspace_id": 90000000000, "data": {"relationships": [{"type": "comment-author", "object_type": "user", "object_id": 123456}]}}}'
+                    ],
                 },
             ),
             Tool(
@@ -544,6 +580,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created list",
+                    "examples": [
+                        '{"id": "90000000000", "name": "New List", "deleted": false, "orderindex": 0, "content": "", "folder": {"id": "90000000000", "name": "Example Folder", "hidden": false, "access": true}, "space": {"id": "90000000000", "name": "Example Space", "access": true}, "archived": false, "statuses": [{"id": "p123_abc", "status": "to do"}]}'
+                    ],
+                },
             ),
             Tool(
                 name="create_folder",
@@ -561,6 +605,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["space_id", "name"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created folder",
+                    "examples": [
+                        '{"id": "90000000000", "name": "New Folder", "orderindex": 0, "override_statuses": false, "hidden": false, "space": {"id": "90000000000", "name": "Example Space", "access": true}, "task_count": "0", "archived": false, "lists": [], "permission_level": "create"}'
+                    ],
                 },
             ),
         ]
@@ -593,6 +645,15 @@ def create_server(user_id, api_key=None):
                     "team", access_token=access_token
                 )
 
+                # Process teams individually if teams are returned as a list
+                if "teams" in workspaces_result and isinstance(
+                    workspaces_result["teams"], list
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(team, indent=2))
+                        for team in workspaces_result["teams"]
+                    ]
+
                 return [
                     TextContent(
                         type="text", text=json.dumps(workspaces_result, indent=2)
@@ -615,6 +676,15 @@ def create_server(user_id, api_key=None):
                     access_token=access_token,
                 )
 
+                # Process spaces individually if spaces are returned as a list
+                if "spaces" in spaces_result and isinstance(
+                    spaces_result["spaces"], list
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(space, indent=2))
+                        for space in spaces_result["spaces"]
+                    ]
+
                 return [
                     TextContent(type="text", text=json.dumps(spaces_result, indent=2))
                 ]
@@ -632,6 +702,15 @@ def create_server(user_id, api_key=None):
                 folders_result = await make_clickup_request(
                     f"space/{space_id}/folder", params=params, access_token=access_token
                 )
+
+                # Process folders individually if folders are returned as a list
+                if "folders" in folders_result and isinstance(
+                    folders_result["folders"], list
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(folder, indent=2))
+                        for folder in folders_result["folders"]
+                    ]
 
                 return [
                     TextContent(type="text", text=json.dumps(folders_result, indent=2))
@@ -660,6 +739,13 @@ def create_server(user_id, api_key=None):
                     endpoint, params=params, access_token=access_token
                 )
 
+                # Process lists individually if lists are returned as a list
+                if "lists" in lists_result and isinstance(lists_result["lists"], list):
+                    return [
+                        TextContent(type="text", text=json.dumps(list_item, indent=2))
+                        for list_item in lists_result["lists"]
+                    ]
+
                 return [
                     TextContent(type="text", text=json.dumps(lists_result, indent=2))
                 ]
@@ -684,6 +770,13 @@ def create_server(user_id, api_key=None):
                 tasks_result = await make_clickup_request(
                     f"list/{list_id}/task", params=params, access_token=access_token
                 )
+
+                # Process tasks individually if tasks are returned as a list
+                if "tasks" in tasks_result and isinstance(tasks_result["tasks"], list):
+                    return [
+                        TextContent(type="text", text=json.dumps(task, indent=2))
+                        for task in tasks_result["tasks"]
+                    ]
 
                 return [
                     TextContent(type="text", text=json.dumps(tasks_result, indent=2))
