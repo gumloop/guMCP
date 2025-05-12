@@ -2471,7 +2471,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     if isinstance(arguments["contact_ids"], list):
                         # Convert contact_ids array to the format expected by Apollo API
                         for i, contact_id in enumerate(arguments["contact_ids"]):
-                            params[f"contact_ids[]"] = contact_id
+                            params[f"contact_ids[{i}]"] = contact_id
                     else:
                         error_message = (
                             "Error: contact_ids must be an array of string IDs"
