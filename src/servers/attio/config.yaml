@@ -2,26 +2,64 @@ name: "Attio guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Attio CRM data and records"
 documentation_path: "README.md"
+resources:
+  - name: "companies"
+    description: "Company records in Attio CRM, including their details and relationships."
+    required_scopes:
+      - "read"
+      - "write"
+  - name: "people"
+    description: "Contact records in Attio CRM, including their personal and professional information."
+    required_scopes:
+      - "read"
+      - "write"
+  - name: "lists"
+    description: "Lists of records in Attio CRM, used for organizing companies and contacts."
+    required_scopes:
+      - "read"
+      - "write"
 tools:
   - name: "search_companies"
     description: "Search for companies in Attio"
+    required_scopes:
+      - "read"
   - name: "read_company"
     description: "Read a specific company by ID"
+    required_scopes:
+      - "read"
   - name: "create_company"
     description: "Create a new company in Attio"
+    required_scopes:
+      - "write"
   - name: "update_company"
     description: "Update an existing company in Attio"
+    required_scopes:
+      - "write"
   - name: "search_contacts"
     description: "Search for contacts in Attio"
+    required_scopes:
+      - "read"
   - name: "read_contact"
     description: "Read a specific contact by ID"
+    required_scopes:
+      - "read"
   - name: "create_contact"
     description: "Create a new contact in Attio"
+    required_scopes:
+      - "write"
   - name: "update_contact"
     description: "Update an existing contact in Attio"
+    required_scopes:
+      - "write"
   - name: "list_lists"
     description: "List available lists in Attio"
+    required_scopes:
+      - "read"
   - name: "read_list"
     description: "Read a specific list by ID"
+    required_scopes:
+      - "read"
   - name: "add_to_list"
     description: "Add a record to a list in Attio"
+    required_scopes:
+      - "write"

@@ -203,6 +203,7 @@ def create_server(user_id, api_key=None):
                         'Found 2 companies:\n[\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Acme Inc",\n      "domains": ["acme.com"]\n    }\n  },\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Acme Corp",\n      "domains": ["acmecorp.com"]\n    }\n  }\n]'
                     ],
                 },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="read_company",
@@ -221,6 +222,7 @@ def create_server(user_id, api_key=None):
                         'Company details:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Acme Inc",\n      "domains": ["acme.com"],\n      "description": "Technology company"\n    }\n  }\n}'
                     ],
                 },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="create_company",
@@ -244,6 +246,7 @@ def create_server(user_id, api_key=None):
                         'Company created successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "New Company",\n      "domains": ["newcompany.com"]\n    }\n  }\n}'
                     ],
                 },
+                requiredScopes=["write"],
             ),
             Tool(
                 name="update_company",
@@ -266,6 +269,7 @@ def create_server(user_id, api_key=None):
                         'Company updated successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": "Updated Company",\n      "domains": ["updatedcompany.com"],\n      "description": "Technology company"\n    }\n  }\n}'
                     ],
                 },
+                requiredScopes=["write"],
             ),
             Tool(
                 name="search_contacts",
@@ -284,6 +288,7 @@ def create_server(user_id, api_key=None):
                         'Found 2 contacts:\n[\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }]\n    }\n  },\n  {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "Jane",\n        "last_name": "Doe",\n        "full_name": "Jane Doe"\n      },\n      "email_addresses": [{\n        "email_address": "jane@example.com"\n      }]\n    }\n  }\n]'
                     ],
                 },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="read_contact",
@@ -302,6 +307,7 @@ def create_server(user_id, api_key=None):
                         'Contact details:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }],\n      "job_title": "Software Engineer"\n    }\n  }\n}'
                     ],
                 },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="create_contact",
@@ -330,6 +336,7 @@ def create_server(user_id, api_key=None):
                         'Contact created successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }]\n    }\n  }\n}'
                     ],
                 },
+                requiredScopes=["write"],
             ),
             Tool(
                 name="update_contact",
@@ -352,6 +359,7 @@ def create_server(user_id, api_key=None):
                         'Contact updated successfully:\n{\n  "data": {\n    "id": {\n      "workspace_id": "<ID>",\n      "object_id": "<ID>",\n      "record_id": "<ID>"\n    },\n    "values": {\n      "name": {\n        "first_name": "John",\n        "last_name": "Doe",\n        "full_name": "John Doe"\n      },\n      "email_addresses": [{\n        "email_address": "john@example.com"\n      }],\n      "job_title": "Software Engineer"\n    }\n  }\n}'
                     ],
                 },
+                requiredScopes=["write"],
             ),
             Tool(
                 name="list_lists",
@@ -367,6 +375,7 @@ def create_server(user_id, api_key=None):
                         'Available lists:\n[\n  {\n    "id": "<ID>",\n    "attributes": {\n      "title": "Prospect List",\n      "description": "List of prospective customers"\n    }\n  },\n  {\n    "id": "<ID>",\n    "attributes": {\n      "title": "Customer List",\n      "description": "List of current customers"\n    }\n  }\n]'
                     ],
                 },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="read_list",
@@ -385,6 +394,7 @@ def create_server(user_id, api_key=None):
                         'List records:\n{\n  "data": [\n    {\n      "id": "<ID>",\n      "type": "company",\n      "attributes": {\n        "name": "Acme Inc",\n        "domains": ["acme.com"]\n      }\n    },\n    {\n      "id": "<ID>",\n      "type": "contact",\n      "attributes": {\n        "name": "John Doe",\n        "email": "john@example.com"\n      }\n    }\n  ]\n}'
                     ],
                 },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="add_to_list",
@@ -412,6 +422,7 @@ def create_server(user_id, api_key=None):
                         'Record added to list successfully:\n{\n  "data": {\n    "id": "<ID>",\n    "record_id": "<RECORD_ID>",\n    "type": "company",\n    "list_id": "<LIST_ID>"\n  }\n}'
                     ],
                 },
+                requiredScopes=["write"],
             ),
         ]
 
