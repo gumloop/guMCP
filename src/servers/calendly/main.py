@@ -308,6 +308,7 @@ def create_server(user_id, api_key=None):
                         "Found 1 event types:\n\n- 30 Minute Meeting (30 min)\n  Active: Yes\n  Scheduling URL: <URL>\n  ID: <ID>\n"
                     ],
                 },
+                requiredScopes=["default"],
             ),
             Tool(
                 name="get_availability",
@@ -338,6 +339,7 @@ def create_server(user_id, api_key=None):
                         "Available times between <DATE> and <DATE>:\n\n<DATE>:\n  - <TIME>\n  - <TIME>\n\n<DATE>:\n  - <TIME>\n  - <TIME>\n"
                     ],
                 },
+                requiredScopes=["default"],
             ),
             Tool(
                 name="list_scheduled_events",
@@ -368,6 +370,7 @@ def create_server(user_id, api_key=None):
                         "Found 1 active events:\n\n- 30 Minute Meeting\n  Status: active\n  Time: <START_TIME> to <END_TIME>\n  Location: <LOCATION>\n  ID: <ID>\n"
                     ],
                 },
+                requiredScopes=["default"],
             ),
             Tool(
                 name="cancel_event",
@@ -392,6 +395,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of strings confirming event cancellation or reporting status.",
                     "examples": ["Successfully canceled event: <EVENT_NAME>"],
                 },
+                requiredScopes=["default"],
             ),
             Tool(
                 name="create_scheduling_link",
@@ -412,6 +416,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of strings containing the single-use scheduling link.",
                     "examples": ["Scheduling link created:\n\n<URL>"],
                 },
+                requiredScopes=["default"],
             ),
         ]
 

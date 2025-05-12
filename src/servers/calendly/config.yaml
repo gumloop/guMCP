@@ -2,14 +2,33 @@ name: "Calendly guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Calendly scheduling and event management"
 documentation_path: "README.md"
+resources:
+  - name: "event_types"
+    description: "Calendly event types and meeting templates that define scheduling options."
+    required_scopes:
+      - "default"
+  - name: "scheduled_events"
+    description: "Scheduled meetings and events in Calendly, including their details and participants."
+    required_scopes:
+      - "default"
 tools:
   - name: "list_event_types"
     description: "List all available event types (meeting templates)"
+    required_scopes:
+      - "default"
   - name: "get_availability"
     description: "Get available time slots for a specific event type"
+    required_scopes:
+      - "default"
   - name: "list_scheduled_events"
     description: "List scheduled events in a given time range"
+    required_scopes:
+      - "default"
   - name: "cancel_event"
     description: "Cancel a scheduled event"
+    required_scopes:
+      - "default"
   - name: "create_scheduling_link"
     description: "Create a single-use scheduling link for a specific event type"
+    required_scopes:
+      - "default"
