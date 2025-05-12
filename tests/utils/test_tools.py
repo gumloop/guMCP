@@ -101,6 +101,10 @@ async def run_tool_test(client, context: dict, test_config: dict) -> dict:
             match = re.search(pattern, response, re.DOTALL | re.IGNORECASE)
             if match and len(match.groups()) > 0:
                 context[key] = match.group(1).strip()
+            else:
+                pytest.fail(
+                    f"Failed to extract '{key}' using pattern '{pattern}' from response: {response}"
+                )
 
     return context
 

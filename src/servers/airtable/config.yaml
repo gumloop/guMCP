@@ -2,10 +2,74 @@ name: "Airtable guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Airtable bases and records"
 documentation_path: "README.md"
+resources:
+  - name: "base"
+    description: "Airtable bases (workspaces) containing multiple tables"
+    required_scopes:
+      - "schema.bases:read"
+  - name: "table"
+    description: "Airtable tables with records, fields, and views"
+    required_scopes:
+      - "schema.bases:read"
+      - "data.records:read"
 tools:
   - name: "read_records"
     description: "Read records from an Airtable table"
+    required_scopes:
+      - "data.records:read"
   - name: "create_records"
     description: "Create new records in an Airtable table"
+    required_scopes:
+      - "data.records:write"
   - name: "update_records"
     description: "Update existing records in an Airtable table"
+    required_scopes:
+      - "data.records:write"
+  - name: "list_bases"
+    description: "List all accessible Airtable bases with their ID, name, and permission level"
+    required_scopes:
+      - "schema.bases:read"
+  - name: "list_tables"
+    description: "List all tables in a given Airtable base"
+    required_scopes:
+      - "schema.bases:read"
+  - name: "base_schema"
+    description: "Get detailed schema for all tables in a base"
+    required_scopes:
+      - "schema.bases:read"
+  - name: "search_records"
+    description: "Search for records containing specific text in a table"
+    required_scopes:
+      - "data.records:read"
+  - name: "get_record"
+    description: "Get a single record by its ID from a table"
+    required_scopes:
+      - "data.records:read"
+  - name: "delete_records"
+    description: "Delete one or more records from a table"
+    required_scopes:
+      - "data.records:write"
+  - name: "create_table"
+    description: "Create a new table in a base"
+    required_scopes:
+      - "schema.bases:write"
+  - name: "update_table"
+    description: "Update an existing table's name or description"
+    required_scopes:
+      - "schema.bases:write"
+  - name: "create_field"
+    description: "Add a new field (column) to an existing table"
+    required_scopes:
+      - "schema.bases:write"
+  - name: "update_field"
+    description: "Update a field's metadata in a table"
+    required_scopes:
+      - "schema.bases:write"
+  - name: "create_base"
+    description: "Create a new Airtable base (workspace)"
+    required_scopes:
+      - "schema.bases:write"
+  - name: "delete_base"
+    description: "Delete an existing Airtable base"
+    required_scopes:
+      - "schema.bases:write"
