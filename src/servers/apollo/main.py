@@ -4,7 +4,7 @@ import logging
 import json
 import requests
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterable
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -16,11 +16,8 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from mcp.types import (
-    TextContent,
-    ImageContent,
-    EmbeddedResource,
-)
+from mcp.types import TextContent, ImageContent, EmbeddedResource, Resource
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 from src.auth.factory import create_auth_client
 
 
@@ -100,6 +97,147 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
     server.user_id = user_id
     server.api_key = api_key
+
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """
+        List Apollo users (teammates) in your Apollo account.
+        """
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        # Get Apollo API key
+        api_key = await get_apollo_credentials(server.user_id, api_key=server.api_key)
+
+        resources = []
+        headers = {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+        }
+
+        # Fetch users using the users/search endpoint
+        try:
+            endpoint = f"{API_BASE_URL}/users/search"
+            params = {"page": 1, "per_page": 10}
+
+            response = requests.get(endpoint, headers=headers, params=params)
+
+            if response.status_code == 200:
+                data = response.json()
+                users = data.get("users", [])
+
+                # Create resource entries for users
+                for user in users:
+                    user_id = user.get("id")
+                    name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or user.get(
+                        "email", f"User {user_id}"
+                    )
+
+                    resources.append(
+                        types.Resource(
+                            uri=f"apollo://user/{user_id}",
+                            mimeType="application/json",
+                            name=name,
+                            description="Apollo User Record",
+                        )
+                    )
+        except Exception as e:
+            logger.error(f"Error fetching users: {str(e)}")
+
+        return resources
+
+    @server.read_resource()
+    async def handle_read_resource(uri: types.AnyUrl) -> Iterable[ReadResourceContents]:
+        """
+        Read an Apollo user resource by URI.
+        """
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        # Get Apollo API key
+        api_key = await get_apollo_credentials(server.user_id, api_key=server.api_key)
+
+        # Parse URI to get resource type and ID
+        uri_str = str(uri)
+        if not uri_str.startswith("apollo://"):
+            return []
+
+        parts = uri_str.replace("apollo://", "").split("/")
+
+        if len(parts) < 2:
+            return []
+
+        resource_type = parts[0]
+        resource_id = parts[1]
+
+        headers = {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+        }
+
+        # We only support user resources
+        if resource_type == "user":
+            try:
+                # The API doesn't have a specific endpoint for a single user,
+                # so we use the search endpoint and filter for the specific user
+                endpoint = f"{API_BASE_URL}/users/search"
+                response = requests.get(endpoint, headers=headers)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    users = data.get("users", [])
+
+                    # Find the user with the matching ID
+                    for user in users:
+                        if user.get("id") == resource_id:
+                            return [
+                                ReadResourceContents(
+                                    content=json.dumps(user, indent=2),
+                                    mime_type="application/json",
+                                )
+                            ]
+
+                    # If we didn't find the user, return a "not found" error
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps({"error": "User not found"}, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+                else:
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(
+                                {
+                                    "error": f"Error fetching user: {response.status_code}"
+                                },
+                                indent=2,
+                            ),
+                            mime_type="application/json",
+                        )
+                    ]
+            except Exception as e:
+                logger.error(f"Error reading user resource: {str(e)}")
+                return [
+                    ReadResourceContents(
+                        content=json.dumps({"error": str(e)}, indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+        else:
+            return [
+                ReadResourceContents(
+                    content=json.dumps(
+                        {"error": f"Unsupported resource type: {resource_type}"},
+                        indent=2,
+                    ),
+                    mime_type="application/json",
+                )
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
@@ -821,6 +959,272 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     "description": "Array of JSON strings containing user listings",
                     "examples": [
                         '{"users":[{"id":"<ID>","name":"Test User"}],"total":10}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="organization_search",
+                description="Search for organizations in Apollo's database",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "q_organization_name": {
+                            "type": "string",
+                            "description": "Keywords to search for in organization names",
+                        },
+                        "revenue_range_min": {
+                            "type": "number",
+                            "description": "Minimum annual revenue",
+                        },
+                        "revenue_range_max": {
+                            "type": "number",
+                            "description": "Maximum annual revenue",
+                        },
+                        "organization_num_employees_ranges": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Employee count ranges (e.g., '1-10', '11-50', etc.)",
+                        },
+                        "organization_locations": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Locations to include",
+                        },
+                        "organization_not_locations": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Locations to exclude",
+                        },
+                        "currently_using_any_of_technology_uids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Technologies used by the organization",
+                        },
+                        "q_organization_keyword_tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Industry keywords or tags",
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "The page number of results to retrieve",
+                        },
+                        "per_page": {
+                            "type": "integer",
+                            "description": "Number of results per page",
+                        },
+                    },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing organization search results",
+                    "examples": [
+                        '{"organizations":[{"id":"<ID>","name":"<Org Name>"}],"total":5}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="people_search",
+                description="Search for people in Apollo's database",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "q_keywords": {
+                            "type": "string",
+                            "description": "Keywords to search for across all people fields",
+                        },
+                        "include_similar_titles": {
+                            "type": "boolean",
+                            "description": "Include similar job titles in search results",
+                        },
+                        "person_titles": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Job titles to filter by",
+                        },
+                        "person_locations": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Person locations to filter by",
+                        },
+                        "person_seniorities": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Seniority levels to filter by",
+                        },
+                        "organization_locations": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Organization locations to filter by",
+                        },
+                        "q_organization_domains_list": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of organization domains to filter by",
+                        },
+                        "contact_email_status": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Email status to filter by",
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "The page number of results to retrieve",
+                        },
+                        "per_page": {
+                            "type": "integer",
+                            "description": "Number of results per page",
+                        },
+                    },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing people search results",
+                    "examples": [
+                        '{"people":[{"id":"<ID>","name":"John Doe","title":"CEO"}],"total":10}'
+                    ],
+                },
+            ),
+            # SEQUENCE MANAGEMENT TOOLS
+            # Tools for managing email sequences in Apollo
+            types.Tool(
+                name="search_sequences",
+                description="Search for sequences in your Apollo account",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "q_name": {
+                            "type": "string",
+                            "description": "Keywords to narrow the search of sequences in your team's Apollo account",
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "The page number of results to retrieve",
+                        },
+                        "per_page": {
+                            "type": "integer",
+                            "description": "Number of results per page",
+                        },
+                    },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing sequence search results",
+                    "examples": [
+                        '{"emailer_campaigns":[{"id":"<ID>","name":"<Sequence Name>"}]}'
+                    ],
+                },
+            ),
+            types.Tool(
+                name="add_contacts_to_sequence",
+                description="Add contacts to an existing sequence in your Apollo account",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "sequence_id": {
+                            "type": "string",
+                            "description": "The Apollo ID for the sequence to which you want to add contacts",
+                        },
+                        "contact_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "The Apollo IDs for the contacts to add to the sequence",
+                        },
+                        "send_email_from_email_account_id": {
+                            "type": "string",
+                            "description": "The Apollo ID for the email account to use for sending emails",
+                        },
+                        "sequence_no_email": {
+                            "type": "boolean",
+                            "description": "Add contacts with no email address to the sequence",
+                        },
+                        "sequence_unverified_email": {
+                            "type": "boolean",
+                            "description": "Add contacts with unverified email addresses to the sequence",
+                        },
+                        "sequence_job_change": {
+                            "type": "boolean",
+                            "description": "Add contacts who recently changed jobs to the sequence",
+                        },
+                        "sequence_active_in_other_campaigns": {
+                            "type": "boolean",
+                            "description": "Add contacts already in other sequences to this sequence",
+                        },
+                        "sequence_finished_in_other_campaigns": {
+                            "type": "boolean",
+                            "description": "Add contacts who finished other sequences to this sequence",
+                        },
+                        "user_id": {
+                            "type": "string",
+                            "description": "The ID for the user in your Apollo account who is adding contacts",
+                        },
+                    },
+                    "required": [
+                        "sequence_id",
+                        "contact_ids",
+                        "send_email_from_email_account_id",
+                    ],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the result of adding contacts to the sequence",
+                    "examples": ['{"entity_progress_job":{"id":"<ID>","progress":0}}'],
+                },
+            ),
+            types.Tool(
+                name="update_contact_sequence_status",
+                description="Mark contacts as finished or remove contacts from sequences",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "emailer_campaign_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "The Apollo IDs for the sequences that you want to update",
+                        },
+                        "contact_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "The Apollo IDs for the contacts in the sequences",
+                        },
+                        "mode": {
+                            "type": "string",
+                            "enum": ["mark_as_finished", "remove", "stop"],
+                            "description": "The action to take: mark_as_finished, remove, or stop",
+                        },
+                    },
+                    "required": ["emailer_campaign_ids", "contact_ids", "mode"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the result of updating contact sequence status",
+                    "examples": ['{"entity_progress_job":{"id":"<ID>","progress":0}}'],
+                },
+            ),
+            types.Tool(
+                name="get_organization_job_postings",
+                description="Retrieve current job postings for a specific organization",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "organization_id": {
+                            "type": "string",
+                            "description": "The Apollo ID for the organization to get job postings for",
+                        },
+                    },
+                    "required": ["organization_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing job postings for the organization",
+                    "examples": [
+                        '{"job_postings":[{"id":"<ID>","title":"Software Engineer"}]}'
                     ],
                 },
             ),
@@ -1926,6 +2330,322 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         error_message = "Error: 403 - This endpoint requires a master API key. Please check your API key permissions."
                         logger.error(error_message)
                         return [TextContent(type="text", text=error_message)]
+                    else:
+                        error_message = (
+                            f"Error: {response.status_code} - {response.text}"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                case "delete_contact":
+                    # Check if contact_id parameter is provided
+                    if "contact_id" not in arguments:
+                        error_message = "Error: The 'contact_id' parameter is required for contact deletion"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Extract contact_id from arguments
+                    contact_id = arguments["contact_id"]
+
+                    # Call the Delete Contact endpoint
+                    url = f"{API_BASE_URL}/contacts/{contact_id}"
+
+                    # Prepare headers
+                    headers = {
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "x-api-key": api_key,
+                    }
+
+                    # Log the request details
+                    logger.info(f"Making DELETE request to {url}")
+                    logger.info(f"Headers: {headers}")
+
+                    # Make the API request
+                    response = requests.delete(url, headers=headers, timeout=30)
+
+                    # Log the response status
+                    logger.info(f"Response status: {response.status_code}")
+
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        result = {"deleted": True, "id": contact_id}
+                        return [
+                            TextContent(type="text", text=json.dumps(result, indent=2))
+                        ]
+                    elif response.status_code == 403:
+                        error_message = "Error: 403 - This endpoint requires a master API key. Please check your API key permissions."
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+                    else:
+                        error_message = (
+                            f"Error: {response.status_code} - {response.text}"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                case "search_sequences":
+                    # Call the Search Sequences endpoint
+                    url = f"{API_BASE_URL}/emailer_campaigns/search"
+
+                    # Prepare headers
+                    headers = {
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "x-api-key": api_key,
+                    }
+
+                    # Prepare query parameters
+                    params = {}
+
+                    # Add search parameters if provided
+                    if "q_name" in arguments:
+                        params["q_name"] = arguments["q_name"]
+
+                    # Add pagination parameters if provided
+                    if "page" in arguments:
+                        params["page"] = arguments["page"]
+                    if "per_page" in arguments:
+                        params["per_page"] = arguments["per_page"]
+
+                    # Log the request details
+                    logger.info(f"Making request to {url}")
+                    logger.info(f"Headers: {headers}")
+                    logger.info(f"Params: {params}")
+
+                    # Make the API request
+                    response = requests.post(
+                        url, headers=headers, json=params, timeout=30
+                    )
+
+                    # Log the response status
+                    logger.info(f"Response status: {response.status_code}")
+
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        result = response.json()
+                        return [
+                            TextContent(type="text", text=json.dumps(result, indent=2))
+                        ]
+                    else:
+                        error_message = (
+                            f"Error: {response.status_code} - {response.text}"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                case "add_contacts_to_sequence":
+                    # Check if required parameters are provided
+                    if "sequence_id" not in arguments:
+                        error_message = "Error: The 'sequence_id' parameter is required"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    if "contact_ids" not in arguments:
+                        error_message = "Error: The 'contact_ids' parameter is required"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    if "send_email_from_email_account_id" not in arguments:
+                        error_message = "Error: The 'send_email_from_email_account_id' parameter is required"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Extract sequence_id from arguments
+                    sequence_id = arguments.pop("sequence_id")
+
+                    # Call the Add Contacts to Sequence endpoint
+                    url = f"{API_BASE_URL}/emailer_campaigns/{sequence_id}/add_contact_ids"
+
+                    # Prepare headers
+                    headers = {
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "x-api-key": api_key,
+                    }
+
+                    # Prepare query parameters
+                    params = {"emailer_campaign_id": sequence_id}
+
+                    # Add required parameters
+                    if isinstance(arguments["contact_ids"], list):
+                        # Convert contact_ids array to the format expected by Apollo API
+                        for i, contact_id in enumerate(arguments["contact_ids"]):
+                            params[f"contact_ids[]"] = contact_id
+                    else:
+                        error_message = (
+                            "Error: contact_ids must be an array of string IDs"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Add email account ID
+                    params["send_email_from_email_account_id"] = arguments[
+                        "send_email_from_email_account_id"
+                    ]
+
+                    # Add optional boolean parameters if provided
+                    for param in [
+                        "sequence_no_email",
+                        "sequence_unverified_email",
+                        "sequence_job_change",
+                        "sequence_active_in_other_campaigns",
+                        "sequence_finished_in_other_campaigns",
+                    ]:
+                        if param in arguments:
+                            params[param] = arguments[param]
+
+                    # Add user_id if provided
+                    if "user_id" in arguments:
+                        params["user_id"] = arguments["user_id"]
+
+                    # Log the request details
+                    logger.info(f"Making request to {url}")
+                    logger.info(f"Headers: {headers}")
+                    logger.info(f"Params: {params}")
+
+                    # Make the API request
+                    response = requests.post(
+                        url, headers=headers, params=params, timeout=30
+                    )
+
+                    # Log the response status
+                    logger.info(f"Response status: {response.status_code}")
+
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        result = response.json()
+                        return [
+                            TextContent(type="text", text=json.dumps(result, indent=2))
+                        ]
+                    else:
+                        error_message = (
+                            f"Error: {response.status_code} - {response.text}"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                case "update_contact_sequence_status":
+                    # Check if required parameters are provided
+                    if "emailer_campaign_ids" not in arguments:
+                        error_message = (
+                            "Error: The 'emailer_campaign_ids' parameter is required"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    if "contact_ids" not in arguments:
+                        error_message = "Error: The 'contact_ids' parameter is required"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    if "mode" not in arguments:
+                        error_message = "Error: The 'mode' parameter is required"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Call the Update Contact Sequence Status endpoint
+                    url = f"{API_BASE_URL}/emailer_campaigns/remove_or_stop_contact_ids"
+
+                    # Prepare headers
+                    headers = {
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "x-api-key": api_key,
+                    }
+
+                    # Prepare query parameters
+                    params = {}
+
+                    # Add emailer_campaign_ids array
+                    if isinstance(arguments["emailer_campaign_ids"], list):
+                        for i, campaign_id in enumerate(
+                            arguments["emailer_campaign_ids"]
+                        ):
+                            params[f"emailer_campaign_ids[]"] = campaign_id
+                    else:
+                        error_message = (
+                            "Error: emailer_campaign_ids must be an array of string IDs"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Add contact_ids array
+                    if isinstance(arguments["contact_ids"], list):
+                        for i, contact_id in enumerate(arguments["contact_ids"]):
+                            params[f"contact_ids[]"] = contact_id
+                    else:
+                        error_message = (
+                            "Error: contact_ids must be an array of string IDs"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Add mode parameter
+                    params["mode"] = arguments["mode"]
+
+                    # Log the request details
+                    logger.info(f"Making request to {url}")
+                    logger.info(f"Headers: {headers}")
+                    logger.info(f"Params: {params}")
+
+                    # Make the API request
+                    response = requests.post(
+                        url, headers=headers, params=params, timeout=30
+                    )
+
+                    # Log the response status
+                    logger.info(f"Response status: {response.status_code}")
+
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        result = response.json()
+                        return [
+                            TextContent(type="text", text=json.dumps(result, indent=2))
+                        ]
+                    else:
+                        error_message = (
+                            f"Error: {response.status_code} - {response.text}"
+                        )
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                case "get_organization_job_postings":
+                    # Check if organization_id parameter is provided
+                    if "organization_id" not in arguments:
+                        error_message = "Error: The 'organization_id' parameter is required for retrieving job postings"
+                        logger.error(error_message)
+                        return [TextContent(type="text", text=error_message)]
+
+                    # Extract organization_id from arguments
+                    organization_id = arguments["organization_id"]
+
+                    # Call the Get Organization Job Postings endpoint
+                    url = f"{API_BASE_URL}/organizations/{organization_id}/job_postings"
+
+                    # Prepare headers
+                    headers = {
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "x-api-key": api_key,
+                    }
+
+                    # Log the request details
+                    logger.info(f"Making GET request to {url}")
+                    logger.info(f"Headers: {headers}")
+
+                    # Make the API request
+                    response = requests.get(url, headers=headers, timeout=30)
+
+                    # Log the response status
+                    logger.info(f"Response status: {response.status_code}")
+
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        result = response.json()
+                        return [
+                            TextContent(type="text", text=json.dumps(result, indent=2))
+                        ]
                     else:
                         error_message = (
                             f"Error: {response.status_code} - {response.text}"
