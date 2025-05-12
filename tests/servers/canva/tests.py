@@ -8,6 +8,18 @@ created_folder_id = None
 
 
 @pytest.mark.asyncio
+async def test_list_design_resources(client):
+    """Test listing Canva designs as resources."""
+    response = await client.process_query(
+        "Browse the available Canva design resources. "
+        "If successful, start your response with 'Here are your Canva design resources'."
+    )
+
+    assert "here are your canva design resources" in response.lower()
+    print("✅ list_design_resources passed.")
+
+
+@pytest.mark.asyncio
 async def test_get_user_profile(client):
     """Test retrieving the user's profile information.
 

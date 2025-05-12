@@ -2,32 +2,67 @@ name: "Canva guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Canva designs, folders, and comments using the Canva API"
 documentation_path: "README.md"
+resources:
+  - name: "designs"
+    description: "Canva designs created by the user or shared with them"
+    required_scopes:
+      - "design:meta:read"
+      - "design:content:read"
+      - "design:content:write"
 tools:
   - name: "get_user_profile"
     description: "Get the current user's profile information including display name"
+    required_scopes:
+      - "profile:read"
   - name: "get_user_details"
     description: "Get the current user's details including user ID and team ID"
+    required_scopes:
+      - "profile:read"
   - name: "get_thread"
     description: "Get metadata for a comment thread on a design"
+    required_scopes:
+      - "comment:read"
   - name: "create_reply"
     description: "Reply to a comment on a design"
+    required_scopes:
+      - "comment:write"
   - name: "create_thread"
     description: "Create a new comment thread on a design"
+    required_scopes:
+      - "comment:write"
   - name: "list_replies"
     description: "List the replies to a comment on a design"
+    required_scopes:
+      - "comment:read"
   - name: "get_reply"
     description: "Get a specific reply to a comment"
+    required_scopes:
+      - "comment:read"
   - name: "get_design"
     description: "Get the metadata for one of the user's designs"
+    required_scopes:
+      - "design:meta:read"
   - name: "list_designs"
     description: "List all the user's designs with optional filtering and sorting"
+    required_scopes:
+      - "design:meta:read"
   - name: "create_design"
     description: "Create a new Canva design with optional type, asset, and title"
+    required_scopes:
+      - "design:content:write"
   - name: "create_folder"
     description: "Create a new folder in the user's Projects"
+    required_scopes:
+      - "folder:write"
   - name: "get_folder"
     description: "Get the metadata for a folder"
+    required_scopes:
+      - "folder:read"
   - name: "update_folder"
     description: "Update a folder's metadata (name)"
+    required_scopes:
+      - "folder:write"
   - name: "delete_folder"
     description: "Delete a folder and move its contents to Trash"
+    required_scopes:
+      - "folder:write"

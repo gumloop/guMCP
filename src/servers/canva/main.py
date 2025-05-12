@@ -4,7 +4,7 @@ import logging
 import json
 import requests
 from pathlib import Path
-from typing import Optional, List, Dict, Any, TypedDict, Union, Literal
+from typing import Optional, List, Dict, Any, TypedDict, Union, Literal, Iterable
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -391,6 +391,83 @@ def create_server(user_id: str, api_key: str = None) -> Server:
             )
         return server._canva_client
 
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """List Canva designs resources"""
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        canva_client = await _get_canva_client()
+
+        try:
+            # Get list of designs
+            response = canva_client.list_designs(
+                continuation=cursor, sort_by="modified_descending"
+            )
+
+            designs = response.get("items", [])
+            continuation = response.get("continuation")
+
+            resources = []
+            for design in designs:
+                design_id = design.get("id")
+                title = design.get("title")
+
+                resource = Resource(
+                    uri=f"canva://design/{design_id}",
+                    mimeType="application/json",
+                    name=title,
+                    description=f"Canva design: {title}",
+                )
+                resources.append(resource)
+
+            return resources
+
+        except Exception as e:
+            logger.error(f"Error listing Canva designs: {e}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read a Canva design resource"""
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        canva_client = await _get_canva_client()
+
+        uri_str = str(uri)
+        if not uri_str.startswith("canva://"):
+            raise ValueError(f"Invalid Canva URI: {uri_str}")
+
+        # Parse the URI to get resource type and ID
+        parts = uri_str.replace("canva://", "").split("/")
+        if len(parts) != 2:
+            raise ValueError(f"Invalid Canva URI format: {uri_str}")
+
+        resource_type, resource_id = parts
+
+        try:
+            if resource_type == "design":
+                # Get design details
+                response = canva_client.get_design(resource_id)
+
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response, indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+            else:
+                raise ValueError(f"Unsupported resource type: {resource_type}")
+
+        except Exception as e:
+            logger.error(f"Error reading Canva resource: {e}")
+            return [
+                ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
+            ]
+
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
         """
@@ -404,11 +481,27 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 name="get_user_profile",
                 description="Get the current user's profile information including display name",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "User profile information from Canva",
+                    "examples": ['{"profile": {"display_name": "Example User"}}'],
+                },
+                requiredScopes=["profile:read"],
             ),
             types.Tool(
                 name="get_user_details",
                 description="Get the current user's details including user ID and team ID",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "User details including user and team IDs",
+                    "examples": [
+                        '{"team_user": {"user_id": "abc123", "team_id": "team456"}}'
+                    ],
+                },
+                requiredScopes=["profile:read"],
             ),
             types.Tool(
                 name="get_thread",
@@ -421,6 +514,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["design_id", "thread_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Comment thread details",
+                    "examples": [
+                        '{"thread": {"id": "thread123", "design_id": "design456", "thread_type": {"type": "comment", "content": {"plaintext": "This is a comment"}, "mentions": {}}, "author": {"id": "user789", "display_name": "Comment Author"}, "created_at": 1600000000, "updated_at": 1600000000}}'
+                    ],
+                },
+                requiredScopes=["comment:read"],
             ),
             types.Tool(
                 name="create_reply",
@@ -434,6 +536,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["design_id", "thread_id", "message_plaintext"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the created reply",
+                    "examples": [
+                        '{"reply": {"id": "reply123", "design_id": "design456", "thread_id": "thread789", "author": {"id": "user123", "display_name": "Reply Author"}, "content": {"plaintext": "This is a reply"}, "mentions": {}, "created_at": 1600000000, "updated_at": 1600000000}}'
+                    ],
+                },
+                requiredScopes=["comment:write"],
             ),
             types.Tool(
                 name="create_thread",
@@ -447,6 +558,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["design_id", "message_plaintext"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the created comment thread",
+                    "examples": [
+                        '{"thread": {"id": "thread123", "design_id": "design456", "thread_type": {"type": "comment", "content": {"plaintext": "New thread comment"}, "mentions": {}}, "author": {"id": "user789", "display_name": "Thread Creator"}, "created_at": 1600000000, "updated_at": 1600000000}}'
+                    ],
+                },
+                requiredScopes=["comment:write"],
             ),
             types.Tool(
                 name="list_replies",
@@ -461,6 +581,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["design_id", "thread_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Individual replies to the thread, one per TextContent",
+                    "examples": [
+                        '{"id": "reply123", "design_id": "design456", "thread_id": "thread789", "author": {"id": "user123", "display_name": "Reply Author"}, "content": {"plaintext": "This is a reply"}, "mentions": {}, "created_at": 1600000000, "updated_at": 1600000000}'
+                    ],
+                },
+                requiredScopes=["comment:read"],
             ),
             types.Tool(
                 name="get_reply",
@@ -474,6 +603,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["design_id", "thread_id", "reply_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of a specific reply",
+                    "examples": [
+                        '{"reply": {"id": "reply123", "design_id": "design456", "thread_id": "thread789", "author": {"id": "user123", "display_name": "Reply Author"}, "content": {"plaintext": "This is a reply"}, "mentions": {}, "created_at": 1600000000, "updated_at": 1600000000}}'
+                    ],
+                },
+                requiredScopes=["comment:read"],
             ),
             types.Tool(
                 name="get_design",
@@ -483,6 +621,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "properties": {"design_id": {"type": "string"}},
                     "required": ["design_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Metadata for a specific design",
+                    "examples": [
+                        '{"design": {"id": "design123", "title": "My Canva Design", "owner": {"user_id": "user456", "team_id": "team789"}, "urls": {"edit_url": "https://example.com/edit", "view_url": "https://example.com/view"}, "created_at": 1600000000, "updated_at": 1600000000, "page_count": 1}}'
+                    ],
+                },
+                requiredScopes=["design:meta:read"],
             ),
             types.Tool(
                 name="list_designs",
@@ -509,6 +656,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Individual designs, one per TextContent",
+                    "examples": [
+                        '{"id": "design123", "title": "My Canva Design", "owner": {"user_id": "user456", "team_id": "team789"}, "urls": {"edit_url": "https://example.com/edit", "view_url": "https://example.com/view"}, "created_at": 1600000000, "updated_at": 1600000000, "page_count": 1}'
+                    ],
+                },
+                requiredScopes=["design:meta:read"],
             ),
             types.Tool(
                 name="create_design",
@@ -534,6 +690,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created design",
+                    "examples": [
+                        '{"design": {"id": "designABC", "title": "Test Design", "owner": {"user_id": "userXYZ", "team_id": "teamPQR"}, "urls": {"edit_url": "https://example.com/edit", "view_url": "https://example.com/view"}, "created_at": 1600000000, "updated_at": 1600000000, "page_count": 1}}'
+                    ],
+                },
+                requiredScopes=["design:content:write"],
             ),
             types.Tool(
                 name="create_folder",
@@ -550,6 +715,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["name", "parent_folder_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created folder",
+                    "examples": [
+                        '{"folder": {"id": "folder123", "name": "My Test Folder", "created_at": 1600000000, "updated_at": 1600000000}}'
+                    ],
+                },
+                requiredScopes=["folder:write"],
             ),
             types.Tool(
                 name="get_folder",
@@ -559,6 +733,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "properties": {"folder_id": {"type": "string"}},
                     "required": ["folder_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Metadata for a specific folder",
+                    "examples": [
+                        '{"folder": {"id": "folder123", "name": "My Test Folder", "created_at": 1600000000, "updated_at": 1600000000}}'
+                    ],
+                },
+                requiredScopes=["folder:read"],
             ),
             types.Tool(
                 name="update_folder",
@@ -571,6 +754,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["folder_id", "name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Updated metadata for the folder",
+                    "examples": [
+                        '{"folder": {"id": "folder123", "name": "Updated Folder Name", "created_at": 1600000000, "updated_at": 1600100000}}'
+                    ],
+                },
+                requiredScopes=["folder:write"],
             ),
             types.Tool(
                 name="delete_folder",
@@ -580,6 +772,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "properties": {"folder_id": {"type": "string"}},
                     "required": ["folder_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the folder deletion operation",
+                    "examples": [
+                        '{"success": true, "message": "Folder deleted successfully"}'
+                    ],
+                },
+                requiredScopes=["folder:write"],
             ),
         ]
 
@@ -635,6 +836,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     arguments.get("limit"),
                     arguments.get("continuation"),
                 )
+
+                # Process reply items individually
+                if "items" in result and isinstance(result["items"], list):
+                    logger.info(f"Tool call result: {result}")
+                    # Return each reply as a separate TextContent
+                    return [
+                        TextContent(type="text", text=json.dumps(reply, indent=2))
+                        for reply in result["items"]
+                    ]
+
             elif name == "get_reply":
                 result = canva.get_reply(
                     arguments["design_id"],
@@ -650,6 +861,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     arguments.get("ownership"),
                     arguments.get("sort_by"),
                 )
+
+                # Process design items individually
+                if "items" in result and isinstance(result["items"], list):
+                    logger.info(f"Tool call result: {result}")
+                    # Return each design as a separate TextContent
+                    return [
+                        TextContent(type="text", text=json.dumps(design, indent=2))
+                        for design in result["items"]
+                    ]
+
             elif name == "create_design":
                 result = canva.create_design(
                     arguments.get("design_type"),
@@ -707,9 +928,7 @@ if __name__ == "__main__":
     if sys.argv[1].lower() == "auth":
         user_id = "local"
         # Run authentication flow
-        import asyncio
-
-        asyncio.run(authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES))
+        authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
