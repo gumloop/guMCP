@@ -2,6 +2,11 @@ name: "Discourse guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Discourse forums and communities"
 documentation_path: "README.md"
+resources:
+  - name: "categories"
+    description: "Discourse forum categories"
+  - name: "topics"
+    description: "Topics from Discourse forums"
 tools:
   - name: "list_categories"
     description: "List all categories in the Discourse forum"

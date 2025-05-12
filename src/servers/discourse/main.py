@@ -313,6 +313,14 @@ def create_server(user_id, api_key=None):
                 name="list_categories",
                 description="List all categories in the Discourse forum",
                 inputSchema={"type": "object", "properties": {}},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Individual categories from the Discourse forum, each returned as a separate item",
+                    "examples": [
+                        '{"id": 3, "name": "Staff", "color": "E45735", "text_color": "FFFFFF", "slug": "staff", "topic_count": 4, "post_count": 7, "position": 2, "description_text": "Private category for staff discussions.", "read_restricted": true}'
+                    ],
+                },
             ),
             Tool(
                 name="search_topics",
@@ -330,6 +338,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["query"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Individual posts or topics matching the search query, each returned as a separate item",
+                    "examples": [
+                        '{"id": 9, "name": "system", "username": "system", "blurb": "Hello and welcome to your 14 day free trial...", "topic_id": 8}',
+                        '{"id": 8, "title": "Welcome to your trial!", "posts_count": 3, "category_id": 3}',
+                    ],
                 },
             ),
             Tool(
@@ -358,6 +375,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["title", "raw", "category_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the created topic post",
+                    "examples": [
+                        '{"id": 23, "username": "user1", "created_at": "2025-05-12T18:45:00.820Z", "cooked": "<p>This is a test topic</p>", "topic_id": 15, "topic_slug": "test-topic-from-mcp-api-111671", "raw": "This is a test topic"}'
+                    ],
+                },
             ),
             Tool(
                 name="create_post",
@@ -380,6 +405,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["topic_id", "raw"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the created post",
+                    "examples": [
+                        '{"id": 24, "username": "user1", "created_at": "2025-05-12T18:45:10.859Z", "cooked": "<p>This is a reply post</p>", "post_number": 2, "topic_id": 15, "topic_slug": "test-topic-from-mcp-api", "raw": "This is a reply post"}'
+                    ],
+                },
             ),
             Tool(
                 name="get_user_info",
@@ -393,6 +426,15 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["username"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "User badges or user details, each returned as an individual item",
+                    "examples": [
+                        '{"id": 5, "badge_id": 41, "user_id": -1, "granted_at": "2025-04-09T16:56:00.414Z"}',
+                        '{"id": -1, "username": "system", "name": "system", "created_at": "2025-04-09T16:55:55.781Z", "admin": true}',
+                    ],
                 },
             ),
         ]
@@ -415,6 +457,25 @@ def create_server(user_id, api_key=None):
                     "GET", "categories.json", credentials
                 )
 
+                # Check if there's an array of categories to process individually
+                if (
+                    "category_list" in categories_result
+                    and "categories" in categories_result["category_list"]
+                    and isinstance(
+                        categories_result["category_list"]["categories"], list
+                    )
+                ):
+                    categories = categories_result["category_list"]["categories"]
+                    if len(categories) > 0:
+                        # Return as individual TextContent items
+                        return [
+                            TextContent(
+                                type="text", text=json.dumps(category, indent=2)
+                            )
+                            for category in categories
+                        ]
+
+                # Otherwise return the whole result
                 return [
                     TextContent(
                         type="text", text=json.dumps(categories_result, indent=2)
@@ -448,6 +509,27 @@ def create_server(user_id, api_key=None):
                 search_result = await make_discourse_request(
                     "GET", "search.json", credentials, params=params
                 )
+
+                # Check if there are posts to process individually
+                if (
+                    "posts" in search_result
+                    and isinstance(search_result["posts"], list)
+                    and len(search_result["posts"]) > 0
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(post, indent=2))
+                        for post in search_result["posts"]
+                    ]
+                # Check if there are topics to process individually
+                elif (
+                    "topics" in search_result
+                    and isinstance(search_result["topics"], list)
+                    and len(search_result["topics"]) > 0
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(topic, indent=2))
+                        for topic in search_result["topics"]
+                    ]
 
                 return [
                     TextContent(type="text", text=json.dumps(search_result, indent=2))
@@ -554,6 +636,34 @@ def create_server(user_id, api_key=None):
                 user_result = await make_discourse_request(
                     "GET", f"users/{username}.json", credentials
                 )
+
+                # Check if there are user_badges to process individually
+                if (
+                    "user_badges" in user_result
+                    and isinstance(user_result["user_badges"], list)
+                    and len(user_result["user_badges"]) > 0
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(badge, indent=2))
+                        for badge in user_result["user_badges"]
+                    ]
+                # Check if there are badges to process individually
+                elif (
+                    "badges" in user_result
+                    and isinstance(user_result["badges"], list)
+                    and len(user_result["badges"]) > 0
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(badge, indent=2))
+                        for badge in user_result["badges"]
+                    ]
+                # Otherwise return the whole user object if it exists
+                elif "user" in user_result:
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps(user_result["user"], indent=2)
+                        )
+                    ]
 
                 return [
                     TextContent(type="text", text=json.dumps(user_result, indent=2))
