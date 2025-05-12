@@ -6,25 +6,55 @@ tools:
   # TEMPLATE MANAGEMENT TOOLS
   - name: "list_templates"
     description: "List all templates in your DocuSign account with optional filtering"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "get_template"
     description: "Get detailed information about a specific template"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "create_template"
     description: "Create a new template in your DocuSign account"
+    required_scopes:
+      - "signature"
+      - "impersonation"
 
   # ENVELOPE MANAGEMENT TOOLS
   - name: "create_envelope"
     description: "Create a new envelope in DocuSign from a template or with documents"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "get_envelope"
     description: "Get detailed information about a specific envelope"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "send_envelope"
     description: "Send a draft envelope to recipients for signing"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "get_envelope_status_bulk"
     description: "Get status information for multiple envelopes at once"
+    required_scopes:
+      - "signature"
+      - "impersonation"
 
   # USER MANAGEMENT TOOLS
   - name: "create_user"
     description: "Create new users in your DocuSign account"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "list_users"
     description: "List all users in your DocuSign account with optional filtering"
+    required_scopes:
+      - "signature"
+      - "impersonation"
   - name: "get_user"
     description: "Get detailed information about a specific user"
+    required_scopes:
+      - "signature"
+      - "impersonation"

@@ -228,6 +228,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             },
                         },
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing list of templates with their details such as templateId, name, created date, and owner information",
+                        "examples": [
+                            '{\n  "resultSetSize": "4",\n  "startPosition": "0",\n  "endPosition": "3",\n  "totalSetSize": "4",\n  "envelopeTemplates": [\n    {\n      "templateId": "template-123-abc",\n      "uri": "/templates/template-123-abc",\n      "name": "Sample Contract",\n      "shared": "false",\n      "passwordProtected": "false",\n      "description": "",\n      "created": "2023-06-15T10:30:45.000Z",\n      "lastModified": "2023-06-15T10:30:45.000Z",\n      "owner": {\n        "userName": "John Doe",\n        "userId": "user-123-abc",\n        "email": "john@example.com"\n      },\n      "pageCount": "1",\n      "folderName": "Templates",\n      "emailSubject": "Please sign this document",\n      "emailBlurb": "Please review and sign this document"\n    },\n    {\n      "templateId": "template-456-def",\n      "uri": "/templates/template-456-def",\n      "name": "NDA Template",\n      "shared": "false",\n      "passwordProtected": "false",\n      "created": "2023-07-01T14:22:33.000Z",\n      "lastModified": "2023-07-01T14:25:30.000Z",\n      "owner": {\n        "userName": "Jane Smith",\n        "userId": "user-456-def",\n        "email": "jane@example.com"\n      },\n      "pageCount": "2",\n      "folderName": "Templates"\n    }\n  ]\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="get_template",
@@ -246,6 +255,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "required": ["template_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing detailed information about the requested template including name, ID, documents, recipients, and email settings",
+                        "examples": [
+                            '{\n  "templateId": "template-abc-123",\n  "uri": "/templates/template-abc-123",\n  "name": "Sample Contract",\n  "shared": "false",\n  "passwordProtected": "false",\n  "description": "A standard contract template",\n  "created": "2023-06-15T10:30:45.000Z",\n  "lastModified": "2023-07-10T08:15:30.000Z",\n  "owner": {\n    "userName": "John Smith",\n    "userId": "user-abc-123",\n    "email": "john@example.com"\n  },\n  "documents": [\n    {\n      "documentId": "1",\n      "name": "Contract.pdf",\n      "order": "1",\n      "pages": "1"\n    }\n  ],\n  "emailSubject": "Please sign this contract",\n  "emailBlurb": "Please review and sign this contract at your earliest convenience",\n  "signingLocation": "Online",\n  "pageCount": "1"\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="create_template",
@@ -293,6 +311,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "file_extension",
                         ],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing confirmation of template creation with template ID and other details",
+                        "examples": [
+                            '{\n  "templateId": "template-xyz-789",\n  "uri": "/templates/template-xyz-789",\n  "templates": [\n    {\n      "templateId": "template-xyz-789",\n      "uri": "/templates/template-xyz-789"\n    }\n  ]\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="create_envelope",
@@ -431,6 +458,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "documents",
                         ],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing confirmation of envelope creation with envelope ID, status, and recipient details",
+                        "examples": [
+                            '{\n  "envelopeId": "env-abc-123",\n  "uri": "/envelopes/env-abc-123",\n  "statusDateTime": "2023-07-15T14:22:33.000Z",\n  "status": "sent"\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="get_envelope",
@@ -453,6 +489,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "required": ["envelope_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing detailed information about the requested envelope including status, documents, recipients, and timeline",
+                        "examples": [
+                            '{\n  "status": "completed",\n  "documentsUri": "/envelopes/env-abc-123/documents",\n  "recipientsUri": "/envelopes/env-abc-123/recipients",\n  "envelopeUri": "/envelopes/env-abc-123",\n  "emailSubject": "Please sign this document",\n  "emailBlurb": "Please review and sign at your earliest convenience",\n  "envelopeId": "env-abc-123",\n  "createdDateTime": "2023-07-01T09:30:00.000Z",\n  "sentDateTime": "2023-07-01T09:30:05.000Z",\n  "completedDateTime": "2023-07-01T14:22:45.000Z",\n  "sender": {\n    "userName": "John Smith",\n    "email": "john@example.com"\n  },\n  "purgeState": "unpurged"\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="send_envelope",
@@ -590,6 +635,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             "documents",
                         ],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing confirmation of envelope sending with envelope ID",
+                        "examples": ['{\n  "envelopeId": "env-abc-123"\n}'],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="get_envelope_status_bulk",
@@ -613,6 +665,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "required": ["envelope_ids"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing status information for multiple envelopes including details like envelope ID, status, recipients, creation date, and status-specific dates",
+                        "examples": [
+                            '{\n  "envelopes": [\n    {\n      "envelopeId": "env-abc-123",\n      "status": "sent",\n      "emailSubject": "Please sign this contract",\n      "createdDateTime": "2023-07-01T09:30:00.000Z",\n      "sentDateTime": "2023-07-01T09:30:05.000Z",\n      "recipients": {\n        "signers": [\n          {\n            "email": "john@example.com",\n            "name": "John Smith",\n            "status": "sent",\n            "routingOrder": "1"\n          }\n        ]\n      }\n    }\n  ]\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="create_user",
@@ -673,6 +734,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "required": ["users"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing confirmation and details of the newly created users including their IDs, usernames, emails, and account settings",
+                        "examples": [
+                            '{\n  "newUsers": [\n    {\n      "userId": "userId-abc-123",\n      "uri": "/users/userId-abc-123",\n      "email": "john.doe@example.com",\n      "userName": "jdoe123",\n      "userStatus": "ActivationSent",\n      "createdDateTime": "2023-06-01T08:15:30.000Z",\n      "membershipId": "membership-abc-123"\n    }\n  ]\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="list_users",
@@ -710,6 +780,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             },
                         },
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing list of users in the DocuSign account with details such as ID, username, email, status, and permission profile",
+                        "examples": [
+                            '{\n  "users": [\n    {\n      "userId": "userId-abc-123",\n      "userName": "jdoe123",\n      "email": "john.doe@example.com",\n      "userStatus": "Active",\n      "firstName": "John",\n      "lastName": "Doe",\n      "userType": "Regular",\n      "permissionProfileName": "Standard User",\n      "createdDateTime": "2023-06-01T08:15:30.000Z"\n    },\n    {\n      "userId": "userId-def-456",\n      "userName": "msmith456",\n      "email": "mary.smith@example.com",\n      "userStatus": "Active",\n      "firstName": "Mary",\n      "lastName": "Smith",\n      "userType": "Admin",\n      "permissionProfileName": "Administrator",\n      "createdDateTime": "2023-05-15T10:20:45.000Z"\n    }\n  ],\n  "resultSetSize": "2",\n  "totalSetSize": "25"\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
                 types.Tool(
                     name="get_user",
@@ -732,6 +811,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                         "required": ["user_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of JSON strings containing detailed information about a DocuSign user including account settings, permissions, and status",
+                        "examples": [
+                            '{\n  "userId": "userId-abc-123",\n  "userName": "jdoe123",\n  "email": "john.doe@example.com",\n  "firstName": "John",\n  "lastName": "Doe",\n  "userStatus": "Active",\n  "userType": "Regular",\n  "permissionProfileName": "Standard User",\n  "createdDateTime": "2023-06-01T08:15:30.000Z",\n  "accountId": "accountId-xyz-789",\n  "userSettings": {\n    "locale": "en",\n    "timezone": "America/New_York",\n    "emailNotifications": {\n      "enabled": "true"\n    }\n  },\n  "groupList": [\n    {\n      "groupId": "group-123",\n      "groupName": "Document Processing"\n    },\n    {\n      "groupId": "group-456",\n      "groupName": "Sales Department"\n    }\n  ]\n}'
+                        ],
+                    },
+                    requiredScopes=["signature", "impersonation"],
                 ),
             ]
         )
@@ -782,7 +870,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -835,40 +929,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = templates_response.json()
-
-                # Format the response for better readability
-                templates_list = result.get("envelopeTemplates", [])
-                template_count = len(templates_list)
-
-                if template_count == 0:
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text="No templates found for the specified criteria.",
-                        )
-                    ]
-
-                # Create a more readable summary
-                summary = (
-                    f"Found {template_count} templates in account {account_id}:\n\n"
-                )
-
-                for i, template in enumerate(templates_list, 1):
-                    template_id = template.get("templateId", "N/A")
-                    name = template.get("name", "Unnamed Template")
-                    created = template.get("created", "Unknown date")
-                    owner = template.get("owner", {}).get("userName", "Unknown owner")
-
-                    summary += f"{i}. {name}\n   ID: {template_id}\n   Created: {created}\n   Owner: {owner}\n\n"
-
-                # Also include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=summary),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "get_template":
@@ -880,7 +942,10 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required field. Please provide template_id.",
+                            text=json.dumps(
+                                {"error": "Missing required field template_id"},
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -893,7 +958,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -919,89 +990,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 template = template_response.json()
-
-                # Format a human-readable summary of the template
-                summary_parts = []
-
-                # Basic template information
-                summary_parts.append(
-                    f"Template Name: {template.get('name', 'Unnamed Template')}"
-                )
-                summary_parts.append(
-                    f"Template ID: {template.get('templateId', 'N/A')}"
-                )
-
-                if template.get("description"):
-                    summary_parts.append(f"Description: {template['description']}")
-
-                if template.get("created"):
-                    summary_parts.append(f"Created: {template['created']}")
-
-                if template.get("lastModified"):
-                    summary_parts.append(f"Last Modified: {template['lastModified']}")
-
-                # Email settings
-                summary_parts.append(
-                    f"Email Subject: {template.get('emailSubject', 'N/A')}"
-                )
-                if template.get("emailBlurb"):
-                    summary_parts.append(f"Email Message: {template['emailBlurb']}")
-
-                # Documents
-                documents = template.get("documents", [])
-                if documents:
-                    summary_parts.append(f"\nDocuments ({len(documents)}):")
-                    for i, doc in enumerate(documents, 1):
-                        summary_parts.append(
-                            f"  {i}. {doc.get('name', 'Unnamed Document')} (ID: {doc.get('documentId', 'N/A')})"
-                        )
-
-                # Recipients
-                recipients = template.get("recipients", {})
-                recipient_types = [
-                    ("signers", "Signers"),
-                    ("carbonCopies", "Carbon Copies"),
-                    ("certifiedDeliveries", "Certified Deliveries"),
-                    ("inPersonSigners", "In-Person Signers"),
-                    ("editors", "Editors"),
-                ]
-
-                summary_parts.append("\nRecipients:")
-                has_recipients = False
-
-                for field, label in recipient_types:
-                    recipients_list = recipients.get(field, [])
-                    if recipients_list:
-                        has_recipients = True
-                        summary_parts.append(f"  {label} ({len(recipients_list)}):")
-                        for i, recipient in enumerate(recipients_list, 1):
-                            role = recipient.get("roleName", "N/A")
-                            name = recipient.get("name", "Unnamed")
-                            email = recipient.get("email", "No email")
-                            routing_order = recipient.get("routingOrder", "N/A")
-                            summary_parts.append(
-                                f"    {i}. {name} ({email}) - Role: {role}, Order: {routing_order}"
-                            )
-
-                if not has_recipients:
-                    summary_parts.append("  No recipients configured")
-
-                # Include shared status
-                template_def = template.get("envelopeTemplateDefinition", {})
-                shared = template_def.get("shared", "false")
-                summary_parts.append(f"\nShared: {'Yes' if shared == 'true' else 'No'}")
-
-                # Join all parts into a summary
-                summary = "\n".join(summary_parts)
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(template, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=summary),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(template, indent=2))
                 ]
 
             elif name == "create_template":
@@ -1017,7 +1007,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1038,7 +1034,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required fields. Please provide name, document_name, document_base64, and file_extension.",
+                            text=json.dumps(
+                                {
+                                    "error": "Missing required fields name, document_name, document_base64, or file_extension"
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1085,24 +1086,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = template_response.json()
-
-                # Format the response for better readability
-                template_id = result.get("templateId")
-                template_name = result.get("name", template_name)
-
-                success_message = f"Template created successfully!\n\nName: {template_name}\nTemplate ID: {template_id}\n"
-
-                if "uri" in result:
-                    success_message += f"\nTemplate URI: {result['uri']}"
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=success_message),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "create_envelope":
@@ -1118,7 +1103,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1132,7 +1123,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required fields. Please provide status and email_subject.",
+                            text=json.dumps(
+                                {
+                                    "error": "Missing required fields status or email_subject"
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1141,7 +1137,10 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: status must be either 'sent' to send immediately or 'created' to save as draft.",
+                            text=json.dumps(
+                                {"error": "Status must be either 'sent' or 'created'"},
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1173,7 +1172,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 return [
                                     types.TextContent(
                                         type="text",
-                                        text="Error: Each recipient must have at least 'email' and 'name' properties.",
+                                        text=json.dumps(
+                                            {
+                                                "error": "Each recipient must have email and name properties"
+                                            },
+                                            indent=2,
+                                        ),
                                     )
                                 ]
 
@@ -1181,7 +1185,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 return [
                                     types.TextContent(
                                         type="text",
-                                        text="Error: When using a template, each recipient must have a 'role_name' property to match template roles.",
+                                        text=json.dumps(
+                                            {
+                                                "error": "When using a template, each recipient must have a role_name property"
+                                            },
+                                            indent=2,
+                                        ),
                                     )
                                 ]
 
@@ -1205,7 +1214,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [
                             types.TextContent(
                                 type="text",
-                                text="Error: When not using a template, you must provide documents in the 'documents' array.",
+                                text=json.dumps(
+                                    {
+                                        "error": "When not using a template, you must provide documents"
+                                    },
+                                    indent=2,
+                                ),
                             )
                         ]
 
@@ -1221,7 +1235,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             return [
                                 types.TextContent(
                                     type="text",
-                                    text="Error: Each document must include 'name', 'document_id', 'file_extension', and 'document_base64'.",
+                                    text=json.dumps(
+                                        {
+                                            "error": "Each document must include name, document_id, file_extension, and document_base64"
+                                        },
+                                        indent=2,
+                                    ),
                                 )
                             ]
 
@@ -1244,7 +1263,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                                 return [
                                     types.TextContent(
                                         type="text",
-                                        text="Error: Each recipient must have at least 'email' and 'name' properties.",
+                                        text=json.dumps(
+                                            {
+                                                "error": "Each recipient must have email and name properties"
+                                            },
+                                            indent=2,
+                                        ),
                                     )
                                 ]
 
@@ -1288,45 +1312,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = envelope_response.json()
-
-                # Format the response for better readability
-                envelope_id = result.get("envelopeId")
-                status = result.get("status", status)
-
-                status_message = (
-                    "sent to recipients" if status == "sent" else "saved as a draft"
-                )
-                success_message = f"Envelope created successfully and {status_message}!\n\nEnvelope ID: {envelope_id}\nStatus: {status}\n"
-
-                if "uri" in result:
-                    success_message += f"Envelope URI: {result['uri']}\n"
-
-                # Include additional details for sent envelopes
-                if status == "sent":
-                    success_message += (
-                        "\nThe document has been sent to the following recipients:\n"
-                    )
-
-                    if template_id and "templateRoles" in envelope_payload:
-                        for role in envelope_payload["templateRoles"]:
-                            success_message += f"- {role['name']} ({role['email']}) as {role['roleName']}\n"
-                    elif (
-                        "recipients" in envelope_payload
-                        and "signers" in envelope_payload["recipients"]
-                    ):
-                        for signer in envelope_payload["recipients"]["signers"]:
-                            success_message += (
-                                f"- {signer['name']} ({signer['email']})\n"
-                            )
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=success_message),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "get_envelope":
@@ -1338,7 +1325,10 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required field. Please provide envelope_id.",
+                            text=json.dumps(
+                                {"error": "Missing required field envelope_id"},
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1351,7 +1341,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1383,108 +1379,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 envelope = envelope_response.json()
-
-                # Format a human-readable summary of the envelope
-                summary_parts = []
-
-                # Basic envelope information
-                summary_parts.append(
-                    f"Envelope ID: {envelope.get('envelopeId', 'N/A')}"
-                )
-                summary_parts.append(f"Status: {envelope.get('status', 'N/A')}")
-
-                if envelope.get("emailSubject"):
-                    summary_parts.append(f"Email Subject: {envelope['emailSubject']}")
-
-                if envelope.get("emailBlurb"):
-                    summary_parts.append(f"Email Message: {envelope['emailBlurb']}")
-
-                # Dates
-                date_fields = [
-                    ("createdDateTime", "Created"),
-                    ("sentDateTime", "Sent"),
-                    ("deliveredDateTime", "Delivered"),
-                    ("completedDateTime", "Completed"),
-                    ("voidedDateTime", "Voided"),
-                ]
-
-                summary_parts.append("\nTimeline:")
-                for field, label in date_fields:
-                    if field in envelope and envelope[field]:
-                        summary_parts.append(f"  {label}: {envelope[field]}")
-
-                # Documents
-                if "documents" in envelope:
-                    documents = envelope.get("documents", [])
-                    summary_parts.append(f"\nDocuments ({len(documents)}):")
-                    for i, doc in enumerate(documents, 1):
-                        summary_parts.append(
-                            f"  {i}. {doc.get('name', 'Unnamed Document')} (ID: {doc.get('documentId', 'N/A')})"
-                        )
-
-                # Recipients
-                if "recipients" in envelope:
-                    recipients = envelope.get("recipients", {})
-                    recipient_types = [
-                        ("signers", "Signers"),
-                        ("carbonCopies", "Carbon Copies"),
-                        ("certifiedDeliveries", "Certified Deliveries"),
-                        ("inPersonSigners", "In-Person Signers"),
-                        ("editors", "Editors"),
-                    ]
-
-                    summary_parts.append("\nRecipients:")
-                    has_recipients = False
-
-                    for field, label in recipient_types:
-                        recipients_list = recipients.get(field, [])
-                        if recipients_list:
-                            has_recipients = True
-                            summary_parts.append(f"  {label} ({len(recipients_list)}):")
-                            for i, recipient in enumerate(recipients_list, 1):
-                                name = recipient.get("name", "Unnamed")
-                                email = recipient.get("email", "No email")
-                                status = recipient.get("status", "Unknown status")
-                                routing_order = recipient.get("routingOrder", "N/A")
-                                summary_parts.append(
-                                    f"    {i}. {name} ({email}) - Status: {status}, Order: {routing_order}"
-                                )
-
-                    if not has_recipients:
-                        summary_parts.append("  No recipients found")
-
-                # Custom fields if included
-                if "customFields" in envelope:
-                    custom_fields = envelope.get("customFields", {})
-                    text_fields = custom_fields.get("textCustomFields", [])
-                    list_fields = custom_fields.get("listCustomFields", [])
-
-                    if text_fields or list_fields:
-                        summary_parts.append("\nCustom Fields:")
-
-                        for field in text_fields:
-                            summary_parts.append(
-                                f"  {field.get('name', 'Unnamed')}: {field.get('value', '')}"
-                            )
-
-                        for field in list_fields:
-                            list_items = field.get("listItems", [])
-                            list_values = ", ".join(list_items) if list_items else ""
-                            summary_parts.append(
-                                f"  {field.get('name', 'Unnamed')}: {list_values}"
-                            )
-
-                # Join all parts into a summary
-                summary = "\n".join(summary_parts)
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(envelope, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=summary),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(envelope, indent=2))
                 ]
 
             elif name == "send_envelope":
@@ -1510,7 +1406,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Error: Missing required fields: {', '.join(missing_required)}. These fields are required for sending an envelope.",
+                            text=json.dumps(
+                                {
+                                    "error": f"Missing required fields: {', '.join(missing_required)}"
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1523,7 +1424,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1559,7 +1466,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Cannot send envelope. Current status is '{envelope.get('status')}'. Only draft envelopes can be sent.",
+                            text=json.dumps(
+                                {
+                                    "error": f"Cannot send envelope. Current status is '{envelope.get('status')}'. Only draft envelopes can be sent."
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1585,7 +1497,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [
                             types.TextContent(
                                 type="text",
-                                text="Error: Each document must include 'name', 'document_id', 'file_extension', and 'document_base64'.",
+                                text=json.dumps(
+                                    {
+                                        "error": "Each document must include name, document_id, file_extension, and document_base64"
+                                    },
+                                    indent=2,
+                                ),
                             )
                         ]
 
@@ -1608,7 +1525,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [
                             types.TextContent(
                                 type="text",
-                                text="Error: Each recipient must have at least 'email' and 'name' properties.",
+                                text=json.dumps(
+                                    {
+                                        "error": "Each recipient must have email and name properties"
+                                    },
+                                    indent=2,
+                                ),
                             )
                         ]
 
@@ -1617,7 +1539,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [
                             types.TextContent(
                                 type="text",
-                                text=f"Error: Recipient '{recipient['name']}' is missing required tabs (signature fields).",
+                                text=json.dumps(
+                                    {
+                                        "error": f"Recipient '{recipient['name']}' is missing required tabs (signature fields)"
+                                    },
+                                    indent=2,
+                                ),
                             )
                         ]
 
@@ -1695,40 +1622,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = send_response.json()
-
-                # Format the response for better readability
-                success_message = (
-                    f"Envelope {envelope_id} has been successfully sent!\n\n"
-                    f"Status: {result.get('status', 'sent')}\n"
-                )
-
-                if "sentDateTime" in result:
-                    success_message += f"Sent timestamp: {result['sentDateTime']}\n"
-
-                # Include summary of what was in the envelope
-                success_message += "\nEnvelope details:\n"
-                success_message += f'- Email subject: "{email_subject}"\n'
-
-                if "emailBlurb" in update_payload:
-                    success_message += f"- Email message included\n"
-
-                success_message += (
-                    f"- Documents: {len(formatted_documents)} document(s)\n"
-                )
-
-                signers = formatted_recipients["signers"]
-                success_message += f"- Recipients: {len(signers)} recipient(s)\n"
-                for signer in signers:
-                    success_message += f"  - {signer['name']} ({signer['email']})\n"
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=success_message),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "get_envelope_status_bulk":
@@ -1740,7 +1635,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required field. Please provide envelope_ids as an array of envelope IDs.",
+                            text=json.dumps(
+                                {
+                                    "error": "Missing required field envelope_ids as an array of envelope IDs"
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1753,7 +1653,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1790,92 +1696,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = envelope_status_response.json()
-
-                # Format the response for better readability
-                envelopes = result.get("envelopes", [])
-                envelope_count = len(envelopes)
-
-                if envelope_count == 0:
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text="No envelope status information found for the specified IDs.",
-                        )
-                    ]
-
-                # Create a more readable summary
-                summary = f"Found status information for {envelope_count} envelopes in account {account_id}:\n\n"
-
-                # Group envelopes by status
-                status_groups = {}
-                for envelope in envelopes:
-                    status = envelope.get("status", "Unknown")
-                    if status not in status_groups:
-                        status_groups[status] = []
-                    status_groups[status].append(envelope)
-
-                # Add summary by status group
-                for status, status_envelopes in status_groups.items():
-                    summary += f"## {status.capitalize()} ({len(status_envelopes)})\n"
-
-                    for envelope in status_envelopes:
-                        envelope_id = envelope.get("envelopeId", "N/A")
-                        subject = envelope.get("emailSubject", "No subject")
-
-                        # Format dates for readability
-                        created_date = envelope.get("createdDateTime", "N/A")
-                        status_date_field = None
-                        if status == "sent":
-                            status_date_field = "sentDateTime"
-                        elif status == "delivered":
-                            status_date_field = "deliveredDateTime"
-                        elif status == "completed":
-                            status_date_field = "completedDateTime"
-                        elif status == "declined":
-                            status_date_field = "declinedDateTime"
-                        elif status == "voided":
-                            status_date_field = "voidedDateTime"
-
-                        status_date = (
-                            envelope.get(status_date_field, "N/A")
-                            if status_date_field
-                            else "N/A"
-                        )
-
-                        summary += f"- {subject}\n"
-                        summary += f"  ID: {envelope_id}\n"
-                        summary += f"  Created: {created_date}\n"
-
-                        if status_date != "N/A":
-                            status_label = status.capitalize()
-                            summary += f"  {status_label}: {status_date}\n"
-
-                        # Add recipient info if available
-                        if "recipients" in envelope:
-                            recipients = envelope.get("recipients", {})
-                            signers = recipients.get("signers", [])
-                            if signers:
-                                summary += f"  Recipients:\n"
-                                for signer in signers:
-                                    name = signer.get("name", "Unnamed")
-                                    email = signer.get("email", "No email")
-                                    recipient_status = signer.get(
-                                        "status", "Unknown status"
-                                    )
-                                    summary += (
-                                        f"    - {name} ({email}): {recipient_status}\n"
-                                    )
-
-                        summary += "\n"
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=summary),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "create_user":
@@ -1887,7 +1709,10 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required field. Please provide at least one user in the 'users' array.",
+                            text=json.dumps(
+                                {"error": "Missing required field users as an array"},
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1900,7 +1725,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -1912,7 +1743,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [
                             types.TextContent(
                                 type="text",
-                                text=f"Error: User at index {i} is missing the required 'userName' field.",
+                                text=json.dumps(
+                                    {
+                                        "error": f"User at index {i} is missing the required userName field"
+                                    },
+                                    indent=2,
+                                ),
                             )
                         ]
 
@@ -1920,7 +1756,12 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         return [
                             types.TextContent(
                                 type="text",
-                                text=f"Error: User at index {i} is missing the required 'email' field.",
+                                text=json.dumps(
+                                    {
+                                        "error": f"User at index {i} is missing the required email field"
+                                    },
+                                    indent=2,
+                                ),
                             )
                         ]
 
@@ -1971,60 +1812,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = users_response.json()
-
-                # Format the response for better readability
-                new_users = result.get("newUsers", [])
-                success_count = len(new_users)
-
-                if success_count == 0:
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text="No users were created. Please check the request payload and try again.",
-                        )
-                    ]
-
-                # Create a readable summary
-                summary = f"Successfully created {success_count} user(s) in account {account_id}:\n\n"
-
-                for i, user in enumerate(new_users, 1):
-                    username = user.get("userName", "N/A")
-                    email = user.get("email", "N/A")
-                    user_id = user.get("userId", "N/A")
-
-                    summary += f"{i}. {username} ({email})\n"
-                    summary += f"   User ID: {user_id}\n"
-
-                    if "firstName" in user and "lastName" in user:
-                        name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
-                        if name:
-                            summary += f"   Name: {name}\n"
-
-                    if "permissionProfileName" in user:
-                        summary += (
-                            f"   Permission Profile: {user['permissionProfileName']}\n"
-                        )
-
-                    if "userStatus" in user:
-                        summary += f"   Status: {user['userStatus']}\n"
-
-                    # Check if activation email was sent
-                    if (
-                        "sendActivationEmail" in user
-                        and user["sendActivationEmail"] == "true"
-                    ):
-                        summary += f"   Activation email sent: Yes\n"
-
-                    summary += "\n"
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=summary),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "list_users":
@@ -2040,7 +1829,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -2085,76 +1880,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 result = users_response.json()
-
-                # Format the response for better readability
-                users = result.get("users", [])
-                user_count = len(users)
-
-                if user_count == 0:
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text="No users found for the specified criteria.",
-                        )
-                    ]
-
-                # Create a more readable summary
-                summary = f"Found {user_count} users in account {account_id}:\n\n"
-
-                for i, user in enumerate(users, 1):
-                    user_id = user.get("userId", "N/A")
-                    username = user.get("userName", "N/A")
-                    email = user.get("email", "N/A")
-                    user_status = user.get("userStatus", "N/A")
-
-                    summary += f"{i}. {username}\n"
-                    summary += f"   ID: {user_id}\n"
-                    summary += f"   Email: {email}\n"
-                    summary += f"   Status: {user_status}\n"
-
-                    # Add name if available
-                    if "firstName" in user or "lastName" in user:
-                        name_parts = []
-                        if "firstName" in user and user["firstName"]:
-                            name_parts.append(user["firstName"])
-                        if "lastName" in user and user["lastName"]:
-                            name_parts.append(user["lastName"])
-
-                        if name_parts:
-                            full_name = " ".join(name_parts)
-                            summary += f"   Name: {full_name}\n"
-
-                    # Add user type/role if available
-                    if "userType" in user:
-                        summary += f"   User Type: {user['userType']}\n"
-
-                    if "permissionProfileName" in user:
-                        summary += (
-                            f"   Permission Profile: {user['permissionProfileName']}\n"
-                        )
-
-                    # Add creation date if available
-                    if "createdDateTime" in user:
-                        summary += f"   Created: {user['createdDateTime']}\n"
-
-                    summary += "\n"
-
-                # Add pagination info if available
-                if "resultSetSize" in result and "totalSetSize" in result:
-                    result_size = result.get("resultSetSize")
-                    total_size = result.get("totalSetSize")
-
-                    if int(total_size) > int(result_size):
-                        summary += f"\nShowing {result_size} of {total_size} total users. Use the 'start_position' parameter to view more results.\n"
-
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(result, indent=2)
-
                 return [
-                    types.TextContent(type="text", text=summary),
-                    types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
-                    ),
+                    types.TextContent(type="text", text=json.dumps(result, indent=2))
                 ]
 
             elif name == "get_user":
@@ -2166,7 +1893,9 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text="Error: Missing required field. Please provide user_id.",
+                            text=json.dumps(
+                                {"error": "Missing required field user_id"}, indent=2
+                            ),
                         )
                     ]
 
@@ -2179,7 +1908,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     return [
                         types.TextContent(
                             type="text",
-                            text=f"Multiple DocuSign accounts found. Please specify an account_id in your request:\n\n{account_list}",
+                            text=json.dumps(
+                                {
+                                    "error": "Multiple accounts found",
+                                    "accounts": accounts,
+                                },
+                                indent=2,
+                            ),
                         )
                     ]
 
@@ -2210,23 +1945,23 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
 
                 user = user_response.json()
+                return [types.TextContent(type="text", text=json.dumps(user, indent=2))]
 
-                # Include the raw JSON for complete information
-                detail_json = json.dumps(user, indent=2)
-
+            else:
                 return [
-                    # types.TextContent(type="text", text=summary),
                     types.TextContent(
-                        type="text", text=f"Raw response:\n\n{detail_json}"
+                        type="text",
+                        text=json.dumps({"error": f"Unknown tool: {name}"}, indent=2),
                     )
                 ]
 
-            else:
-                return [types.TextContent(type="text", text=f"Unknown tool: {name}")]
-
         except Exception as e:
             logger.error(f"Error calling DocuSign API: {e}")
-            return [types.TextContent(type="text", text=str(e))]
+            return [
+                types.TextContent(
+                    type="text", text=json.dumps({"error": str(e)}, indent=2)
+                )
+            ]
 
     return server
 
