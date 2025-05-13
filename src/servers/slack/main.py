@@ -199,15 +199,6 @@ def create_server(user_id, api_key=None):
                 )
                 resources.append(resource)
 
-                # Add users_in_channel resource
-                resource = Resource(
-                    uri=f"slack://users/{channel_id}",
-                    mimeType="application/json",
-                    name=f"Users in #{channel_name}",
-                    description=f"List of users in {'private' if is_private else 'public'} Slack channel: #{channel_name}",
-                )
-                resources.append(resource)
-
             return resources
 
         except SlackApiError as e:
@@ -250,46 +241,6 @@ def create_server(user_id, api_key=None):
                 return [
                     ReadResourceContents(
                         content=json.dumps(enriched_messages, indent=2),
-                        mime_type="application/json",
-                    )
-                ]
-
-            elif resource_type == "users":
-                # Get channel members
-                response = slack_client.conversations_members(channel=resource_id)
-                member_ids = response.get("members", [])
-
-                # Get user details for each member
-                members = []
-                for member_id in member_ids:
-                    try:
-                        user_info = slack_client.users_info(user=member_id)
-                        if user_info["ok"]:
-                            user_data = user_info["user"]
-                            members.append(
-                                {
-                                    "id": member_id,
-                                    "name": user_data.get("real_name")
-                                    or user_data.get("name", "Unknown"),
-                                    "display_name": user_data.get("profile", {}).get(
-                                        "display_name", ""
-                                    ),
-                                    "is_admin": user_data.get("is_admin", False),
-                                    "is_owner": user_data.get("is_owner", False),
-                                    "is_bot": user_data.get("is_bot", False),
-                                }
-                            )
-                    except SlackApiError:
-                        members.append(
-                            {
-                                "id": member_id,
-                                "name": "Unknown",
-                            }
-                        )
-
-                return [
-                    ReadResourceContents(
-                        content=json.dumps(members, indent=2),
                         mime_type="application/json",
                     )
                 ]

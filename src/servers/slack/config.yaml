@@ -9,12 +9,6 @@ resources:
       - "channels:history"
       - "groups:history"
       - "channels:read"
-  - name: "users"
-    description: "List of users who are members of a specific Slack channel, including their basic profile information."
-    required_scopes:
-      - "channels:read"
-      - "groups:read"
-      - "users:read"
 tools:
   - name: "read_messages"
     description: "Read messages from a Slack channel"
