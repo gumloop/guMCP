@@ -4,7 +4,7 @@ import logging
 import json
 import requests
 from pathlib import Path
-from typing import Optional, List, Dict, TypedDict, Union
+from typing import Optional, List, Dict, TypedDict, Union, Iterable
 
 # Add both project root and src directory to Python path
 project_root = os.path.abspath(
@@ -17,10 +17,14 @@ import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 from mcp.types import (
+    AnyUrl,
     TextContent,
     ImageContent,
     EmbeddedResource,
+    Resource,
 )
+from mcp.server.lowlevel.helper_types import ReadResourceContents
+
 
 from src.utils.figma.util import (
     authenticate_and_save_credentials,
@@ -396,6 +400,89 @@ def create_server(user_id: str, api_key: str = None) -> Server:
             )
         return server._figma_client
 
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """List Figma team projects as resources"""
+        logger.info(
+            f"Listing resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        figma_client = await _get_figma_client()
+
+        try:
+            # For now, we need a team_id to list projects
+            # In a real implementation, we might get the user's teams first
+            # and then list projects for each team
+            team_id = os.environ.get("FIGMA_DEFAULT_TEAM_ID")
+            if not team_id:
+                logger.warning("No default team ID set, unable to list projects")
+                return []
+
+            # Get team projects
+            response = figma_client.get_team_projects(team_id)
+
+            projects = response.get("projects", [])
+            team_name = response.get("name", "Figma Team")
+
+            resources = []
+            for project in projects:
+                project_id = str(project.get("id"))
+                project_name = project.get("name")
+
+                resource = Resource(
+                    uri=f"figma://project/{project_id}",
+                    mimeType="application/json",
+                    name=project_name,
+                    description=f"Figma project: {project_name} (Team: {team_name})",
+                )
+                resources.append(resource)
+
+            return resources
+
+        except Exception as e:
+            logger.error(f"Error listing Figma projects: {e}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read a Figma resource"""
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        figma_client = await _get_figma_client()
+
+        uri_str = str(uri)
+        if not uri_str.startswith("figma://"):
+            raise ValueError(f"Invalid Figma URI: {uri_str}")
+
+        # Parse the URI to get resource type and ID
+        parts = uri_str.replace("figma://", "").split("/")
+        if len(parts) != 2:
+            raise ValueError(f"Invalid Figma URI format: {uri_str}")
+
+        resource_type, resource_id = parts
+
+        try:
+            if resource_type == "project":
+                # Get project files
+                response = figma_client.get_project_files(resource_id)
+
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(response, indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+            else:
+                raise ValueError(f"Unsupported resource type: {resource_type}")
+
+        except Exception as e:
+            logger.error(f"Error reading Figma resource: {e}")
+            return [
+                ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
+            ]
+
     @server.list_tools()
     async def handle_list_tools() -> list[types.Tool]:
         """
@@ -409,6 +496,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 name="get_me",
                 description="Get the authenticated user's information",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                requiredScopes=["current_user:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "User information including ID, handle, and email",
+                    "examples": [
+                        '{"id": "user123", "handle": "username", "img_url": "https://example.com/avatar.jpg", "email": "user@example.com"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_file",
@@ -417,6 +513,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "type": "object",
                     "properties": {"file_key": {"type": "string"}},
                     "required": ["file_key"],
+                },
+                requiredScopes=["file_content:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Figma file details including document structure and metadata",
+                    "examples": [
+                        '{"name": "Example Design", "document": {"id": "0:1", "name": "Document", "type": "DOCUMENT"}, "components": {}, "schemaVersion": 0, "styles": {}, "lastModified": "2023-06-20T12:00:00Z", "version": "123456789"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -429,6 +534,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "as_md": {"type": "boolean"},
                     },
                     "required": ["file_key"],
+                },
+                requiredScopes=["file_comments:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of comments on the Figma file",
+                    "examples": [
+                        '{"comments": [{"id": "comment123", "client_meta": {"node_id": "1:23", "node_offset": {"x": 100, "y": 100}}, "file_key": "file456", "parent_id": null, "user": {"id": "user789", "handle": "username", "img_url": "https://example.com/avatar.jpg"}, "created_at": "2023-06-15T14:30:00Z", "resolved_at": null, "order_id": 1, "reactions": []}]}'
+                    ],
                 },
             ),
             types.Tool(
@@ -444,6 +558,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["file_key", "message"],
                 },
+                requiredScopes=["file_comments:write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the created comment",
+                    "examples": [
+                        '{"id": "comment123", "client_meta": {"node_id": "1:23", "node_offset": {"x": 100, "y": 100}}, "file_key": "file456", "parent_id": null, "user": {"id": "user789", "handle": "username", "img_url": "https://example.com/avatar.jpg"}, "created_at": "2023-07-10T09:15:00Z", "message": "This is a comment"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_comment",
@@ -455,6 +578,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "comment_id": {"type": "string"},
                     },
                     "required": ["file_key", "comment_id"],
+                },
+                requiredScopes=["file_comments:write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the comment deletion operation",
+                    "examples": [
+                        '{"success": true, "message": "Comment deleted successfully"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -469,6 +601,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["file_key", "comment_id"],
                 },
+                requiredScopes=["file_comments:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of reactions for the specified comment",
+                    "examples": [
+                        '{"reactions": [{"user": {"id": "user123", "handle": "username", "img_url": "https://example.com/avatar.jpg"}, "emoji": "👍", "created_at": "2023-07-11T10:30:00Z"}], "pagination": {"next_page": null, "prev_page": null}}'
+                    ],
+                },
             ),
             types.Tool(
                 name="post_comment_reaction",
@@ -481,6 +622,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                         "emoji": {"type": "string"},
                     },
                     "required": ["file_key", "comment_id", "emoji"],
+                },
+                requiredScopes=["file_comments:write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the reaction creation operation",
+                    "examples": [
+                        '{"success": true, "message": "Reaction added successfully"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -495,6 +645,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["file_key", "comment_id", "emoji"],
                 },
+                requiredScopes=["file_comments:write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the reaction deletion operation",
+                    "examples": [
+                        '{"success": true, "message": "Reaction deleted successfully"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_team_projects",
@@ -503,6 +662,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "type": "object",
                     "properties": {"team_id": {"type": "string"}},
                     "required": ["team_id"],
+                },
+                requiredScopes=["files:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of projects within the specified team",
+                    "examples": [
+                        '{"name": "Team Name", "projects": [{"id": 123456, "name": "Project One"}, {"id": 789012, "name": "Project Two"}]}'
+                    ],
                 },
             ),
             types.Tool(
@@ -516,6 +684,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     },
                     "required": ["project_id"],
                 },
+                requiredScopes=["files:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of files within the specified project",
+                    "examples": [
+                        '{"name": "Project Name", "files": [{"key": "file123", "name": "File One", "thumbnail_url": "https://example.com/thumbnail1.jpg", "last_modified": "2023-07-01T15:30:00Z"}, {"key": "file456", "name": "File Two", "thumbnail_url": "https://example.com/thumbnail2.jpg", "last_modified": "2023-07-05T09:45:00Z"}]}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_file_versions",
@@ -524,6 +701,15 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                     "type": "object",
                     "properties": {"file_key": {"type": "string"}},
                     "required": ["file_key"],
+                },
+                requiredScopes=["files:read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Version history for the specified file",
+                    "examples": [
+                        '{"versions": [{"id": "version123", "created_at": "2023-07-10T14:20:00Z", "label": "Latest version", "description": "Updated layout", "user": {"id": "user456", "handle": "username", "img_url": "https://example.com/avatar.jpg"}}, {"id": "version789", "created_at": "2023-07-05T11:10:00Z", "label": null, "description": null, "user": {"id": "user456", "handle": "username", "img_url": "https://example.com/avatar.jpg"}}], "pagination": {"next_page": null, "prev_page": null}}'
+                    ],
                 },
             ),
         ]
@@ -557,7 +743,6 @@ def create_server(user_id: str, api_key: str = None) -> Server:
                 result = figma.get_me()
             elif name == "get_file":
                 result = figma.get_file(arguments["file_key"])
-
             elif name == "get_file_comments":
                 result = figma.get_file_comments(
                     arguments["file_key"], arguments.get("as_md", False)
@@ -599,7 +784,16 @@ def create_server(user_id: str, api_key: str = None) -> Server:
             else:
                 return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
-            return [TextContent(type="text", text=json.dumps(result, indent=2))]
+            # Handle results based on type
+            if isinstance(result, list):
+                # If result is a list, return each item as a separate TextContent
+                return [
+                    TextContent(type="text", text=json.dumps(item, indent=2))
+                    for item in result
+                ]
+            else:
+                # Otherwise return as a single TextContent
+                return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
             logger.error(f"Error executing tool {name}: {str(e)}")

@@ -2,26 +2,53 @@ name: "Figma guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Figma files, comments, and projects using the Figma API"
 documentation_path: "README.md"
+resources:
+  - name: "projects"
+    description: "Figma projects from your teams"
+    required_scopes:
+      - "files:read"
 tools:
   - name: "get_me"
     description: "Get the authenticated user's information including ID, handle, and email"
+    required_scopes:
+      - "current_user:read"
   - name: "get_file"
     description: "Get a Figma file by key, including its structure and content"
+    required_scopes:
+      - "file_content:read"
   - name: "get_file_comments"
     description: "Get all comments for a specific Figma file"
+    required_scopes:
+      - "file_comments:read"
   - name: "post_comment"
     description: "Add a new comment to a Figma file"
+    required_scopes:
+      - "file_comments:write"
   - name: "delete_comment"
     description: "Remove a comment from a Figma file"
+    required_scopes:
+      - "file_comments:write"
   - name: "get_comment_reactions"
     description: "Get all reactions for a specific comment"
+    required_scopes:
+      - "file_comments:read"
   - name: "post_comment_reaction"
     description: "Add a reaction to a comment"
+    required_scopes:
+      - "file_comments:write"
   - name: "delete_comment_reaction"
     description: "Remove a reaction from a comment"
+    required_scopes:
+      - "file_comments:write"
   - name: "get_team_projects"
     description: "List all projects within a team"
+    required_scopes:
+      - "files:read"
   - name: "get_project_files"
     description: "List all files within a project"
+    required_scopes:
+      - "files:read"
   - name: "get_file_versions"
     description: "Get version history of a file"
+    required_scopes:
+      - "files:read"

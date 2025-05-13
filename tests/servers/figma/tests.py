@@ -1,11 +1,19 @@
 import pytest
 import uuid
 
+from tests.utils.test_tools import run_resources_test
+
+
 # Global variables to store created comment and reaction information
-test_file_key = "AAQtgPXn0loqOh0X4ygCxA"  # Replace with a valid test file key
+test_file_key = ""  # Replace with a valid test file key
 test_comment_id = None
-test_team_id = "1492722123164135195"  # Replace with a valid test team ID
-test_project_id = "366588101"  # Replace with a valid test project ID
+test_team_id = ""  # Replace with a valid test team ID
+test_project_id = ""  # Replace with a valid test project ID
+
+
+@pytest.mark.asyncio
+async def test_resources(client):
+    return await run_resources_test(client)
 
 
 @pytest.mark.asyncio
