@@ -4,20 +4,28 @@ documentation_path: "README.md"
 tools:
   - name: list_files
     description: List files or folders in a specific directory in Dropbox
+    required_scopes: ["files.metadata.read"]
   - name: upload_file
     description: Upload a file to a specific directory in Dropbox
+    required_scopes: ["files.content.write"]
   - name: create_folder
     description: Create a folder in a specific directory in Dropbox
+    required_scopes: ["files.metadata.write"]
   - name: delete
     description: Delete a file or folder from a specific directory in Dropbox
+    required_scopes: ["files.content.write", "files.metadata.write"]
   - name: download
     description: Download a file from a specific directory in Dropbox
+    required_scopes: ["files.content.read"]
   - name: search
     description: Search for a file or a folder in Dropbox
+    required_scopes: ["files.metadata.read"]
   - name: move
     description: Move a file or a folder to a specific directory in Dropbox
+    required_scopes: ["files.metadata.write"]
   - name: get_user_info
     description: Get information about the current user
+    required_scopes: ["account_info.read"]
   - name: get_file_metadata
     description: Get metadata/information about a file in Dropbox
-
+    required_scopes: ["files.metadata.read"]

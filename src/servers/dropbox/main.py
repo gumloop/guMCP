@@ -113,6 +113,16 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["path"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of files and folders with their details including name, path, and type",
+                    "examples": [
+                        "name: document.txt, path_lower: /folder/document.txt, type: FileMetadata",
+                        "name: images, path_lower: /folder/images, type: FolderMetadata",
+                    ],
+                },
+                requiredScopes=["files.metadata.read"],
             ),
             types.Tool(
                 name="upload_file",
@@ -142,6 +152,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["path", "file_path", "file_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the upload operation with file path",
+                    "examples": [
+                        "Successfully uploaded file to: /path/to/uploaded/file.txt"
+                    ],
+                },
+                requiredScopes=["files.content.write"],
             ),
             types.Tool(
                 name="create_folder",
@@ -161,6 +180,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["folder_name", "path"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the folder creation operation with path",
+                    "examples": [
+                        "Successfully created folder at: /path/to/created/folder"
+                    ],
+                },
+                requiredScopes=["files.metadata.write"],
             ),
             types.Tool(
                 name="delete",
@@ -177,6 +205,16 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["path"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the delete operation with path",
+                    "examples": [
+                        "Successfully deleted: /path/to/deleted/file.txt",
+                        "Successfully deleted: /path/to/deleted/folder",
+                    ],
+                },
+                requiredScopes=["files.content.write", "files.metadata.write"],
             ),
             types.Tool(
                 name="download",
@@ -200,6 +238,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["path", "local_path", "file_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the download operation with local file path",
+                    "examples": [
+                        "Successfully downloaded file to: /local/path/to/downloaded/file.txt"
+                    ],
+                },
+                requiredScopes=["files.content.read"],
             ),
             types.Tool(
                 name="search",
@@ -214,6 +261,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Search results showing matching file or folder paths",
+                    "examples": [
+                        "Search results:\n- /path/to/match1.txt\n- /path/to/match2.pdf"
+                    ],
+                },
+                requiredScopes=["files.metadata.read"],
             ),
             types.Tool(
                 name="move",
@@ -238,11 +294,27 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["from_path", "to_path", "file_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the move operation with new file or folder path",
+                    "examples": ["Successfully moved file to: /new/path/to/file.txt"],
+                },
+                requiredScopes=["files.metadata.write"],
             ),
             types.Tool(
                 name="get_user_info",
                 description="Get information about the current user",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "User information including name, email, account ID, and country",
+                    "examples": [
+                        "User Information:\nName: Example User\nEmail: user@example.com\nAccount ID: dbid:ABC123\nCountry: US"
+                    ],
+                },
+                requiredScopes=["account_info.read"],
             ),
             types.Tool(
                 name="get_file_metadata",
@@ -258,6 +330,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["path"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "File metadata including name, path, and size",
+                    "examples": [
+                        "File Metadata:\nName: example.txt\nPath: /path/to/example.txt\nSize: 1024 bytes"
+                    ],
+                },
+                requiredScopes=["files.metadata.read"],
             ),
         ]
 
@@ -280,24 +361,12 @@ def create_server(user_id, api_key=None):
                 entries = []
                 for entry in result.entries:
                     entries.append(
-                        {
-                            "name": entry.name,
-                            "path_lower": entry.path_lower,
-                            "type": entry.__class__.__name__,
-                        }
+                        types.TextContent(
+                            type="text",
+                            text=f"name: {entry.name}, path_lower: {entry.path_lower}, type: {entry.__class__.__name__}",
+                        )
                     )
-                return [
-                    types.TextContent(
-                        type="text",
-                        text=f"Files in {arguments['path']}:\n"
-                        + "\n".join(
-                            [
-                                f"- {entry['name']} ({entry['type']})"
-                                for entry in entries
-                            ]
-                        ),
-                    )
-                ]
+                return entries
 
             elif name == "upload_file":
                 # Construct the destination path

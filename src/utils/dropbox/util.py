@@ -4,6 +4,7 @@ from typing import Dict, List, Any
 
 from src.utils.oauth.util import (
     run_oauth_flow,
+    refresh_token_if_needed,
 )
 
 
@@ -32,6 +33,7 @@ def build_dropbox_auth_params(
         "response_type": "code",
         "redirect_uri": redirect_uri,
         "scope": " ".join(scopes),
+        "token_access_type": "offline",  # Explicitly request refresh token
     }
 
 
@@ -73,6 +75,28 @@ def build_dropbox_token_headers(oauth_config: Dict[str, Any]) -> Dict[str, str]:
     return {
         "Authorization": f"Basic {encoded_credentials}",
         "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+
+def build_dropbox_refresh_token_data(
+    oauth_config: Dict[str, Any], refresh_token: str, credentials: Dict[str, Any]
+) -> Dict[str, str]:
+    """
+    Build the token refresh request data for Dropbox OAuth.
+
+    Args:
+        oauth_config: OAuth configuration dictionary.
+        refresh_token: The refresh token to use.
+        credentials: Existing credentials.
+
+    Returns:
+        Dictionary of data for the token refresh request.
+    """
+    return {
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+        "client_id": oauth_config["client_id"],
+        "client_secret": oauth_config["client_secret"],
     }
 
 
@@ -149,13 +173,13 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
     Returns:
         A valid access token string.
     """
-    # Get the Dropbox oauth config
-    from src.auth.factory import create_auth_client
-
-    auth_client = create_auth_client()
-
-    # Get the existing credentials
-    credentials = auth_client.get_user_credentials(service_name, user_id)
-
-    # Return the access token
-    return credentials.get("access_token")
+    # Use refresh_token_if_needed to handle token refresh
+    return await refresh_token_if_needed(
+        user_id=user_id,
+        service_name=service_name,
+        token_url=DROPBOX_OAUTH_TOKEN_URL,
+        token_data_builder=build_dropbox_refresh_token_data,
+        process_token_response=process_dropbox_token_response,
+        token_header_builder=build_dropbox_token_headers,
+        api_key=api_key,
+    )
