@@ -197,6 +197,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["url"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Scraped content from the requested URL in the specified formats",
+                    "examples": [
+                        '{"success": true, "markdown": "# Website Title\\n\\nThis is the main content of the website...\\n", "html": "<div class=\\"main-content\\">...", "url": "https://example.com", "title": "Example Website", "metadata": {"statusCode": 200, "contentType": "text/html"}}'
+                    ],
+                },
             ),
             Tool(
                 name="batch_scrape",
@@ -296,6 +304,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["urls"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the initiated batch scrape job",
+                    "examples": [
+                        '{"success": true, "id": "batch_12345678", "status": "pending", "totalUrls": 5, "createdAt": "2023-08-15T10:30:00Z", "message": "Batch scrape job started successfully"}'
+                    ],
+                },
             ),
             Tool(
                 name="get_batch_status",
@@ -310,6 +326,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Status information about the batch scrape job",
+                    "examples": [
+                        '{"id": "batch_12345678", "status": "completed", "total": 5, "completed": 5, "failed": 0, "urls": [{"url": "https://example.com", "status": "completed"}], "createdAt": "2023-08-15T10:30:00Z", "completedAt": "2023-08-15T10:31:15Z"}'
+                    ],
+                },
             ),
             Tool(
                 name="get_batch_error",
@@ -323,6 +347,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Error information from the batch scrape job",
+                    "examples": [
+                        '{"id": "batch_12345678", "errors": [{"url": "https://invalid-url.com", "error": "Failed to resolve DNS", "statusCode": 404}]}'
+                    ],
                 },
             ),
             Tool(
@@ -368,6 +400,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["url"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the initiated crawl job",
+                    "examples": [
+                        '{"success": true, "id": "crawl_87654321", "status": "pending", "url": "https://example.com", "message": "Crawl job started successfully"}'
+                    ],
+                },
             ),
             Tool(
                 name="get_crawl_status",
@@ -382,6 +422,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Status information about the crawl job",
+                    "examples": [
+                        '{"id": "crawl_87654321", "status": "in_progress", "url": "https://example.com", "pagesFound": 25, "pagesCrawled": 15, "createdAt": "2023-08-15T14:20:00Z"}'
+                    ],
+                },
             ),
             Tool(
                 name="cancel_crawl",
@@ -395,6 +443,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the crawl cancellation request",
+                    "examples": [
+                        '{"success": true, "id": "crawl_87654321", "status": "cancelled", "message": "Crawl job cancelled successfully"}'
+                    ],
                 },
             ),
             Tool(
@@ -437,6 +493,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["url"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of URLs found on the mapped website",
+                    "examples": [
+                        '{"success": true, "url": "https://example.com", "links": ["https://example.com/about", "https://example.com/products", "https://example.com/contact"], "total": 3}'
+                    ],
                 },
             ),
             Tool(
@@ -481,6 +545,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["urls"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the initiated data extraction job",
+                    "examples": [
+                        '{"success": true, "id": "extract_abcd1234", "status": "pending", "urls": ["https://example.com"], "message": "Data extraction job started successfully"}'
+                    ],
+                },
             ),
             Tool(
                 name="get_extract_status",
@@ -494,6 +566,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Status and results of the data extraction job",
+                    "examples": [
+                        '{"id": "extract_abcd1234", "status": "completed", "data": [{"title": "Example Product", "price": "$29.99", "description": "This is an example product description."}], "createdAt": "2023-08-15T16:45:00Z", "completedAt": "2023-08-15T16:46:30Z"}'
+                    ],
                 },
             ),
             Tool(
@@ -529,6 +609,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Search results with optional full page content",
+                    "examples": [
+                        '{"success": true, "query": "example search", "results": [{"title": "Example Search Result", "url": "https://example.com/result1", "snippet": "This is a snippet of the search result...", "content": "Full content of the page if include_content was true..."}], "total": 1}'
+                    ],
+                },
             ),
             Tool(
                 name="check_credit_usage",
@@ -536,6 +624,14 @@ def create_server(user_id, api_key=None):
                 inputSchema={
                     "type": "object",
                     "properties": {},
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about credit usage for the Firecrawl account",
+                    "examples": [
+                        '{"plan": "Pro", "credits": {"used": 850, "total": 5000, "remaining": 4150}, "reset": {"next": "2023-09-01T00:00:00Z", "period": "monthly"}}'
+                    ],
                 },
             ),
         ]
@@ -547,8 +643,8 @@ def create_server(user_id, api_key=None):
         logger.info(f"User {server.user_id} calling tool: {name}")
         api_key = await get_firecrawl_credentials(server.user_id, server.api_key)
 
-        if name == "scrape_url":
-            try:
+        try:
+            if name == "scrape_url":
                 response = await make_firecrawl_request(
                     "post", "scrape", arguments, api_key
                 )
@@ -564,10 +660,7 @@ def create_server(user_id, api_key=None):
 
                 if response.get("success"):
                     return [
-                        TextContent(
-                            type="text",
-                            text=f"Successfully scraped URL and here are the details: {json.dumps(response, indent=2)}",
-                        )
+                        TextContent(type="text", text=json.dumps(response, indent=2))
                     ]
                 else:
                     return [
@@ -576,11 +669,7 @@ def create_server(user_id, api_key=None):
                             text=f"Error scraping URL (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-            except Exception as e:
-                return [TextContent(type="text", text=f"Error scraping URL: {str(e)}")]
-
-        elif name == "batch_scrape":
-            try:
+            elif name == "batch_scrape":
                 response = await make_firecrawl_request(
                     "post", "batch/scrape", arguments, api_key
                 )
@@ -596,10 +685,7 @@ def create_server(user_id, api_key=None):
 
                 if response.get("success"):
                     return [
-                        TextContent(
-                            type="text",
-                            text=f"Batch scrape job started successfully and here is the batch id and other details: {json.dumps(response, indent=2)}",
-                        )
+                        TextContent(type="text", text=json.dumps(response, indent=2))
                     ]
                 else:
                     return [
@@ -608,17 +694,8 @@ def create_server(user_id, api_key=None):
                             text=f"Error starting batch scrape (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error starting batch scrape: {str(e)}"
-                    )
-                ]
-
-        elif name == "get_batch_status":
-            batch_id = arguments["id"]
-
-            try:
+            elif name == "get_batch_status":
+                batch_id = arguments["id"]
                 response = await make_firecrawl_request(
                     "get", f"batch/scrape/{batch_id}", api_key=api_key
                 )
@@ -632,21 +709,8 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Here is the status of the batch scrape: {json.dumps(response, indent=2)}",
-                    )
-                ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error checking batch status: {str(e)}"
-                    )
-                ]
-
-        elif name == "get_batch_error":
-            try:
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
+            elif name == "get_batch_error":
                 response = await make_firecrawl_request(
                     "get", f"batch/scrape/{arguments['id']}/errors", api_key=api_key
                 )
@@ -660,21 +724,8 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Here are the errors from the batch scrape: {json.dumps(response, indent=2)}",
-                    )
-                ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error retrieving batch errors: {str(e)}"
-                    )
-                ]
-
-        elif name == "crawl_website":
-            try:
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
+            elif name == "crawl_website":
                 response = await make_firecrawl_request(
                     "post", "crawl", arguments, api_key
                 )
@@ -690,10 +741,7 @@ def create_server(user_id, api_key=None):
 
                 if response.get("success"):
                     return [
-                        TextContent(
-                            type="text",
-                            text=f"Crawl job started successfully and here is the crawl id and other details: {json.dumps(response, indent=2)}",
-                        )
+                        TextContent(type="text", text=json.dumps(response, indent=2))
                     ]
                 else:
                     return [
@@ -702,15 +750,8 @@ def create_server(user_id, api_key=None):
                             text=f"Error starting crawl (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-            except Exception as e:
-                return [
-                    TextContent(type="text", text=f"Error starting crawl: {str(e)}")
-                ]
-
-        elif name == "get_crawl_status":
-            crawl_id = arguments["id"]
-
-            try:
+            elif name == "get_crawl_status":
+                crawl_id = arguments["id"]
                 response = await make_firecrawl_request(
                     "get", f"crawl/{crawl_id}", api_key=api_key
                 )
@@ -724,23 +765,9 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Here is the status of the crawl: {json.dumps(response, indent=2)}",
-                    )
-                ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error checking crawl status: {str(e)}"
-                    )
-                ]
-
-        elif name == "cancel_crawl":
-            crawl_id = arguments["id"]
-
-            try:
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
+            elif name == "cancel_crawl":
+                crawl_id = arguments["id"]
                 response = await make_firecrawl_request(
                     "delete", f"crawl/{crawl_id}", api_key=api_key
                 )
@@ -754,19 +781,8 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Here is the response for cancelling the crawl: {json.dumps(response, indent=2)}",
-                    )
-                ]
-            except Exception as e:
-                return [
-                    TextContent(type="text", text=f"Error cancelling crawl: {str(e)}")
-                ]
-
-        elif name == "map_website":
-            try:
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
+            elif name == "map_website":
                 response = await make_firecrawl_request(
                     "post", "map", arguments, api_key
                 )
@@ -781,12 +797,20 @@ def create_server(user_id, api_key=None):
                     ]
 
                 if response.get("success"):
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Successfully mapped website and here are the details: {json.dumps(response, indent=2)}",
-                        )
-                    ]
+                    # Handle links array if present
+                    if isinstance(response.get("links"), list):
+                        # Return multiple TextContent objects for arrays
+                        return [
+                            TextContent(
+                                type="text", text=json.dumps(response, indent=2)
+                            )
+                        ]
+                    else:
+                        return [
+                            TextContent(
+                                type="text", text=json.dumps(response, indent=2)
+                            )
+                        ]
                 else:
                     return [
                         TextContent(
@@ -794,13 +818,7 @@ def create_server(user_id, api_key=None):
                             text=f"Error mapping website (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-            except Exception as e:
-                return [
-                    TextContent(type="text", text=f"Error mapping website: {str(e)}")
-                ]
-
-        elif name == "extract_data":
-            try:
+            elif name == "extract_data":
                 response = await make_firecrawl_request(
                     "post", "extract", arguments, api_key
                 )
@@ -816,10 +834,7 @@ def create_server(user_id, api_key=None):
 
                 if response.get("success"):
                     return [
-                        TextContent(
-                            type="text",
-                            text=f"Data extraction job started successfully and here are the details: {json.dumps(response, indent=2)}",
-                        )
+                        TextContent(type="text", text=json.dumps(response, indent=2))
                     ]
                 else:
                     return [
@@ -828,17 +843,8 @@ def create_server(user_id, api_key=None):
                             text=f"Error starting data extraction (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error starting data extraction: {str(e)}"
-                    )
-                ]
-
-        elif name == "get_extract_status":
-            extract_id = arguments["id"]
-
-            try:
+            elif name == "get_extract_status":
+                extract_id = arguments["id"]
                 response = await make_firecrawl_request(
                     "get", f"extract/{extract_id}", api_key=api_key
                 )
@@ -852,21 +858,19 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Here is the status of the extraction job: {json.dumps(response, indent=2)}",
-                    )
-                ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error checking extract status: {str(e)}"
-                    )
-                ]
-
-        elif name == "search":
-            try:
+                # Handle data array if present
+                if (
+                    isinstance(response.get("data"), list)
+                    and len(response.get("data", [])) > 0
+                ):
+                    return [
+                        TextContent(type="text", text=json.dumps(response, indent=2))
+                    ]
+                else:
+                    return [
+                        TextContent(type="text", text=json.dumps(response, indent=2))
+                    ]
+            elif name == "search":
                 response = await make_firecrawl_request(
                     "post", "search", arguments, api_key
                 )
@@ -881,12 +885,22 @@ def create_server(user_id, api_key=None):
                     ]
 
                 if response.get("success"):
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Search completed successfully and here are the results: {json.dumps(response, indent=2)}",
-                        )
-                    ]
+                    # Handle results array if present
+                    if (
+                        isinstance(response.get("results"), list)
+                        and len(response.get("results", [])) > 0
+                    ):
+                        return [
+                            TextContent(
+                                type="text", text=json.dumps(response, indent=2)
+                            )
+                        ]
+                    else:
+                        return [
+                            TextContent(
+                                type="text", text=json.dumps(response, indent=2)
+                            )
+                        ]
                 else:
                     return [
                         TextContent(
@@ -894,13 +908,7 @@ def create_server(user_id, api_key=None):
                             text=f"Error performing search (Status {status_code}): {response.get('error', 'Unknown error')}\nDetails: {response.get('error_detail', 'No details available')}",
                         )
                     ]
-            except Exception as e:
-                return [
-                    TextContent(type="text", text=f"Error performing search: {str(e)}")
-                ]
-
-        elif name == "check_credit_usage":
-            try:
+            elif name == "check_credit_usage":
                 response = await make_firecrawl_request(
                     "get", "team/credit-usage", api_key=api_key
                 )
@@ -914,20 +922,12 @@ def create_server(user_id, api_key=None):
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Here is your credit usage information: {json.dumps(response, indent=2)}",
-                    )
-                ]
-            except Exception as e:
-                return [
-                    TextContent(
-                        type="text", text=f"Error checking credit usage: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
-        return [TextContent(type="text", text=f"Unknown tool: {name}")]
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"Error executing {name}: {str(e)}")]
 
     return server
 
