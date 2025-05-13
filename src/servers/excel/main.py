@@ -242,6 +242,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the created Excel workbook including file ID, name, and web URL",
+                    "examples": [
+                        '{\n  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users(\'user%40example.com\')/drive/root/$entity",\n  "@microsoft.graph.downloadUrl": "https://example.com/download",\n  "id": "1234567890ABC",\n  "name": "Test Workbook.xlsx",\n  "webUrl": "https://onedrive.live.com/edit.aspx?resid=1234567890ABC",\n  "size": 0,\n  "file": {\n    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"\n  }\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="list_worksheets",
@@ -256,6 +265,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of worksheets in the Excel workbook with their properties",
+                    "examples": [
+                        '{\n  "value": [\n    {\n      "id": "Sheet1",\n      "name": "Sheet1",\n      "position": 0,\n      "visibility": "Visible"\n    },\n    {\n      "id": "Sheet2",\n      "name": "Sheet2",\n      "position": 1,\n      "visibility": "Visible"\n    }\n  ]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="add_worksheet",
@@ -274,6 +292,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the newly created worksheet",
+                    "examples": [
+                        '{\n  "id": "Sheet3",\n  "name": "Test Worksheet-12345",\n  "position": 2,\n  "visibility": "Visible"\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="read_worksheet",
@@ -296,6 +323,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Data from the worksheet with cell values, formulas, and formatting information",
+                    "examples": [
+                        '{\n  "address": "A1:B3",\n  "values": [\n    ["Header 1", "Header 2"],\n    ["Value 1", "Value 2"],\n    ["Value 3", "Value 4"]\n  ],\n  "formulas": null,\n  "numberFormat": null\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="update_cells",
@@ -323,6 +359,13 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "range", "values"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of cell update with information about the updated range",
+                    "examples": ['{\n  "address": "A1:B3",\n  "updated": true\n}'],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="add_formula",
@@ -349,6 +392,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "cell", "formula"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of formula addition with information about the updated cell",
+                    "examples": [
+                        '{\n  "address": "C2",\n  "formulaApplied": "=SUM(A2:B2)"\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="add_row",
@@ -372,6 +424,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "values"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of row addition with row index and values",
+                    "examples": [
+                        '{\n  "success": true,\n  "rowAdded": 4,\n  "values": ["New Value 1", "New Value 2"]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="add_table",
@@ -403,6 +464,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "range"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the created table including ID, name, and range",
+                    "examples": [
+                        '{\n  "id": "1",\n  "name": "TestTable-12345",\n  "showHeaders": true,\n  "showTotals": false,\n  "style": "TableStyleMedium2",\n  "worksheet": {\n    "id": "Sheet1",\n    "name": "Sheet1"\n  },\n  "address": "D1:E3"\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="add_table_row",
@@ -429,6 +499,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "table_name", "values"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the newly added table row",
+                    "examples": [
+                        '{\n  "index": 3,\n  "values": ["Value 1", "Value 2"]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="find_row",
@@ -454,6 +533,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "column", "value"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the found row including row index and data",
+                    "examples": [
+                        '{\n  "found_row": {\n    "Header 1": "Updated Value 1",\n    "Header 2": "Updated Value 2"\n  },\n  "row_index": 2\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="find_or_create_row",
@@ -489,6 +577,15 @@ def create_server(user_id, api_key=None):
                         "values",
                     ],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the found or created row including whether it was created",
+                    "examples": [
+                        '{\n  "row": {\n    "Header 1": "Unique Value-12345",\n    "Header 2": "Associated Value"\n  },\n  "row_index": 4,\n  "created": true\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="update_row",
@@ -515,6 +612,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "row_index", "values"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the updated row with new values",
+                    "examples": [
+                        '{\n  "updated": true,\n  "row": {\n    "Header 1": "Updated Value 1",\n    "Header 2": "Updated Value 2"\n  },\n  "row_index": 2\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="delete_worksheet_row",
@@ -537,6 +643,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "row_index"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of row deletion",
+                    "examples": [
+                        '{\n  "success": true,\n  "message": "Row 4 deleted successfully"\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="list_tables",
@@ -555,6 +670,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of tables in the workbook with their details",
+                    "examples": [
+                        '{\n  "value": [\n    {\n      "id": "1",\n      "name": "TestTable-12345",\n      "showHeaders": true,\n      "showTotals": false,\n      "style": "TableStyleMedium2",\n      "worksheet": {\n        "id": "Sheet1",\n        "name": "Sheet1"\n      }\n    }\n  ]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="get_table",
@@ -577,6 +701,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "table_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about the specified table",
+                    "examples": [
+                        '{\n  "id": "1",\n  "name": "TestTable-12345",\n  "showHeaders": true,\n  "showTotals": false,\n  "style": "TableStyleMedium2",\n  "worksheet": {\n    "id": "Sheet1",\n    "name": "Sheet1"\n  },\n  "address": "D1:E3",\n  "columns": [\n    {\n      "id": "1",\n      "name": "Column1",\n      "index": 0\n    },\n    {\n      "id": "2",\n      "name": "Column2",\n      "index": 1\n    }\n  ]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="list_table_rows",
@@ -599,6 +732,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "table_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of rows in the table with their values",
+                    "examples": [
+                        '{\n  "value": [\n    {\n      "index": 0,\n      "values": ["Value 1", "Value 2"]\n    },\n    {\n      "index": 1,\n      "values": ["Value 3", "Value 4"]\n    }\n  ]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="add_table_column",
@@ -630,6 +772,15 @@ def create_server(user_id, api_key=None):
                         "column_name",
                     ],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Information about the newly added column",
+                    "examples": [
+                        '{\n  "id": "3",\n  "name": "NewColumn-12345",\n  "index": 2\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="update_table_column",
@@ -667,6 +818,15 @@ def create_server(user_id, api_key=None):
                         "values",
                     ],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of column update with column information",
+                    "examples": [
+                        '{\n  "updated": true,\n  "column": {\n    "id": "2",\n    "name": "Column2",\n    "index": 1\n  },\n  "values": ["New Value 1", "New Value 2"]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="delete_table",
@@ -689,6 +849,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id", "worksheet_name", "table_name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of table deletion",
+                    "examples": [
+                        '{\n  "success": true,\n  "message": "Table TestTable-12345 deleted successfully"\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="download_workbook",
@@ -703,6 +872,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["file_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Download URL for the Excel workbook",
+                    "examples": [
+                        '{\n  "url": "https://example.com/download/12345",\n  "name": "Test Workbook.xlsx"\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
             Tool(
                 name="search_workbooks",
@@ -722,6 +900,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Search results with matching Excel workbooks",
+                    "examples": [
+                        '{\n  "value": [\n    {\n      "id": "1234567890ABC",\n      "name": "Test Workbook.xlsx",\n      "webUrl": "https://onedrive.live.com/edit.aspx?resid=1234567890ABC",\n      "lastModifiedDateTime": "2023-06-01T12:00:00Z"\n    },\n    {\n      "id": "0987654321ZYX",\n      "name": "Another Workbook.xlsx",\n      "webUrl": "https://onedrive.live.com/edit.aspx?resid=0987654321ZYX",\n      "lastModifiedDateTime": "2023-05-28T09:30:00Z"\n    }\n  ]\n}'
+                    ],
+                },
+                requiredScopes=["Files.ReadWrite", "offline_access"],
             ),
         ]
 
@@ -1192,7 +1379,35 @@ def create_server(user_id, api_key=None):
             if isinstance(result, dict) and "error" in result:
                 return [TextContent(type="text", text=f"Error: {result['error']}")]
 
-            return [TextContent(type="text", text=json.dumps(result, indent=2))]
+            # Check if the result contains an array
+            if isinstance(result, list):
+                # For arrays, return multiple TextContent items, one for each element
+                return [
+                    TextContent(type="text", text=json.dumps(item, indent=2))
+                    for item in result
+                ]
+            # Or if it's a dict with a 'value' key containing an array
+            elif (
+                isinstance(result, dict)
+                and "value" in result
+                and isinstance(result["value"], list)
+                and name
+                in [
+                    "read_messages",
+                    "list_worksheets",
+                    "list_tables",
+                    "list_table_rows",
+                    "search_workbooks",
+                ]
+            ):
+                # For arrays in API responses, return multiple TextContent items
+                return [
+                    TextContent(type="text", text=json.dumps(item, indent=2))
+                    for item in result["value"]
+                ]
+            else:
+                # For object results, return as a single TextContent
+                return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
             return [TextContent(type="text", text=f"Error executing {name}: {str(e)}")]

@@ -2,46 +2,115 @@ name: "Excel guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Microsoft Excel files stored in OneDrive"
 documentation_path: "README.md"
+resources:
+  - name: "file"
+    description: "Excel workbooks stored in OneDrive"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
 tools:
   - name: "create_workbook"
     description: "Create a new Excel workbook in OneDrive"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "list_worksheets"
     description: "List all worksheets in an Excel workbook"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "add_worksheet"
     description: "Add a new worksheet to an Excel workbook"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "read_worksheet"
     description: "Read data from a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "update_cells"
     description: "Update cell values in a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "add_formula"
     description: "Add a formula to a cell in a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "add_row"
     description: "Add a row to the end of a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "add_table"
     description: "Create a new table in a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "add_table_row"
     description: "Add a row to a table"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "find_row"
     description: "Find a row by column value"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "find_or_create_row"
     description: "Find a row by column value or create it if not found"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "update_row"
     description: "Update a specific row in a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "delete_worksheet_row"
     description: "Delete a row from a worksheet"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "list_tables"
     description: "List all tables in an Excel workbook"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "get_table"
     description: "Get table metadata"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "list_table_rows"
     description: "List rows in a table"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "add_table_column"
     description: "Add a column to a table"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "update_table_column"
     description: "Update data in a table column"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "delete_table"
     description: "Delete a table (data remains, only deletes the table object)"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "download_workbook"
     description: "Get a download URL for the workbook"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
   - name: "search_workbooks"
     description: "Search for workbooks"
+    required_scopes:
+      - "Files.ReadWrite"
+      - "offline_access"
