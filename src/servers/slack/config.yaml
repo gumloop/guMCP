@@ -2,10 +2,110 @@ name: "Slack guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Slack channels and messages"
 documentation_path: "README.md"
+resources:
+  - name: "channel"
+    description: "Slack channels, including public and private ones. Content typically includes a list of messages."
+    required_scopes:
+      - "channels:history"
+      - "groups:history"
+      - "channels:read"
 tools:
   - name: "read_messages"
     description: "Read messages from a Slack channel"
+    required_scopes:
+      - "channels:history"
+      - "groups:history"
+      - "im:read"
   - name: "send_message"
     description: "Send a message to a Slack channel or user"
+    required_scopes:
+      - "chat:write"
+      - "chat:write.customize"
   - name: "create_canvas"
     description: "Create a Slack canvas message with rich content"
+    required_scopes:
+      - "chat:write"
+      - "chat:write.customize"
+  - name: "add_user_to_channel"
+    description: "Add a user to a Slack channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "upload_file"
+    description: "Upload a file to Slack"
+    required_scopes:
+      - "files:write"
+  - name: "react_to_message"
+    description: "Add a reaction to a message"
+    required_scopes:
+      - "reactions:write"
+  - name: "delete_message"
+    description: "Delete a Slack message"
+    required_scopes:
+      - "chat:write"
+  - name: "get_message_thread"
+    description: "Retrieve a message and its replies"
+    required_scopes:
+      - "channels:history"
+      - "groups:history" 
+      - "im:read"
+  - name: "pin_message"
+    description: "Pin a message in a channel/DM"
+    required_scopes:
+      - "pins:write"
+  - name: "unpin_message"
+    description: "Unpin a message"
+    required_scopes:
+      - "pins:write"
+  - name: "get_user_presence"
+    description: "Check a user's online status"
+    required_scopes:
+      - "users:read"
+  - name: "invite_to_channel"
+    description: "Invite user(s) to a channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "remove_from_channel"
+    description: "Remove user from a channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "get_file_info"
+    description: "Get metadata for a specific file"
+    required_scopes:
+      - "files:read"
+  - name: "list_pinned_items"
+    description: "List pinned items in a channel/DM"
+    required_scopes:
+      - "pins:read"
+  - name: "create_channel"
+    description: "Create a new public or private Slack channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "delete_channel"
+    description: "Delete (archive) a Slack channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "update_channel_topic"
+    description: "Update a channel's topic"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "update_channel_purpose"
+    description: "Update a channel's purpose"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "archive_channel"
+    description: "Archive a Slack channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
+  - name: "unarchive_channel"
+    description: "Unarchive a Slack channel"
+    required_scopes:
+      - "channels:manage"
+      - "groups:write"
