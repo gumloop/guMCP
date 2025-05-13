@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from typing import Optional, Iterable
 from base64 import urlsafe_b64encode
 
@@ -209,18 +210,22 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
                 name="send_email",
-                description="Send an email through Gmail",
+                description="Send a new email or reply to an existing thread",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "to": {
                             "type": "string",
-                            "description": "Recipient email address",
+                            "description": "Recipient email address(es), comma separated",
                         },
-                        "subject": {"type": "string", "description": "Email subject"},
+                        "subject": {
+                            "type": "string",
+                            "description": "Email subject",
+                        },
                         "body": {
                             "type": "string",
                             "description": "Email body (plain text)",
@@ -233,9 +238,18 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "description": "BCC recipients (comma separated)",
                         },
+                        "thread_id": {
+                            "type": "string",
+                            "description": "Optional: Thread ID to reply to (creates reply in thread)",
+                        },
+                        "in_reply_to": {
+                            "type": "string",
+                            "description": "Optional: Message ID to reply to (for threaded conversations)",
+                        },
                     },
                     "required": ["to", "subject", "body"],
                 },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
                 name="update_email",
@@ -260,6 +274,183 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email_id"],
                 },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="create_draft",
+                description="Prepare emails without sending them",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "to": {
+                            "type": "string",
+                            "description": "Recipient email address",
+                        },
+                        "subject": {"type": "string", "description": "Email subject"},
+                        "body": {
+                            "type": "string",
+                            "description": "Email body (plain text)",
+                        },
+                        "cc": {
+                            "type": "string",
+                            "description": "CC recipients (comma separated)",
+                        },
+                        "bcc": {
+                            "type": "string",
+                            "description": "BCC recipients (comma separated)",
+                        },
+                        "thread_id": {
+                            "type": "string",
+                            "description": "Optional thread ID to create a draft reply in an existing thread",
+                        },
+                    },
+                    "required": ["to", "subject", "body"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="forward_email",
+                description="Forward an email to other recipients",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID to forward",
+                        },
+                        "to": {
+                            "type": "string",
+                            "description": "Recipient email address(es), comma separated",
+                        },
+                        "additional_text": {
+                            "type": "string",
+                            "description": "Additional text to include with the forwarded email",
+                        },
+                    },
+                    "required": ["email_id", "to"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="create_label",
+                description="Create a new Gmail label for organization",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name for the new label",
+                        },
+                        "background_color": {
+                            "type": "string",
+                            "description": "Optional background color (hex code)",
+                        },
+                        "text_color": {
+                            "type": "string",
+                            "description": "Optional text color (hex code)",
+                        },
+                    },
+                    "required": ["name"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="archive_email",
+                description="Move emails out of inbox",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID to archive",
+                        },
+                    },
+                    "required": ["email_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="trash_email",
+                description="Move emails to trash",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID to move to trash",
+                        },
+                    },
+                    "required": ["email_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="star_email",
+                description="Flag an email as important by adding a star",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID to star",
+                        },
+                    },
+                    "required": ["email_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="unstar_email",
+                description="Remove the star flag from an email",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID to unstar",
+                        },
+                    },
+                    "required": ["email_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="get_attachment_details",
+                description="Get details about attachments in an email",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID to get attachment details from",
+                        },
+                    },
+                    "required": ["email_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
+            ),
+            Tool(
+                name="download_attachment",
+                description="Generate a download link for an email attachment",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "email_id": {
+                            "type": "string",
+                            "description": "Email ID that contains the attachment",
+                        },
+                        "attachment_id": {
+                            "type": "string",
+                            "description": "ID of the attachment to download",
+                        },
+                        "filename": {
+                            "type": "string",
+                            "description": "Filename to save the attachment as",
+                        },
+                    },
+                    "required": ["email_id", "attachment_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
         ]
 
@@ -298,7 +489,7 @@ def create_server(user_id, api_key=None):
                     )
                 ]
 
-            email_summaries = []
+            emails = []
             for message in messages:
                 msg = (
                     gmail_service.users()
@@ -306,41 +497,60 @@ def create_server(user_id, api_key=None):
                     .get(
                         userId="me",
                         id=message["id"],
-                        format="metadata",
-                        metadataHeaders=["Subject", "From", "Date"],
+                        format="full",
                     )
                     .execute()
                 )
 
+                # Process the message to extract readable content
+                readable_msg = {}
+                readable_msg["id"] = msg.get("id", "")
+                readable_msg["threadId"] = msg.get("threadId", "")
+                readable_msg["labelIds"] = msg.get("labelIds", [])
+
                 # Extract headers
-                subject = "No Subject"
-                sender = "Unknown"
-                date = "Unknown"
-                for header in msg.get("payload", {}).get("headers", []):
-                    if header["name"] == "Subject":
-                        subject = header["value"]
-                    elif header["name"] == "From":
-                        sender = header["value"]
-                    elif header["name"] == "Date":
-                        date = header["value"]
+                headers = {}
+                if "payload" in msg and "headers" in msg["payload"]:
+                    for header in msg["payload"]["headers"]:
+                        headers[header["name"].lower()] = header["value"]
 
-                # Get labels
-                labels = msg.get("labelIds", [])
-                is_unread = "UNREAD" in labels
+                readable_msg["subject"] = headers.get("subject", "No Subject")
+                readable_msg["from"] = headers.get("from", "Unknown")
+                readable_msg["to"] = headers.get("to", "Unknown")
+                readable_msg["date"] = headers.get("date", "Unknown")
 
-                email_summaries.append(
-                    f"ID: {message['id']}\n"
-                    f"From: {sender}\n"
-                    f"Subject: {subject}\n"
-                    f"Date: {date}\n"
-                    f"Status: {'Unread' if is_unread else 'Read'}\n"
-                    f"Labels: {', '.join(labels)}\n"
+                # Extract plain text content
+                body_text = ""
+                if "payload" in msg:
+                    body_text = extract_text_from_payload(msg["payload"])
+
+                readable_msg["body"] = body_text or msg.get("snippet", "")
+
+                # Extract attachment info (if any)
+                attachments = []
+                if "payload" in msg and "parts" in msg["payload"]:
+                    for part in msg["payload"]["parts"]:
+                        if "filename" in part and part["filename"]:
+                            attachment = {
+                                "filename": part.get("filename", ""),
+                                "mimeType": part.get("mimeType", ""),
+                                "attachmentId": part.get("body", {}).get(
+                                    "attachmentId", ""
+                                ),
+                                "size": part.get("body", {}).get("size", 0),
+                            }
+                            attachments.append(attachment)
+
+                readable_msg["attachments"] = attachments
+                readable_msg["hasAttachments"] = len(attachments) > 0
+
+                emails.append(
+                    TextContent(
+                        type="text", text=f"{json.dumps(readable_msg, indent=4)}"
+                    )
                 )
 
-            result = f"Found {len(messages)} emails:\n\n" + "\n---\n".join(
-                email_summaries
-            )
-            return [TextContent(type="text", text=result)]
+            return emails
 
         elif name == "send_email":
             if not arguments or not all(
@@ -359,22 +569,44 @@ def create_server(user_id, api_key=None):
             if "bcc" in arguments and arguments["bcc"]:
                 message["bcc"] = arguments["bcc"]
 
+            # Initialize the send parameters
+            send_params = {"userId": "me"}
+            body_params = {}
+
+            # Handle thread_id if provided (for reply functionality)
+            if "thread_id" in arguments and arguments["thread_id"]:
+                thread_id = arguments["thread_id"]
+
+                # Add Re: to subject if needed for replies
+                if not arguments["subject"].lower().startswith("re:"):
+                    message["subject"] = f"Re: {arguments['subject']}"
+
+                # Set In-Reply-To header if provided
+                if "in_reply_to" in arguments and arguments["in_reply_to"]:
+                    message["In-Reply-To"] = arguments["in_reply_to"]
+                    # Set References header for threading
+                    message["References"] = arguments["in_reply_to"]
+
+                # Include threadId in the message parameters
+                body_params["threadId"] = thread_id
+
             # Encode the message
             raw_message = urlsafe_b64encode(message.as_bytes()).decode()
+            body_params["raw"] = raw_message
 
             # Send the message
             try:
                 sent_message = (
                     gmail_service.users()
                     .messages()
-                    .send(userId="me", body={"raw": raw_message})
+                    .send(userId="me", body=body_params)
                     .execute()
                 )
 
                 return [
                     TextContent(
                         type="text",
-                        text=f"Email sent successfully to {arguments['to']}. Message ID: {sent_message['id']}",
+                        text=f"{json.dumps(sent_message, indent=4)}",
                     )
                 ]
             except Exception as e:
@@ -420,15 +652,377 @@ def create_server(user_id, api_key=None):
                 return [
                     TextContent(
                         type="text",
-                        text=f"Successfully updated email {email_id}.\n"
-                        f"Added labels: {', '.join(add_labels) if add_labels else 'None'}\n"
-                        f"Removed labels: {', '.join(remove_labels) if remove_labels else 'None'}\n"
-                        f"Current labels: {', '.join(updated_labels)}",
+                        text=f"{json.dumps(result, indent=4)}",
                     )
                 ]
             except Exception as e:
                 return [
                     TextContent(type="text", text=f"Failed to update email: {str(e)}")
+                ]
+
+        elif name == "create_draft":
+            if not arguments or not all(
+                k in arguments for k in ["to", "subject", "body"]
+            ):
+                raise ValueError("Missing required parameters: to, subject, body")
+
+            # Create email message
+            message = email.mime.text.MIMEText(arguments["body"])
+            message["to"] = arguments["to"]
+            message["subject"] = arguments["subject"]
+
+            # Add optional CC and BCC if provided
+            if "cc" in arguments and arguments["cc"]:
+                message["cc"] = arguments["cc"]
+            if "bcc" in arguments and arguments["bcc"]:
+                message["bcc"] = arguments["bcc"]
+
+            # Encode the message
+            raw_message = urlsafe_b64encode(message.as_bytes()).decode()
+
+            # Create the draft
+            try:
+                draft_body = {"message": {"raw": raw_message}}
+
+                # Add thread ID if provided for creating a draft reply
+                if "thread_id" in arguments and arguments["thread_id"]:
+                    draft_body["message"]["threadId"] = arguments["thread_id"]
+
+                # Get the raw API response
+                draft = (
+                    gmail_service.users()
+                    .drafts()
+                    .create(userId="me", body=draft_body)
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(draft, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to create draft: {str(e)}")
+                ]
+        elif name == "forward_email":
+            if not arguments or not all(k in arguments for k in ["email_id", "to"]):
+                raise ValueError("Missing required parameters: email_id, to")
+
+            email_id = arguments["email_id"]
+            to_addresses = arguments["to"]
+            additional_text = arguments.get("additional_text", "")
+
+            try:
+                # Get the original message
+                original_message = (
+                    gmail_service.users()
+                    .messages()
+                    .get(userId="me", id=email_id, format="full")
+                    .execute()
+                )
+
+                # Extract message details
+                headers = {}
+                for header in original_message.get("payload", {}).get("headers", []):
+                    name = header.get("name", "").lower()
+                    if name in ["from", "to", "subject", "date"]:
+                        headers[name] = header.get("value", "")
+
+                # Prepare forwarded message
+                # Create raw message from original
+                # For simplicity, we'll create a new message that references the original
+                subject = headers.get("subject", "")
+                if not subject.lower().startswith("fwd:"):
+                    subject = f"Fwd: {subject}"
+
+                # Original message headers to include in forwarded message
+                orig_from = headers.get("from", "Unknown")
+                orig_date = headers.get("date", "Unknown")
+                orig_to = headers.get("to", "Unknown")
+
+                # Create a simplified forwarded message
+                forward_msg = email.mime.text.MIMEText(
+                    f"{additional_text}\n\n"
+                    f"---------- Forwarded message ----------\n"
+                    f"From: {orig_from}\n"
+                    f"Date: {orig_date}\n"
+                    f"Subject: {headers.get('subject', '')}\n"
+                    f"To: {orig_to}\n\n"
+                    f"{original_message.get('snippet', '')}\n"
+                )
+
+                # Set new headers
+                forward_msg["To"] = to_addresses
+                forward_msg["Subject"] = subject
+
+                # Encode the message
+                raw_message = urlsafe_b64encode(forward_msg.as_bytes()).decode()
+
+                # Send the forwarded message
+                forwarded_message = (
+                    gmail_service.users()
+                    .messages()
+                    .send(userId="me", body={"raw": raw_message})
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(forwarded_message, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to forward email: {str(e)}")
+                ]
+
+        elif name == "list_labels":
+            try:
+                include_system = (
+                    arguments.get("include_system", True) if arguments else True
+                )
+
+                # Get all labels
+                results = gmail_service.users().labels().list(userId="me").execute()
+                labels = results.get("labels", [])
+
+                # Filter out system labels if requested
+                if not include_system:
+                    labels = [
+                        label for label in labels if label.get("type") != "system"
+                    ]
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(results, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to list labels: {str(e)}")
+                ]
+
+        elif name == "create_label":
+            if not arguments or "name" not in arguments:
+                raise ValueError("Missing required parameter: name")
+
+            label_name = arguments["name"]
+            background_color = arguments.get("background_color")
+            text_color = arguments.get("text_color")
+
+            try:
+                # Prepare the label object
+                label_object = {
+                    "name": label_name,
+                    "messageListVisibility": "show",
+                    "labelListVisibility": "labelShow",
+                }
+
+                # Add color information if provided
+                if background_color or text_color:
+                    label_object["color"] = {}
+                    if background_color:
+                        label_object["color"]["backgroundColor"] = background_color
+                    if text_color:
+                        label_object["color"]["textColor"] = text_color
+
+                # Create the label
+                created_label = (
+                    gmail_service.users()
+                    .labels()
+                    .create(userId="me", body=label_object)
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(created_label, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to create label: {str(e)}")
+                ]
+
+        elif name == "archive_email":
+            if not arguments or "email_id" not in arguments:
+                raise ValueError("Missing required parameter: email_id")
+
+            email_id = arguments["email_id"]
+
+            try:
+                # Archive by removing INBOX label
+                result = (
+                    gmail_service.users()
+                    .messages()
+                    .modify(
+                        userId="me",
+                        id=email_id,
+                        body={"removeLabelIds": ["INBOX"]},
+                    )
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(result, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to archive email: {str(e)}")
+                ]
+
+        elif name == "trash_email":
+            if not arguments or "email_id" not in arguments:
+                raise ValueError("Missing required parameter: email_id")
+
+            email_id = arguments["email_id"]
+
+            try:
+                # Move to trash
+                result = (
+                    gmail_service.users()
+                    .messages()
+                    .trash(userId="me", id=email_id)
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(result, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to trash email: {str(e)}")
+                ]
+
+        elif name == "star_email":
+            if not arguments or "email_id" not in arguments:
+                raise ValueError("Missing required parameter: email_id")
+
+            email_id = arguments["email_id"]
+
+            try:
+                # Add STARRED label to the email
+                result = (
+                    gmail_service.users()
+                    .messages()
+                    .modify(
+                        userId="me",
+                        id=email_id,
+                        body={"addLabelIds": ["STARRED"]},
+                    )
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(result, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to star email: {str(e)}")
+                ]
+
+        elif name == "unstar_email":
+            if not arguments or "email_id" not in arguments:
+                raise ValueError("Missing required parameter: email_id")
+
+            email_id = arguments["email_id"]
+
+            try:
+                # Remove STARRED label from the email
+                result = (
+                    gmail_service.users()
+                    .messages()
+                    .modify(
+                        userId="me",
+                        id=email_id,
+                        body={"removeLabelIds": ["STARRED"]},
+                    )
+                    .execute()
+                )
+
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(result, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to unstar email: {str(e)}")
+                ]
+
+        elif name == "get_attachment_details":
+            if not arguments or "email_id" not in arguments:
+                raise ValueError("Missing required parameter: email_id")
+
+            email_id = arguments["email_id"]
+
+            try:
+                # Get the email message with full details
+                message = (
+                    gmail_service.users()
+                    .messages()
+                    .get(userId="me", id=email_id, format="full")
+                    .execute()
+                )
+
+                # Return the raw API response
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(message, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(
+                        type="text", text=f"Failed to get message details: {str(e)}"
+                    )
+                ]
+
+        elif name == "download_attachment":
+            if not arguments or not all(
+                k in arguments for k in ["email_id", "attachment_id"]
+            ):
+                raise ValueError("Missing required parameters: email_id, attachment_id")
+
+            email_id = arguments["email_id"]
+            attachment_id = arguments["attachment_id"]
+
+            try:
+                # Get the attachment
+                attachment = (
+                    gmail_service.users()
+                    .messages()
+                    .attachments()
+                    .get(userId="me", messageId=email_id, id=attachment_id)
+                    .execute()
+                )
+
+                # Return the raw API response
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{json.dumps(attachment, indent=4)}",
+                    )
+                ]
+            except Exception as e:
+                return [
+                    TextContent(type="text", text=f"Failed to get attachment: {str(e)}")
                 ]
 
         raise ValueError(f"Unknown tool: {name}")
@@ -461,3 +1055,49 @@ if __name__ == "__main__":
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")
         print("Note: To run the server normally, use the guMCP server framework.")
+
+
+def extract_text_from_payload(payload):
+    """Extract readable text from message payload, handling base64 encoding"""
+    if not payload:
+        return ""
+
+    # If this part is plain text and has a body
+    if (
+        payload.get("mimeType") == "text/plain"
+        and "body" in payload
+        and "data" in payload["body"]
+    ):
+        try:
+            import base64
+
+            data = payload["body"]["data"]
+            # Replace URL-safe characters back to normal base64
+            data = data.replace("-", "+").replace("_", "/")
+            # Add padding if needed
+            padding = len(data) % 4
+            if padding:
+                data += "=" * (4 - padding)
+            # Decode base64 to bytes, then to string
+            text = base64.b64decode(data).decode("utf-8", errors="replace")
+            return text
+        except Exception as e:
+            return f"[Error decoding text: {str(e)}]"
+
+    # If this is multipart, recursively extract text from parts
+    if "parts" in payload:
+        text_parts = []
+        for part in payload["parts"]:
+            # Skip attachments
+            if part.get("filename"):
+                continue
+            # Process text parts
+            if part.get("mimeType", "").startswith("text/"):
+                text_parts.append(extract_text_from_payload(part))
+            # Handle nested multipart
+            elif part.get("mimeType", "").startswith("multipart/"):
+                text_parts.append(extract_text_from_payload(part))
+
+        return "\n".join(filter(None, text_parts))
+
+    return ""

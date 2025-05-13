@@ -2,10 +2,57 @@ name: "Gmail guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Gmail emails and messages"
 documentation_path: "README.md"
+resources:
+  - name: "labels"
+    description: "Gmail labels containing emails and messages"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
 tools:
   - name: "read_emails"
     description: "Search and read emails in Gmail"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
   - name: "send_email"
-    description: "Send an email through Gmail"
+    description: "Send a new email or reply to an existing thread"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
   - name: "update_email"
     description: "Update email labels (mark as read/unread, move to folders)"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "create_draft"
+    description: "Prepare emails without sending them"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "forward_email"
+    description: "Forward an email to other recipients"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "create_label"
+    description: "Create a new Gmail label for organization"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "archive_email"
+    description: "Move emails out of inbox"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "trash_email"
+    description: "Move emails to trash"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "star_email"
+    description: "Flag an email as important by adding a star"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "unstar_email"
+    description: "Remove the star flag from an email"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "get_attachment_details"
+    description: "Get details about attachments in an email"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+  - name: "download_attachment"
+    description: "Get download URLs for an email attachment"
+    required_scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
