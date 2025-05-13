@@ -5,7 +5,13 @@ documentation_path: "README.md"
 tools:
   - name: "list_events"
     description: "List events from Google Calendar for a specified time range"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
   - name: "create_event"
     description: "Create a new event in Google Calendar"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
   - name: "update_event"
     description: "Update an existing event in Google Calendar"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
