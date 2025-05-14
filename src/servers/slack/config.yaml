@@ -61,11 +61,6 @@ tools:
     description: "Check a user's online status"
     required_scopes:
       - "users:read"
-  - name: "invite_to_channel"
-    description: "Invite user(s) to a channel"
-    required_scopes:
-      - "channels:manage"
-      - "groups:write"
   - name: "remove_from_channel"
     description: "Remove user from a channel"
     required_scopes:
@@ -109,3 +104,9 @@ tools:
     required_scopes:
       - "channels:manage"
       - "groups:write"
+  - name: "list_users_in_channel"
+    description: "List all users in a Slack channel"
+    required_scopes:
+      - "channels:read"
+      - "groups:read"
+      - "users:read"
