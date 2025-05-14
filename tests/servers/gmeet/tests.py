@@ -2,9 +2,18 @@ import pytest
 import uuid
 from datetime import datetime
 
+from tests.utils.test_tools import run_resources_test
+
+
 # Global variable to store created meeting id
 created_meeting_id = None
 current_date = datetime.now().strftime("%Y-%m-%d")
+
+
+@pytest.mark.asyncio
+async def test_resources(client):
+    response = await run_resources_test(client)
+    return response
 
 
 @pytest.mark.asyncio
