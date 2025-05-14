@@ -182,6 +182,16 @@ TOOL_TESTS = [
         "description": "Archive the created channel and return ok parameter from the response",
         "depends_on": ["channel_id"],
     },
+    {
+        "name": "list_users_in_channel",
+        "args_template": "in channel with ID {channel_id}",
+        "expected_keywords": ["user_count"],
+        "regex_extractors": {
+            "user_count": r"(?:user_count|users):\s*(\d+)",
+        },
+        "description": "List users in the channel and return the count of users",
+        "depends_on": ["channel_id"],
+    },
 ]
 
 

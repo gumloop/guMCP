@@ -217,6 +217,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "List of calendar events with details including title, ID, time, location, description, and attendees",
+                    "examples": [
+                        "Found 3 events in the next 7 days:\n\n1. Test Meeting\n   ID: <event-id>\n   When: 2025-05-14 03:00 to 2025-05-14 04:00\n\n2. Updated Test Meeting\n   ID: <event-id>\n   When: 2025-05-14 03:00 to 2025-05-14 04:00\n   Description: This is a test description\n\n3. No Title\n   ID: <event-id>\n   When: 2025-05-14 10:00 to 2025-05-14 11:00\n   Where: test\n\n"
+                    ]
+                },
+                requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
             Tool(
                 name="create_event",
@@ -253,6 +261,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["summary", "start_datetime", "end_datetime"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "Confirmation of event creation with details including title, time, and event ID",
+                    "examples": [
+                        "Event created successfully!\nTitle: Test Meeting\nStart: 2025-05-14 10:00\nEnd: 2025-05-14 11:00\n\nEvent ID: <event-id>\nEvent Link: <event-url>"
+                    ]
+                },
+                requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
             Tool(
                 name="update_event",
@@ -296,6 +312,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["event_id"],
                 },
+                outputSchema={
+                    "type": "string",
+                    "description": "Confirmation of event update with updated details including title, time, and description",
+                    "examples": [
+                        "Event updated successfully!\nTitle: Updated Test Meeting\nWhen: 2025-05-14 03:00 to 2025-05-14 04:00\nDescription: This is a test description\n\nEvent Link: <event-url>"
+                    ]
+                },
+                requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
         ]
 
