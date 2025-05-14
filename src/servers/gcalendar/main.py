@@ -218,11 +218,12 @@ def create_server(user_id, api_key=None):
                     },
                 },
                 outputSchema={
-                    "type": "string",
-                    "description": "List of calendar events with details including title, ID, time, location, description, and attendees",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Each item is a TextContent containing a summary of upcoming events, including count, titles, IDs, times, optional descriptions, and attendees.",
                     "examples": [
-                        "Found 3 events in the next 7 days:\n\n1. Test Meeting\n   ID: <event-id>\n   When: 2025-05-14 03:00 to 2025-05-14 04:00\n\n2. Updated Test Meeting\n   ID: <event-id>\n   When: 2025-05-14 03:00 to 2025-05-14 04:00\n   Description: This is a test description\n\n3. No Title\n   ID: <event-id>\n   When: 2025-05-14 10:00 to 2025-05-14 11:00\n   Where: test\n\n"
-                    ]
+                        "Found 2 events in the next 7 days:\n\n1. Meeting A\n   ID: <ID>\n   When: 2025-05-14 09:00 to 2025-05-14 10:00\n\n2. Meeting B\n   ID: <ID>\n   When: 2025-05-15 11:00 to 2025-05-15 12:00\n   Description: <Description>\n   Attendees: user@example.com\n"
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
@@ -262,11 +263,12 @@ def create_server(user_id, api_key=None):
                     "required": ["summary", "start_datetime", "end_datetime"],
                 },
                 outputSchema={
-                    "type": "string",
-                    "description": "Confirmation of event creation with details including title, time, and event ID",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation message for created event, including title, times, optional location, description, attendees, and generated event ID and link.",
                     "examples": [
-                        "Event created successfully!\nTitle: Test Meeting\nStart: 2025-05-14 10:00\nEnd: 2025-05-14 11:00\n\nEvent ID: <event-id>\nEvent Link: <event-url>"
-                    ]
+                        "Event created successfully!\nTitle: <Title>\nStart: <Start>\nEnd: <End>\n\nEvent ID: <ID>\nEvent Link: <URL>"
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
@@ -313,11 +315,135 @@ def create_server(user_id, api_key=None):
                     "required": ["event_id"],
                 },
                 outputSchema={
-                    "type": "string",
-                    "description": "Confirmation of event update with updated details including title, time, and description",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation message for updated event, including title, updated time range, optional location and description, and event link.",
                     "examples": [
-                        "Event updated successfully!\nTitle: Updated Test Meeting\nWhen: 2025-05-14 03:00 to 2025-05-14 04:00\nDescription: This is a test description\n\nEvent Link: <event-url>"
-                    ]
+                        "Event updated successfully!\nTitle: <Title>\nWhen: <Start> to <End>\nDescription: <Description>\n\nEvent Link: <URL>"
+                    ],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/calendar"],
+            ),
+            Tool(
+                name="delete_event",
+                description="Delete an event from Google Calendar",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "calendar_id": {
+                            "type": "string",
+                            "description": "Calendar ID (optional - defaults to primary)",
+                        },
+                        "event_id": {
+                            "type": "string",
+                            "description": "Event ID to delete",
+                        },
+                        "send_notifications": {
+                            "type": "boolean",
+                            "description": "Whether to send notifications to attendees (optional - defaults to false)",
+                        },
+                        "send_updates": {
+                            "type": "string",
+                            "enum": ["all", "externalOnly", "none"],
+                            "description": "Specifies who should receive notifications (optional - defaults to none)",
+                        },
+                    },
+                    "required": ["event_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Empty response indicating successful deletion; a TextContent with an empty string is returned.",
+                    "examples": [""],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/calendar"],
+            ),
+            Tool(
+                name="update_attendee_status",
+                description="Update an attendee's response status for an event",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "calendar_id": {
+                            "type": "string",
+                            "description": "Calendar ID (optional - defaults to primary)",
+                        },
+                        "event_id": {
+                            "type": "string",
+                            "description": "Event ID to update",
+                        },
+                        "attendee_email": {
+                            "type": "string",
+                            "description": "Email address of the attendee to update",
+                        },
+                        "response_status": {
+                            "type": "string",
+                            "enum": [
+                                "accepted",
+                                "declined",
+                                "tentative",
+                                "needsAction",
+                            ],
+                            "description": "New response status for the attendee",
+                        },
+                        "send_notifications": {
+                            "type": "boolean",
+                            "description": "Whether to send notifications to attendees (optional - defaults to false)",
+                        },
+                        "send_updates": {
+                            "type": "string",
+                            "enum": ["all", "externalOnly", "none"],
+                            "description": "Specifies who should receive notifications (optional - defaults to none)",
+                        },
+                    },
+                    "required": ["event_id", "attendee_email", "response_status"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Raw API response for updated attendee status, serialized as a JSON string.",
+                    "examples": [
+                        '{"kind":"calendar#event","id":"<ID>","status":"confirmed","attendees":[{"email":"<EMAIL>","responseStatus":"accepted"}],"htmlLink":"<URL>"}'
+                    ],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/calendar"],
+            ),
+            Tool(
+                name="check_free_slots",
+                description="Check for available time slots in a calendar",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "calendar_id": {
+                            "type": "string",
+                            "description": "Calendar ID (optional - defaults to primary)",
+                        },
+                        "start_datetime": {
+                            "type": "string",
+                            "description": "Start of time range (format: YYYY-MM-DD HH:MM)",
+                        },
+                        "end_datetime": {
+                            "type": "string",
+                            "description": "End of time range (format: YYYY-MM-DD HH:MM)",
+                        },
+                        "duration_minutes": {
+                            "type": "integer",
+                            "description": "Minimum duration of free slots in minutes (optional - defaults to 30)",
+                        },
+                        "timezone": {
+                            "type": "string",
+                            "description": "Timezone for the free slots search (optional - defaults to UTC)",
+                        },
+                    },
+                    "required": ["start_datetime", "end_datetime"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Raw free/busy query response, serialized as a JSON string, detailing busy periods for the specified time range.",
+                    "examples": [
+                        '{"kind":"calendar#freeBusy","timeMin":"<TIME>","timeMax":"<TIME>","calendars":{"primary":{"busy":[{"start":"<TIME>","end":"<TIME>"},...]}}}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
@@ -569,6 +695,130 @@ def create_server(user_id, api_key=None):
                 response += f"\nEvent Link: {updated_event.get('htmlLink', 'N/A')}"
 
                 return [TextContent(type="text", text=response)]
+
+            elif name == "delete_event":
+                if "event_id" not in arguments:
+                    raise ValueError("Missing required parameter: event_id")
+
+                calendar_id = arguments.get("calendar_id", "primary")
+                event_id = arguments["event_id"]
+
+                # Optional parameters
+                send_notifications = arguments.get("send_notifications", False)
+                send_updates = arguments.get("send_updates", "none")
+
+                # Delete the event
+                result = (
+                    calendar_service.events()
+                    .delete(
+                        calendarId=calendar_id,
+                        eventId=event_id,
+                        sendNotifications=send_notifications,
+                        sendUpdates=send_updates,
+                    )
+                    .execute()
+                )
+
+                # Return raw API response (usually empty for delete)
+                return [TextContent(type="text", text=str(result))]
+
+            elif name == "update_attendee_status":
+                if not all(
+                    k in arguments
+                    for k in ["event_id", "attendee_email", "response_status"]
+                ):
+                    raise ValueError(
+                        "Missing required parameters: event_id, attendee_email, response_status"
+                    )
+
+                calendar_id = arguments.get("calendar_id", "primary")
+                event_id = arguments["event_id"]
+                attendee_email = arguments["attendee_email"]
+                response_status = arguments["response_status"]
+
+                # Optional parameters
+                send_notifications = arguments.get("send_notifications", False)
+                send_updates = arguments.get("send_updates", "none")
+
+                # First get the existing event
+                event = (
+                    calendar_service.events()
+                    .get(calendarId=calendar_id, eventId=event_id)
+                    .execute()
+                )
+
+                # Find and update the attendee
+                attendees = event.get("attendees", [])
+                found = False
+
+                for attendee in attendees:
+                    if attendee.get("email") == attendee_email:
+                        attendee["responseStatus"] = response_status
+                        found = True
+                        break
+
+                if not found:
+                    # If attendee not found, add them
+                    if "attendees" not in event:
+                        event["attendees"] = []
+                    event["attendees"].append(
+                        {"email": attendee_email, "responseStatus": response_status}
+                    )
+
+                # Update the event
+                updated_event = (
+                    calendar_service.events()
+                    .update(
+                        calendarId=calendar_id,
+                        eventId=event_id,
+                        body=event,
+                        sendNotifications=send_notifications,
+                        sendUpdates=send_updates,
+                    )
+                    .execute()
+                )
+
+                print(updated_event)
+
+                # Return raw API response
+                return [TextContent(type="text", text=str(updated_event))]
+
+            elif name == "check_free_slots":
+                if not all(k in arguments for k in ["start_datetime", "end_datetime"]):
+                    raise ValueError(
+                        "Missing required parameters: start_datetime, end_datetime"
+                    )
+
+                calendar_id = arguments.get("calendar_id", "primary")
+                duration_minutes = int(arguments.get("duration_minutes", 30))
+                timezone = arguments.get("timezone", "UTC")
+
+                # Process start and end times
+                start_datetime = arguments["start_datetime"]
+                end_datetime = arguments["end_datetime"]
+
+                # Convert to datetime objects
+                try:
+                    start_dt = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
+                    end_dt = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
+                except ValueError:
+                    raise ValueError("Invalid datetime format. Use YYYY-MM-DD HH:MM")
+
+                # Create request body
+                body = {
+                    "timeMin": start_dt.isoformat() + "Z",
+                    "timeMax": end_dt.isoformat() + "Z",
+                    "timeZone": timezone,
+                    "items": [{"id": calendar_id}],
+                }
+
+                # Make freebusy query
+                freebusy_response = (
+                    calendar_service.freebusy().query(body=body).execute()
+                )
+
+                # Return raw API response
+                return [TextContent(type="text", text=str(freebusy_response))]
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
