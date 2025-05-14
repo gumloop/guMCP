@@ -2,6 +2,57 @@ name: "Google Drive guMCP Server"
 icon: "assets/icon.png"
 description: "Search and access files in Google Drive"
 documentation_path: "README.md"
+resources:
+  - name: "files"
+    description: "Files and folders in Google Drive"
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.readonly"
 tools:
   - name: "search"
     description: "Search for files in Google Drive"
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.readonly"
+  - name: "copy_file"
+    description: "Create a copy of the specified file."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "create_folder"
+    description: "Create a new, empty folder."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "move_file"
+    description: "Move a file from one folder to another."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "create_file_from_text"
+    description: "Create a new file from plain text."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "replace_file"
+    description: "Upload a file to Drive, that replaces an existing file."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "add_file_sharing_preference"
+    description: "Adds a sharing scope to the sharing preference of a file. Does not remove existing sharing settings. Provides a sharing URL."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "create_shortcut"
+    description: "Create a shortcut to a file."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "update_file_folder_name"
+    description: "Update the name of a file or folder."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+  - name: "retrieve_files"
+    description: "This action sends a GET request to the Google Drive API to retrieve a list of files based on specific query parameters."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.readonly"
+  - name: "retrieve_file_or_folder_by_id"
+    description: "Get a file or folder by its ID."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.readonly"
+  - name: "delete_file"
+    description: "This action will delete a file in Google Drive. You will need to provide the file ID."
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"

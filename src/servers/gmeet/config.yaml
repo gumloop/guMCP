@@ -2,16 +2,33 @@ name: "Google Meet guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Google Meet using the Google Calendar API"
 documentation_path: "README.md"
+resources:
+  - name: "meetings"
+    description: "Google Meet meetings created in your calendar"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events.readonly"
 tools:
   - name: "create_meeting"
     description: "Create a new meeting"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events"
   - name: "add_attendees"
     description: "Add attendees to a meeting."
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events"
   - name: "fetch_meetings_by_date"
     description: "Fetch all meetings for a given date."
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events.readonly"
   - name: "get_meeting_details"
     description: "Get details of a meeting by meeting id."
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events.readonly"
   - name: "update_meeting"
     description: "Update a meeting by meeting id."
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events"
   - name: "delete_meeting"
     description: "Delete a meeting by meeting id."
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar.events"
