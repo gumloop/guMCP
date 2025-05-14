@@ -522,6 +522,7 @@ def create_server(user_id, api_key=None):
                         '[{"total":88,"results":[{"id":"<ID1>","properties":{"email":"alice@example.com","firstname":"Alice","lastname":"Smith","company":"CompanyA"}},{"id":"<ID2>","properties":{"email":"bob@example.com","firstname":"Bob","lastname":"Jones","company":"CompanyB"}}],"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="create_contact",
@@ -562,6 +563,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"email":"test123@example.com","firstname":"Test","lastname":"User","company":"Test Company","jobtitle":"QA Tester"},"_status_code":201}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
             Tool(
                 name="update_contact",
@@ -603,6 +605,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"company":"Updated Company","jobtitle":"Senior QA Engineer"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
             Tool(
                 name="search_contacts",
@@ -642,6 +645,7 @@ def create_server(user_id, api_key=None):
                         '[{"total":1,"results":[{"id":"<ID>","properties":{"email":"test@example.com"}}],"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="list_companies",
@@ -673,6 +677,7 @@ def create_server(user_id, api_key=None):
                         '[{"results":[{"id":"<ID1>","properties":{"name":"CompanyA","domain":"companyA.com","industry":"COMPUTER_SOFTWARE"}},{"id":"<ID2>","properties":{"name":"CompanyB","domain":"companyB.com","industry":"COMPUTER_SOFTWARE"}}],"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.companies.read"],
             ),
             Tool(
                 name="create_company",
@@ -718,6 +723,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"name":"Test Company","domain":"testco.com","industry":"COMPUTER_SOFTWARE"},"_status_code":201}]'
                     ],
                 },
+                requiredScopes=["crm.objects.companies.write"],
             ),
             Tool(
                 name="update_company",
@@ -764,6 +770,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"description":"Updated description","industry":"COMPUTER_SOFTWARE"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.companies.write"],
             ),
             Tool(
                 name="list_deals",
@@ -795,6 +802,7 @@ def create_server(user_id, api_key=None):
                         '[{"results":[{"id":"<ID1>","properties":{"dealname":"Deal A","amount":"5000","dealstage":"qualified"}},{"id":"<ID2>","properties":{"dealname":"Deal B","amount":"10000","dealstage":null}}],"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.deals.read"],
             ),
             Tool(
                 name="create_deal",
@@ -839,6 +847,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"dealname":"Test Deal","amount":5000},"_status_code":201}]'
                     ],
                 },
+                requiredScopes=["crm.objects.deals.write"],
             ),
             Tool(
                 name="update_deal",
@@ -876,6 +885,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"amount":"7500","dealstage":"qualifiedtobuy"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.deals.write"],
             ),
             Tool(
                 name="get_engagements",
@@ -904,6 +914,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for getting engagements",
                     "examples": ['[{"total":0,"results":[],"_status_code":200}]'],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="send_email",
@@ -933,6 +944,10 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for sending an email",
                     "examples": ['[{"_status_code":200}]'],
                 },
+                requiredScopes=[
+                    "crm.objects.contacts.read",
+                    "crm.objects.contacts.write",
+                ],
             ),
             Tool(
                 name="list_tickets",
@@ -973,6 +988,7 @@ def create_server(user_id, api_key=None):
                         '[{"results":[{"id":"<ID>","properties":{"subject":"Test Ticket","content":"...","hs_ticket_priority":"MEDIUM"}}],"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["tickets"],
             ),
             Tool(
                 name="get_ticket",
@@ -1009,6 +1025,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"subject":"Test Ticket","content":"...","hs_ticket_priority":"MEDIUM"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["tickets"],
             ),
             Tool(
                 name="create_ticket",
@@ -1063,6 +1080,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"subject":"Test Ticket","hs_ticket_priority":"MEDIUM"},"_status_code":201}]'
                     ],
                 },
+                requiredScopes=["tickets"],
             ),
             Tool(
                 name="update_ticket",
@@ -1110,6 +1128,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"subject":"Updated Ticket","hs_ticket_priority":"HIGH"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["tickets"],
             ),
             Tool(
                 name="delete_ticket",
@@ -1130,6 +1149,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for deleting a ticket",
                     "examples": ['[{"_status_code":204}]'],
                 },
+                requiredScopes=["tickets"],
             ),
             Tool(
                 name="merge_tickets",
@@ -1154,6 +1174,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for merging tickets",
                     "examples": ['[{"id":"<MERGED_ID>","_status_code":200}]'],
                 },
+                requiredScopes=["tickets"],
             ),
             Tool(
                 name="list_products",
@@ -1189,6 +1210,7 @@ def create_server(user_id, api_key=None):
                         '[{"results":[{"id":"<ID>","properties":{"name":"Product A","price":"99.99"}}],"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["e-commerce"],
             ),
             Tool(
                 name="get_product",
@@ -1221,6 +1243,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"name":"Test Product","description":null,"price":null,"hs_sku":null},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["e-commerce"],
             ),
             Tool(
                 name="create_product",
@@ -1267,6 +1290,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"name":"Test Product","price":"99.99"},"_status_code":201}]'
                     ],
                 },
+                requiredScopes=["e-commerce"],
             ),
             Tool(
                 name="update_product",
@@ -1317,6 +1341,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<ID>","properties":{"name":"Updated Prod","price":"129.99"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["e-commerce"],
             ),
             Tool(
                 name="delete_product",
@@ -1337,6 +1362,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for deleting a product",
                     "examples": ['[{"_status_code":204}]'],
                 },
+                requiredScopes=["e-commerce"],
             ),
             Tool(
                 name="get_engagement",
@@ -1357,6 +1383,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for getting an engagement",
                     "examples": ['[{"engagement":{"id":"<ID>"},"_status_code":200}]'],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="list_engagements",
@@ -1383,6 +1410,7 @@ def create_server(user_id, api_key=None):
                         '[{"results":[{"engagement":{"id":"<ID>"}}],"hasMore":true,"offset":<OFFSET>,"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="get_recent_engagements",
@@ -1411,6 +1439,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for getting recent engagements",
                     "examples": ['[{"total":0,"results":[],"_status_code":200}]'],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="get_call_dispositions",
@@ -1434,6 +1463,7 @@ def create_server(user_id, api_key=None):
                         '[{"id":"<UUID1>","label":"Busy"},{"id":"<UUID2>","label":"Connected"}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.read"],
             ),
             Tool(
                 name="create_engagement",
@@ -1490,6 +1520,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for creating an engagement",
                     "examples": ['[{"_status_code":200}]'],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
             Tool(
                 name="update_engagement",
@@ -1528,6 +1559,7 @@ def create_server(user_id, api_key=None):
                         '[{"_engagement":{"id":"<ID>","bodyPreview":"Updated note"},"_status_code":200}]'
                     ],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
             Tool(
                 name="delete_engagement",
@@ -1548,6 +1580,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for deleting an engagement",
                     "examples": ['[{"_status_code":204}]'],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
             Tool(
                 name="merge_contacts",
@@ -1572,6 +1605,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for merging contacts",
                     "examples": ['[{"id":"<ID>","status_code":200}]'],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
             Tool(
                 name="gdpr_delete_contact",
@@ -1596,6 +1630,7 @@ def create_server(user_id, api_key=None):
                     "description": "Array of JSON strings containing the API response for GDPR deletion of a contact",
                     "examples": ['[{"_status_code":204}]'],
                 },
+                requiredScopes=["crm.objects.contacts.write"],
             ),
         ]
 
