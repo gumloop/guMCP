@@ -2,6 +2,9 @@ import uuid
 import pytest
 
 
+doc_id = ""  # add doc_id here
+
+
 @pytest.mark.asyncio
 async def test_list_resources(client):
     """Test listing Google Docs from Google Drive"""
@@ -48,6 +51,23 @@ async def test_read_doc(client):
     print(f"  - {doc_resource.name}: {response.contents[0].text[:100]}...")
 
     print("✅ Successfully read Google Doc")
+
+
+@pytest.mark.asyncio
+async def test_read_doc_tool(client):
+    """Test reading a Google Doc using the read_doc tool"""
+    response = await client.process_query(
+        f"Use the read_doc tool to read the Google Doc with ID '{doc_id}'. Display its contents."
+    )
+
+    # Verify that document content was returned
+    assert len(response) > 10, f"Document content should be returned: {response}"
+    assert "read" in response.lower(), f"Read operation not acknowledged: {response}"
+
+    print("Document read using tool:")
+    print(f"Response sample: {response[:100]}...")
+
+    print("✅ Successfully read Google Doc using read_doc tool")
 
 
 @pytest.mark.asyncio

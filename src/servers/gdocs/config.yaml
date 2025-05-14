@@ -13,6 +13,10 @@ tools:
     description: "Search for Google Docs in Drive"
     required_scopes:
       - "https://www.googleapis.com/auth/drive.file"
+  - name: "read_doc"
+    description: "Read content from a Google Doc"
+    required_scopes:
+      - "https://www.googleapis.com/auth/documents"
   - name: "create_doc"
     description: "Create a new Google Doc"
     required_scopes:

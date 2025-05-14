@@ -166,6 +166,26 @@ def create_server(user_id, api_key=None):
                 },
             ),
             Tool(
+                name="read_doc",
+                description="Read content from a Google Doc",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "doc_id": {"type": "string", "description": "Document ID"},
+                    },
+                    "required": ["doc_id"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/documents"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Full content of the requested Google Doc",
+                    "examples": [
+                        "Gumloop Basics\nIf you're looking to automate workflows without diving into complex coding, Gumloop might be just what you need. This document provides an overview of key features and concepts."
+                    ],
+                },
+            ),
+            Tool(
                 name="create_doc",
                 description="Create a new Google Doc",
                 inputSchema={
@@ -287,6 +307,26 @@ def create_server(user_id, api_key=None):
                     text=f"Found {len(files)} Google Docs matching '{user_query}':\n{file_list}",
                 )
             ]
+
+        elif name == "read_doc":
+            if not arguments or "doc_id" not in arguments:
+                raise ValueError("Missing required parameter: doc_id")
+
+            doc_id = arguments["doc_id"]
+
+            docs_service = await create_docs_service(
+                server.user_id, api_key=server.api_key
+            )
+
+            # Get the document content
+            document = (
+                docs_service.documents()
+                .get(documentId=doc_id, fields="body/content")
+                .execute()
+            )
+
+            # Return raw document content
+            return [TextContent(type="text", text=str(document))]
 
         elif name == "create_doc":
             if not arguments or "title" not in arguments or "content" not in arguments:
