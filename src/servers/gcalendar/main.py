@@ -208,13 +208,42 @@ def create_server(user_id, api_key=None):
                             "type": "string",
                             "description": "Calendar ID (optional - defaults to primary)",
                         },
+                        "time_min": {
+                            "type": "string",
+                            "description": "Start time of the time range (format: YYYY-MM-DD HH:MM or YYYY-MM-DD)",
+                        },
+                        "time_max": {
+                            "type": "string",
+                            "description": "End time of the time range (format: YYYY-MM-DD HH:MM or YYYY-MM-DD)",
+                        },
                         "days": {
                             "type": "integer",
-                            "description": "Number of days to look ahead (optional - defaults to 7)",
+                            "description": "Number of days to look ahead (used if time_max is not provided)",
                         },
                         "max_results": {
                             "type": "integer",
-                            "description": "Maximum number of events to return (optional - defaults to 10)",
+                            "description": "Maximum number of events to return (default: 10)",
+                        },
+                        "order_by": {
+                            "type": "string",
+                            "enum": ["startTime", "updated"],
+                            "description": "Order of events returned (default: startTime)",
+                        },
+                        "show_deleted": {
+                            "type": "boolean",
+                            "description": "Whether to include deleted events (default: false)",
+                        },
+                        "single_events": {
+                            "type": "boolean",
+                            "description": "Whether to expand recurring events (default: true)",
+                        },
+                        "time_zone": {
+                            "type": "string",
+                            "description": "Time zone for the response (default: UTC)",
+                        },
+                        "q": {
+                            "type": "string",
+                            "description": "Free text search terms to find events that match",
                         },
                     },
                 },
@@ -259,6 +288,62 @@ def create_server(user_id, api_key=None):
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "List of attendee emails (optional)",
+                        },
+                        "time_zone": {
+                            "type": "string",
+                            "description": "Time zone for the event (default: UTC)",
+                        },
+                        "recurrence": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "RRULE, EXRULE, RDATE and EXDATE rules for recurrence (e.g., ['RRULE:FREQ=DAILY;COUNT=2'])",
+                        },
+                        "reminders": {
+                            "type": "object",
+                            "properties": {
+                                "use_default": {
+                                    "type": "boolean",
+                                    "description": "Whether to use the default reminders",
+                                },
+                                "overrides": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "enum": ["email", "popup"],
+                                                "description": "Method of reminder",
+                                            },
+                                            "minutes": {
+                                                "type": "integer",
+                                                "description": "Minutes before event to trigger reminder",
+                                            },
+                                        },
+                                    },
+                                    "description": "Custom reminders to override the default",
+                                },
+                            },
+                            "description": "Reminders settings for the event",
+                        },
+                        "transparency": {
+                            "type": "string",
+                            "enum": ["opaque", "transparent"],
+                            "description": "Whether the event blocks time on the calendar (opaque) or not (transparent)",
+                        },
+                        "visibility": {
+                            "type": "string",
+                            "enum": ["default", "public", "private", "confidential"],
+                            "description": "Visibility of the event (default: default)",
+                        },
+                        "color_id": {
+                            "type": "string",
+                            "description": "Color ID for the event (1-11)",
+                        },
+                        "send_updates": {
+                            "type": "string",
+                            "enum": ["all", "externalOnly", "none"],
+                            "description": "Specifies who should receive confirmations (default: none)",
                         },
                     },
                     "required": ["summary", "start_datetime", "end_datetime"],
@@ -312,6 +397,62 @@ def create_server(user_id, api_key=None):
                             "items": {"type": "string"},
                             "description": "New list of attendee emails (optional)",
                         },
+                        "time_zone": {
+                            "type": "string",
+                            "description": "Time zone for the event (default: UTC)",
+                        },
+                        "recurrence": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "RRULE, EXRULE, RDATE and EXDATE rules for recurrence (e.g., ['RRULE:FREQ=DAILY;COUNT=2'])",
+                        },
+                        "reminders": {
+                            "type": "object",
+                            "properties": {
+                                "use_default": {
+                                    "type": "boolean",
+                                    "description": "Whether to use the default reminders",
+                                },
+                                "overrides": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "enum": ["email", "popup"],
+                                                "description": "Method of reminder",
+                                            },
+                                            "minutes": {
+                                                "type": "integer",
+                                                "description": "Minutes before event to trigger reminder",
+                                            },
+                                        },
+                                    },
+                                    "description": "Custom reminders to override the default",
+                                },
+                            },
+                            "description": "Reminders settings for the event",
+                        },
+                        "transparency": {
+                            "type": "string",
+                            "enum": ["opaque", "transparent"],
+                            "description": "Whether the event blocks time on the calendar (opaque) or not (transparent)",
+                        },
+                        "visibility": {
+                            "type": "string",
+                            "enum": ["default", "public", "private", "confidential"],
+                            "description": "Visibility of the event",
+                        },
+                        "color_id": {
+                            "type": "string",
+                            "description": "Color ID for the event (1-11)",
+                        },
+                        "send_updates": {
+                            "type": "string",
+                            "enum": ["all", "externalOnly", "none"],
+                            "description": "Specifies who should receive confirmations (default: none)",
+                        },
                     },
                     "required": ["event_id"],
                 },
@@ -341,12 +482,12 @@ def create_server(user_id, api_key=None):
                         },
                         "send_notifications": {
                             "type": "boolean",
-                            "description": "Whether to send notifications to attendees (optional - defaults to false)",
+                            "description": "Whether to send notifications to attendees (default: false)",
                         },
                         "send_updates": {
                             "type": "string",
                             "enum": ["all", "externalOnly", "none"],
-                            "description": "Specifies who should receive notifications (optional - defaults to none)",
+                            "description": "Specifies who should receive notifications (default: none)",
                         },
                     },
                     "required": ["event_id"],
@@ -391,12 +532,16 @@ def create_server(user_id, api_key=None):
                         },
                         "send_notifications": {
                             "type": "boolean",
-                            "description": "Whether to send notifications to attendees (optional - defaults to false)",
+                            "description": "Whether to send notifications to attendees (default: false)",
                         },
                         "send_updates": {
                             "type": "string",
                             "enum": ["all", "externalOnly", "none"],
-                            "description": "Specifies who should receive notifications (optional - defaults to none)",
+                            "description": "Specifies who should receive notifications (default: none)",
+                        },
+                        "comment": {
+                            "type": "string",
+                            "description": "A comment to include with the response status",
                         },
                     },
                     "required": ["event_id", "attendee_email", "response_status"],
@@ -431,11 +576,29 @@ def create_server(user_id, api_key=None):
                         },
                         "duration_minutes": {
                             "type": "integer",
-                            "description": "Minimum duration of free slots in minutes (optional - defaults to 30)",
+                            "description": "Minimum duration of free slots in minutes (default: 30)",
                         },
                         "timezone": {
                             "type": "string",
-                            "description": "Timezone for the free slots search (optional - defaults to UTC)",
+                            "description": "Timezone for the free slots search (default: UTC)",
+                        },
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Calendar ID to check",
+                                    }
+                                },
+                                "required": ["id"],
+                            },
+                            "description": "List of calendars to check for availability",
+                        },
+                        "group_exp_expand": {
+                            "type": "boolean",
+                            "description": "Whether to expand group members (default: false)",
                         },
                     },
                     "required": ["start_datetime", "end_datetime"],
@@ -473,9 +636,37 @@ def create_server(user_id, api_key=None):
                 calendar_id = arguments.get("calendar_id", "primary")
                 days = int(arguments.get("days", 7))
                 max_results = int(arguments.get("max_results", 10))
+                order_by = arguments.get("order_by", "startTime")
+                show_deleted = arguments.get("show_deleted", False)
+                single_events = arguments.get("single_events", True)
+                time_zone = arguments.get("time_zone", "UTC")
+                q = arguments.get("q", "")
 
-                time_min = datetime.utcnow().isoformat() + "Z"
-                time_max = (datetime.utcnow() + timedelta(days=days)).isoformat() + "Z"
+                # Process time_min and time_max parameters
+                if "time_min" in arguments:
+                    time_min_str = arguments["time_min"]
+                    if " " in time_min_str:  # Has time component
+                        time_min_dt = datetime.strptime(time_min_str, "%Y-%m-%d %H:%M")
+                    else:  # Date only
+                        time_min_dt = datetime.strptime(time_min_str, "%Y-%m-%d")
+                    time_min = time_min_dt.isoformat() + "Z"
+                else:
+                    time_min = datetime.utcnow().isoformat() + "Z"
+
+                if "time_max" in arguments:
+                    time_max_str = arguments["time_max"]
+                    if " " in time_max_str:  # Has time component
+                        time_max_dt = datetime.strptime(time_max_str, "%Y-%m-%d %H:%M")
+                    else:  # Date only
+                        time_max_dt = datetime.strptime(time_max_str, "%Y-%m-%d")
+                        # If only date is provided, set time to end of day
+                        time_max_dt = time_max_dt.replace(hour=23, minute=59, second=59)
+                    time_max = time_max_dt.isoformat() + "Z"
+                else:
+                    # Use days parameter for the default time_max
+                    time_max = (
+                        datetime.utcnow() + timedelta(days=days)
+                    ).isoformat() + "Z"
 
                 events_result = (
                     calendar_service.events()
@@ -484,8 +675,11 @@ def create_server(user_id, api_key=None):
                         timeMin=time_min,
                         timeMax=time_max,
                         maxResults=max_results,
-                        singleEvents=True,
-                        orderBy="startTime",
+                        singleEvents=single_events,
+                        orderBy=order_by,
+                        showDeleted=show_deleted,
+                        timeZone=time_zone,
+                        q=q,
                     )
                     .execute()
                 )
@@ -503,57 +697,42 @@ def create_server(user_id, api_key=None):
                 return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "create_event":
-                if not all(
-                    k in arguments
-                    for k in ["summary", "start_datetime", "end_datetime"]
-                ):
-                    raise ValueError(
-                        "Missing required parameters: summary, start_datetime, end_datetime"
-                    )
-
                 calendar_id = arguments.get("calendar_id", "primary")
                 summary = arguments["summary"]
                 description = arguments.get("description", "")
                 location = arguments.get("location", "")
                 attendees = arguments.get("attendees", [])
+                time_zone = arguments.get("time_zone", "UTC")
+                recurrence = arguments.get("recurrence", [])
+                reminders = arguments.get("reminders", {})
+                transparency = arguments.get("transparency", "opaque")
+                visibility = arguments.get("visibility", "default")
+                color_id = arguments.get("color_id", "")
+                send_updates = arguments.get("send_updates", "none")
 
                 # Process start and end times
                 start_datetime = arguments["start_datetime"]
                 end_datetime = arguments["end_datetime"]
 
-                # Check if full datetime or just date
-                start_has_time = len(start_datetime.split()) > 1
-                end_has_time = len(end_datetime.split()) > 1
-
+                # Create event dictionary
                 event = {
                     "summary": summary,
                     "description": description,
                     "location": location,
+                    "timeZone": time_zone,
                 }
 
                 # Handle start time
-                if start_has_time:
-                    try:
-                        # Convert to ISO format for API
-                        dt = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
-                        event["start"] = {"dateTime": dt.isoformat(), "timeZone": "UTC"}
-                    except ValueError:
-                        raise ValueError(
-                            "Invalid start datetime format. Use YYYY-MM-DD HH:MM"
-                        )
+                if " " in start_datetime:  # Has time component
+                    dt = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
+                    event["start"] = {"dateTime": dt.isoformat(), "timeZone": time_zone}
                 else:
                     event["start"] = {"date": start_datetime}
 
                 # Handle end time
-                if end_has_time:
-                    try:
-                        # Convert to ISO format for API
-                        dt = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
-                        event["end"] = {"dateTime": dt.isoformat(), "timeZone": "UTC"}
-                    except ValueError:
-                        raise ValueError(
-                            "Invalid end datetime format. Use YYYY-MM-DD HH:MM"
-                        )
+                if " " in end_datetime:  # Has time component
+                    dt = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
+                    event["end"] = {"dateTime": dt.isoformat(), "timeZone": time_zone}
                 else:
                     event["end"] = {"date": end_datetime}
 
@@ -561,9 +740,31 @@ def create_server(user_id, api_key=None):
                 if attendees:
                     event["attendees"] = [{"email": email} for email in attendees]
 
+                # Add recurrence if provided
+                if recurrence:
+                    event["recurrence"] = recurrence
+
+                # Add reminders if provided
+                if reminders:
+                    event["reminders"] = reminders
+
+                # Add transparency if provided
+                if transparency:
+                    event["transparency"] = transparency
+
+                # Add visibility if provided
+                if visibility:
+                    event["visibility"] = visibility
+
+                # Add color ID if provided
+                if color_id:
+                    event["colorId"] = color_id
+
                 created_event = (
                     calendar_service.events()
-                    .insert(calendarId=calendar_id, body=event)
+                    .insert(
+                        calendarId=calendar_id, body=event, sendUpdates=send_updates
+                    )
                     .execute()
                 )
 
@@ -582,11 +783,10 @@ def create_server(user_id, api_key=None):
                 return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "update_event":
-                if "event_id" not in arguments:
-                    raise ValueError("Missing required parameter: event_id")
-
                 calendar_id = arguments.get("calendar_id", "primary")
                 event_id = arguments["event_id"]
+                time_zone = arguments.get("time_zone", "UTC")
+                send_updates = arguments.get("send_updates", "none")
 
                 # First get the existing event
                 event = (
@@ -608,38 +808,24 @@ def create_server(user_id, api_key=None):
                 # Process start time if provided
                 if "start_datetime" in arguments:
                     start_datetime = arguments["start_datetime"]
-                    start_has_time = len(start_datetime.split()) > 1
-
-                    if start_has_time:
-                        try:
-                            dt = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
-                            event["start"] = {
-                                "dateTime": dt.isoformat(),
-                                "timeZone": "UTC",
-                            }
-                        except ValueError:
-                            raise ValueError(
-                                "Invalid start datetime format. Use YYYY-MM-DD HH:MM"
-                            )
+                    if " " in start_datetime:  # Has time component
+                        dt = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
+                        event["start"] = {
+                            "dateTime": dt.isoformat(),
+                            "timeZone": time_zone,
+                        }
                     else:
                         event["start"] = {"date": start_datetime}
 
                 # Process end time if provided
                 if "end_datetime" in arguments:
                     end_datetime = arguments["end_datetime"]
-                    end_has_time = len(end_datetime.split()) > 1
-
-                    if end_has_time:
-                        try:
-                            dt = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
-                            event["end"] = {
-                                "dateTime": dt.isoformat(),
-                                "timeZone": "UTC",
-                            }
-                        except ValueError:
-                            raise ValueError(
-                                "Invalid end datetime format. Use YYYY-MM-DD HH:MM"
-                            )
+                    if " " in end_datetime:  # Has time component
+                        dt = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
+                        event["end"] = {
+                            "dateTime": dt.isoformat(),
+                            "timeZone": time_zone,
+                        }
                     else:
                         event["end"] = {"date": end_datetime}
 
@@ -649,10 +835,35 @@ def create_server(user_id, api_key=None):
                         {"email": email} for email in arguments["attendees"]
                     ]
 
+                # Add or update recurrence if provided
+                if "recurrence" in arguments:
+                    event["recurrence"] = arguments["recurrence"]
+
+                # Add or update reminders if provided
+                if "reminders" in arguments:
+                    event["reminders"] = arguments["reminders"]
+
+                # Add or update transparency if provided
+                if "transparency" in arguments:
+                    event["transparency"] = arguments["transparency"]
+
+                # Add or update visibility if provided
+                if "visibility" in arguments:
+                    event["visibility"] = arguments["visibility"]
+
+                # Add or update color ID if provided
+                if "color_id" in arguments:
+                    event["colorId"] = arguments["color_id"]
+
                 # Update the event
                 updated_event = (
                     calendar_service.events()
-                    .update(calendarId=calendar_id, eventId=event_id, body=event)
+                    .update(
+                        calendarId=calendar_id,
+                        eventId=event_id,
+                        body=event,
+                        sendUpdates=send_updates,
+                    )
                     .execute()
                 )
 
@@ -685,9 +896,6 @@ def create_server(user_id, api_key=None):
                 return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "delete_event":
-                if "event_id" not in arguments:
-                    raise ValueError("Missing required parameter: event_id")
-
                 calendar_id = arguments.get("calendar_id", "primary")
                 event_id = arguments["event_id"]
 
@@ -731,14 +939,6 @@ def create_server(user_id, api_key=None):
                 return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "update_attendee_status":
-                if not all(
-                    k in arguments
-                    for k in ["event_id", "attendee_email", "response_status"]
-                ):
-                    raise ValueError(
-                        "Missing required parameters: event_id, attendee_email, response_status"
-                    )
-
                 calendar_id = arguments.get("calendar_id", "primary")
                 event_id = arguments["event_id"]
                 attendee_email = arguments["attendee_email"]
@@ -747,6 +947,7 @@ def create_server(user_id, api_key=None):
                 # Optional parameters
                 send_notifications = arguments.get("send_notifications", False)
                 send_updates = arguments.get("send_updates", "none")
+                comment = arguments.get("comment", "")
 
                 # First get the existing event
                 event = (
@@ -762,6 +963,9 @@ def create_server(user_id, api_key=None):
                 for attendee in attendees:
                     if attendee.get("email") == attendee_email:
                         attendee["responseStatus"] = response_status
+                        # Add comment if provided
+                        if comment:
+                            attendee["comment"] = comment
                         found = True
                         break
 
@@ -769,9 +973,13 @@ def create_server(user_id, api_key=None):
                     # If attendee not found, add them
                     if "attendees" not in event:
                         event["attendees"] = []
-                    event["attendees"].append(
-                        {"email": attendee_email, "responseStatus": response_status}
-                    )
+                    attendee_data = {
+                        "email": attendee_email,
+                        "responseStatus": response_status,
+                    }
+                    if comment:
+                        attendee_data["comment"] = comment
+                    event["attendees"].append(attendee_data)
 
                 # Update the event
                 updated_event = (
@@ -790,33 +998,40 @@ def create_server(user_id, api_key=None):
                 return [TextContent(type="text", text=json.dumps(updated_event))]
 
             elif name == "check_free_slots":
-                if not all(k in arguments for k in ["start_datetime", "end_datetime"]):
-                    raise ValueError(
-                        "Missing required parameters: start_datetime, end_datetime"
-                    )
-
                 calendar_id = arguments.get("calendar_id", "primary")
                 duration_minutes = int(arguments.get("duration_minutes", 30))
                 timezone = arguments.get("timezone", "UTC")
+                group_exp_expand = arguments.get("group_exp_expand", False)
 
                 # Process start and end times
                 start_datetime = arguments["start_datetime"]
                 end_datetime = arguments["end_datetime"]
 
-                # Convert to datetime objects
-                try:
+                # Parse datetime strings
+                if " " in start_datetime:
                     start_dt = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
+                else:
+                    start_dt = datetime.strptime(start_datetime, "%Y-%m-%d")
+
+                if " " in end_datetime:
                     end_dt = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
-                except ValueError:
-                    raise ValueError("Invalid datetime format. Use YYYY-MM-DD HH:MM")
+                else:
+                    end_dt = datetime.strptime(end_datetime, "%Y-%m-%d")
+                    end_dt = end_dt.replace(hour=23, minute=59, second=59)
 
                 # Create request body
                 body = {
                     "timeMin": start_dt.isoformat() + "Z",
                     "timeMax": end_dt.isoformat() + "Z",
                     "timeZone": timezone,
-                    "items": [{"id": calendar_id}],
+                    "groupExpansionMax": 100 if group_exp_expand else 1,
                 }
+
+                # Use provided items if available, otherwise use the calendar_id
+                if "items" in arguments and arguments["items"]:
+                    body["items"] = arguments["items"]
+                else:
+                    body["items"] = [{"id": calendar_id}]
 
                 # Make freebusy query
                 freebusy_response = (
