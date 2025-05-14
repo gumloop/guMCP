@@ -2,6 +2,11 @@ name: "Google Calendar guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Google Calendar events and schedules"
 documentation_path: "README.md"
+resources:
+  - name: "calendars"
+    description: "Google Calendar calendars and their events"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
 tools:
   - name: "list_events"
     description: "List events from Google Calendar for a specified time range"
@@ -13,5 +18,17 @@ tools:
       - "https://www.googleapis.com/auth/calendar"
   - name: "update_event"
     description: "Update an existing event in Google Calendar"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
+  - name: "delete_event"
+    description: "Delete an event from Google Calendar"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
+  - name: "update_attendee_status"
+    description: "Update an attendee's response status for an event"
+    required_scopes:
+      - "https://www.googleapis.com/auth/calendar"
+  - name: "check_free_slots"
+    description: "Check for available time slots in a calendar"
     required_scopes:
       - "https://www.googleapis.com/auth/calendar"
