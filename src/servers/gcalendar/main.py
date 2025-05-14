@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Optional, Iterable
 from datetime import datetime, timedelta
+import json
 
 # Add both project root and src directory to Python path
 # Get the project root directory and add to path
@@ -220,9 +221,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Each item is a TextContent containing a summary of upcoming events, including count, titles, IDs, times, optional descriptions, and attendees.",
+                    "description": "JSON string containing an event listing with count, days, and events array with event details",
                     "examples": [
-                        "Found 2 events in the next 7 days:\n\n1. Meeting A\n   ID: <ID>\n   When: 2025-05-14 09:00 to 2025-05-14 10:00\n\n2. Meeting B\n   ID: <ID>\n   When: 2025-05-15 11:00 to 2025-05-15 12:00\n   Description: <Description>\n   Attendees: user@example.com\n"
+                        '{"count": 1, "days": 7, "events": [{"summary": "sdfsd", "start": "2025-05-15 15:30", "end": "2025-05-15 16:30", "location": "N/A", "id": "063f3joira2ujv8tatfdv033r0", "description": "", "attendees": []}]}'
                     ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
@@ -265,9 +266,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Confirmation message for created event, including title, times, optional location, description, attendees, and generated event ID and link.",
+                    "description": "JSON string containing the created event details with id, title, start/end times, and other fields",
                     "examples": [
-                        "Event created successfully!\nTitle: <Title>\nStart: <Start>\nEnd: <End>\n\nEvent ID: <ID>\nEvent Link: <URL>"
+                        '{"id": "event123", "title": "Test Meeting", "start": "2025-05-15 10:00", "end": "2025-05-15 11:00", "location": null, "description": null, "attendees": null, "htmlLink": "https://www.google.com/calendar/event?eid=abc123"}'
                     ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
@@ -317,9 +318,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Confirmation message for updated event, including title, updated time range, optional location and description, and event link.",
+                    "description": "JSON string containing the updated event details with id, title, start/end times, and other fields",
                     "examples": [
-                        "Event updated successfully!\nTitle: <Title>\nWhen: <Start> to <End>\nDescription: <Description>\n\nEvent Link: <URL>"
+                        '{"id": "event123", "title": "Updated Test Meeting", "start": "2025-05-15 03:00", "end": "2025-05-15 04:00", "location": null, "description": "This is a test description", "attendees": null, "htmlLink": "https://www.google.com/calendar/event?eid=abc123"}'
                     ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
@@ -353,8 +354,10 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Empty response indicating successful deletion; a TextContent with an empty string is returned.",
-                    "examples": [""],
+                    "description": "JSON string containing the deletion result with success status, event ID, and event title",
+                    "examples": [
+                        '{"success": true, "message": "Event deleted successfully", "event_id": "event123", "event_title": "Updated Test Meeting", "calendar_id": "primary"}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
             ),
@@ -401,9 +404,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Raw API response for updated attendee status, serialized as a JSON string.",
+                    "description": "JSON string containing the full Google Calendar event data with updated attendee status",
                     "examples": [
-                        '{"kind":"calendar#event","id":"<ID>","status":"confirmed","attendees":[{"email":"<EMAIL>","responseStatus":"accepted"}],"htmlLink":"<URL>"}'
+                        '{"kind": "calendar#event", "etag": "\\"3494522604616062\\"", "id": "event123", "status": "confirmed", "htmlLink": "https://www.google.com/calendar/event?eid=abc123", "created": "2025-05-14T22:21:21.000Z", "updated": "2025-05-14T22:21:42.308Z", "summary": "Updated Test Meeting", "description": "This is a test description", "creator": {"email": "user@example.com", "self": true}, "organizer": {"email": "user@example.com", "self": true}, "start": {"dateTime": "2025-05-15T03:00:00-07:00", "timeZone": "UTC"}, "end": {"dateTime": "2025-05-15T04:00:00-07:00", "timeZone": "UTC"}, "attendees": [{"email": "test@example.com", "responseStatus": "accepted"}]}'
                     ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
@@ -440,9 +443,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Raw free/busy query response, serialized as a JSON string, detailing busy periods for the specified time range.",
+                    "description": "JSON string containing the Google Calendar freebusy response with busy periods for the specified time range",
                     "examples": [
-                        '{"kind":"calendar#freeBusy","timeMin":"<TIME>","timeMax":"<TIME>","calendars":{"primary":{"busy":[{"start":"<TIME>","end":"<TIME>"},...]}}}'
+                        '{"kind": "calendar#freeBusy", "timeMin": "2025-05-15T09:00:00.000Z", "timeMax": "2025-05-15T17:00:00.000Z", "calendars": {"primary": {"busy": [{"start": "2025-05-15T10:00:00Z", "end": "2025-05-15T11:00:00Z"}]}}}'
                     ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/calendar"],
@@ -490,26 +493,14 @@ def create_server(user_id, api_key=None):
                 events = events_result.get("items", [])
                 formatted_events = [format_event(event) for event in events]
 
-                response = (
-                    f"Found {len(formatted_events)} events in the next {days} days:\n\n"
-                )
+                # Create a proper JSON response
+                response_data = {
+                    "count": len(formatted_events),
+                    "days": days,
+                    "events": formatted_events,
+                }
 
-                for i, event in enumerate(formatted_events, 1):
-                    response += f"{i}. {event['summary']}\n"
-                    response += f"   ID: {event['id']}\n"
-                    response += f"   When: {event['start']} to {event['end']}\n"
-                    if event["location"] != "N/A":
-                        response += f"   Where: {event['location']}\n"
-                    if event["description"]:
-                        response += f"   Description: {event['description']}\n"
-                    if event["attendees"]:
-                        response += f"   Attendees: {', '.join(event['attendees'])}\n"
-                    response += "\n"
-
-                if not formatted_events:
-                    response = f"No events found in the next {days} days."
-
-                return [TextContent(type="text", text=response)]
+                return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "create_event":
                 if not all(
@@ -576,29 +567,19 @@ def create_server(user_id, api_key=None):
                     .execute()
                 )
 
-                response = f"Event created successfully!\n"
-                response += f"Title: {summary}\n"
-                if start_has_time:
-                    response += f"Start: {start_datetime}\n"
-                else:
-                    response += f"Start Date: {start_datetime}\n"
+                # Create a proper JSON response
+                response_data = {
+                    "id": created_event["id"],
+                    "title": summary,
+                    "start": start_datetime,
+                    "end": end_datetime,
+                    "location": location if location else None,
+                    "description": description if description else None,
+                    "attendees": attendees if attendees else None,
+                    "htmlLink": created_event.get("htmlLink", None),
+                }
 
-                if end_has_time:
-                    response += f"End: {end_datetime}\n"
-                else:
-                    response += f"End Date: {end_datetime}\n"
-
-                if location:
-                    response += f"Location: {location}\n"
-                if description:
-                    response += f"Description: {description}\n"
-                if attendees:
-                    response += f"Attendees: {', '.join(attendees)}\n"
-
-                response += f"\nEvent ID: {created_event['id']}"
-                response += f"\nEvent Link: {created_event.get('htmlLink', 'N/A')}"
-
-                return [TextContent(type="text", text=response)]
+                return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "update_event":
                 if "event_id" not in arguments:
@@ -677,24 +658,31 @@ def create_server(user_id, api_key=None):
 
                 formatted_event = format_event(updated_event)
 
-                response = f"Event updated successfully!\n"
-                response += f"Title: {formatted_event['summary']}\n"
-                response += (
-                    f"When: {formatted_event['start']} to {formatted_event['end']}\n"
-                )
+                # Create a proper JSON response
+                response_data = {
+                    "id": updated_event["id"],
+                    "title": formatted_event["summary"],
+                    "start": formatted_event["start"],
+                    "end": formatted_event["end"],
+                    "location": (
+                        formatted_event["location"]
+                        if formatted_event["location"] != "N/A"
+                        else None
+                    ),
+                    "description": (
+                        formatted_event["description"]
+                        if formatted_event["description"]
+                        else None
+                    ),
+                    "attendees": (
+                        formatted_event["attendees"]
+                        if formatted_event["attendees"]
+                        else None
+                    ),
+                    "htmlLink": updated_event.get("htmlLink", None),
+                }
 
-                if formatted_event["location"] != "N/A":
-                    response += f"Location: {formatted_event['location']}\n"
-                if formatted_event["description"]:
-                    response += f"Description: {formatted_event['description']}\n"
-                if formatted_event["attendees"]:
-                    response += (
-                        f"Attendees: {', '.join(formatted_event['attendees'])}\n"
-                    )
-
-                response += f"\nEvent Link: {updated_event.get('htmlLink', 'N/A')}"
-
-                return [TextContent(type="text", text=response)]
+                return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "delete_event":
                 if "event_id" not in arguments:
@@ -706,6 +694,18 @@ def create_server(user_id, api_key=None):
                 # Optional parameters
                 send_notifications = arguments.get("send_notifications", False)
                 send_updates = arguments.get("send_updates", "none")
+
+                # Get event details before deletion for response
+                try:
+                    event_details = (
+                        calendar_service.events()
+                        .get(calendarId=calendar_id, eventId=event_id)
+                        .execute()
+                    )
+
+                    event_title = event_details.get("summary", "Unknown Event")
+                except HttpError:
+                    event_title = "Unknown Event"
 
                 # Delete the event
                 result = (
@@ -719,8 +719,16 @@ def create_server(user_id, api_key=None):
                     .execute()
                 )
 
-                # Return raw API response (usually empty for delete)
-                return [TextContent(type="text", text=str(result))]
+                # Create a proper JSON response (Google API often returns empty for delete)
+                response_data = {
+                    "success": True,
+                    "message": "Event deleted successfully",
+                    "event_id": event_id,
+                    "event_title": event_title,
+                    "calendar_id": calendar_id,
+                }
+
+                return [TextContent(type="text", text=json.dumps(response_data))]
 
             elif name == "update_attendee_status":
                 if not all(
@@ -778,10 +786,8 @@ def create_server(user_id, api_key=None):
                     .execute()
                 )
 
-                print(updated_event)
-
-                # Return raw API response
-                return [TextContent(type="text", text=str(updated_event))]
+                # Return properly formatted JSON response
+                return [TextContent(type="text", text=json.dumps(updated_event))]
 
             elif name == "check_free_slots":
                 if not all(k in arguments for k in ["start_datetime", "end_datetime"]):
@@ -817,8 +823,8 @@ def create_server(user_id, api_key=None):
                     calendar_service.freebusy().query(body=body).execute()
                 )
 
-                # Return raw API response
-                return [TextContent(type="text", text=str(freebusy_response))]
+                # Return properly formatted JSON response
+                return [TextContent(type="text", text=json.dumps(freebusy_response))]
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
@@ -826,11 +832,13 @@ def create_server(user_id, api_key=None):
         except HttpError as error:
             error_message = f"Error accessing Google Calendar: {error}"
             logger.error(error_message)
-            return [TextContent(type="text", text=error_message)]
+            error_response = {"error": True, "message": error_message}
+            return [TextContent(type="text", text=json.dumps(error_response))]
         except Exception as e:
             error_message = f"Error executing tool {name}: {str(e)}"
             logger.error(error_message)
-            return [TextContent(type="text", text=error_message)]
+            error_response = {"error": True, "message": error_message}
+            return [TextContent(type="text", text=json.dumps(error_response))]
 
     return server
 
