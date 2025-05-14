@@ -1,4 +1,5 @@
 import pytest
+import uuid
 
 from tests.utils.test_tools import get_test_id, run_tool_test
 
@@ -47,158 +48,116 @@ async def test_read_label(client):
     print("✅ Successfully read emails from label")
 
 
-@pytest.mark.asyncio
-async def test_read_emails_tool(client):
-    """Test the read_emails tool"""
-    response = await client.process_query(
-        "Use the read_emails tool to search for emails with the query 'is:unread' and limit to 3 results. If you found the emails, start your response with 'I found the emails:'"
-    )
-
-    assert (
-        "i found the emails" in response.lower()
-    ), f"Search results not found in response: {response}"
-
-    print("Search results:")
-    print(f"\t{response}")
-
-    print("✅ Read emails tool working")
-
-
-@pytest.mark.asyncio
-async def test_send_email(client):
-    """Test sending an email"""
-    response = await client.process_query(
-        """Use the send_email tool to send a test email with these parameters:
-        to: rahul@gumloop.com
-        subject: Test Email
-        body: This is a test email sent from automated testing.
-        If it worked successfully, start your response with 'Sent Successfsfully'"""
-    )
-
-    assert "sent successfully" in response.lower(), f"Failed to send email: {response}"
-
-    print("Send email response:")
-    print(f"\t{response}")
-
-    print("✅ Send email tool working")
-
-
-@pytest.mark.asyncio
-async def test_update_email(client):
-    """Test updating email labels"""
-    # First get an email ID
-    list_response = await client.list_resources()
-    assert len(list_response.resources) > 0, "No emails found to test with"
-
-    email_id = str(list_response.resources[0].uri).replace("gmail:///", "")
-
-    response = await client.process_query(
-        f"""Use the update_email tool to mark email {email_id} as read with these parameters:
-        email_id: {email_id}
-        remove_labels: ["UNREAD"]
-        If it works successfuly start your response with 'Successfully updated email'"""
-    )
-
-    assert (
-        "successfully updated email" in response.lower()
-    ), f"Failed to update email: {response}"
-
-    print("Update email response:")
-    print(f"\t{response}")
-
-    print("✅ Update email tool working")
-
-
 SHARED_CONTEXT = {
     "test_email": "jyoti@gumloop.com",
 }
 
 TOOL_TESTS = [
+    # Read operations first
+    {
+        "name": "read_emails",
+        "args_template": 'with query="is:unread" max_results=3',
+        "expected_keywords": ["email_id"],
+        "regex_extractors": {"email_id": r"id:\s*([a-z0-9]+)"},
+        "description": "search and read emails with a query and return any one of the email ids",
+    },
+    # Create operations
+    {
+        "name": "create_label",
+        "args_template": 'with name="Test Label {random_id}" background_color="#0C0E13" text_color="#0C0E13"',
+        "expected_keywords": ["label_id"],
+        "regex_extractors": {"label_id": r"label_id:\s*([A-Za-z0-9_]+)"},
+        "description": "create a label and return label id",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
     {
         "name": "create_draft",
         "args_template": 'with to="test@gumloop.com" subject="Test Email" body="This is a test email sent from automated testing."',
         "expected_keywords": ["draft_id"],
-        "regex_extractors": {"draft_id": r"draft_id:\s*([a-z0-9]+)"},
-        "description": "create a draft email and return its message id as draft_id, ex: draft_id: 1234567890",
+        "regex_extractors": {"draft_id": r"draft_id:\s*([a-zA-Z0-9]+)"},
+        "description": "create a draft email and return its id as draft_id in format draft_id: <draft_id>",
     },
     {
         "name": "send_email",
         "args_template": 'with to="{test_email}" subject="Test Email" body="This is a test email sent from automated testing."',
-        "expected_keywords": ["email_id"],
-        "regex_extractors": {"email_id": r"email_id:\s*([a-z0-9]+)"},
-        "description": "send an email and return email id",
+        "expected_keywords": ["email_thread_id"],
+        "regex_extractors": {"email_thread_id": r"email_thread_id:\s*([a-z0-9]+)"},
+        "description": "send an email and return email thread id in format email_thread_id: <email_thread_id>",
         "depends_on": ["test_email"],
     },
+    # Modify operations on existing emails
     {
-        "name": "forward_email",
-        "args_template": 'with email_id="{email_id}" to="{test_email}"',
-        "expected_keywords": ["forwarded_email_id"],
-        "regex_extractors": {
-            "forwarded_email_id": r"forwarded_email_id:\s*([a-z0-9]+)"
-        },
-        "description": "forward an email and return forwarded email id, follow the format",
-        "depends_on": ["email_id"],
-    },
-    {
-        "name": "create_label",
-        "args_template": 'with name="Test Label" background_color="#000000" text_color="#FFFFFF"',
-        "expected_keywords": ["label_id"],
-        "regex_extractors": {"label_id": r"label_id:\s*([a-z0-9]+)"},
-        "description": "create a label and return label id, follow the format",
-    },
-    {
-        "name": "archive_email",
-        "args_template": 'with email_id="{email_id}"',
-        "expected_keywords": ["archived_email_id"],
-        "regex_extractors": {"archived_email_id": r"archived_email_id:\s*([a-z0-9]+)"},
-        "description": "archive an email and return archived email id, follow the format",
-        "depends_on": ["email_id"],
+        "name": "update_email",
+        "args_template": 'with email_id="{email_thread_id}" remove_labels=["UNREAD"]',
+        "expected_keywords": ["updated_email_id"],
+        "regex_extractors": {"updated_email_id": r"updated_email_id:\s*([a-z0-9]+)"},
+        "description": "update email labels and return updated email id in format updated_email_id: <updated_email_id>",
+        "depends_on": ["email_thread_id"],
     },
     {
         "name": "star_email",
-        "args_template": 'with email_id="{email_id}"',
+        "args_template": 'with email_id="{email_thread_id}"',
         "expected_keywords": ["starred_email_id"],
         "regex_extractors": {"starred_email_id": r"starred_email_id:\s*([a-z0-9]+)"},
-        "description": "star an email and return starred email id, follow the format",
-        "depends_on": ["email_id"],
+        "description": "star an email and return starred email thread id in format starred_email_id: <starred_email_id>",
+        "depends_on": ["email_thread_id"],
     },
     {
         "name": "unstar_email",
-        "args_template": 'with email_id="{email_id}"',
+        "args_template": 'with email_id="{email_thread_id}"',
         "expected_keywords": ["unstarred_email_id"],
         "regex_extractors": {
             "unstarred_email_id": r"unstarred_email_id:\s*([a-z0-9]+)"
         },
-        "description": "unstar an email and return unstarred email id, follow the format",
-        "depends_on": ["email_id"],
+        "description": "unstar an email and return unstarred email thread id in format unstarred_email_id: <unstarred_email_id>",
+        "depends_on": ["email_thread_id"],
+    },
+    {
+        "name": "forward_email",
+        "args_template": 'with email_id="{email_thread_id}" to="{test_email}"',
+        "expected_keywords": ["forwarded_email_id"],
+        "regex_extractors": {
+            "forwarded_email_id": r"forwarded_email_id:\s*([a-z0-9]+)"
+        },
+        "description": "forward an email and return forwarded email id",
+        "depends_on": ["email_thread_id", "test_email"],
     },
     {
         "name": "get_attachment_details",
-        "args_template": 'with email_id="{email_id}"',
+        "args_template": 'with email_id="{email_thread_id}"',
         "expected_keywords": ["attachment_details"],
         "regex_extractors": {
             "attachment_details": r"attachment_details:\s*([a-z0-9]+)"
         },
-        "description": "get attachment details and return attachment details, follow the format",
-        "depends_on": ["email_id"],
+        "description": "get attachment details and return attachment details",
+        "depends_on": ["email_thread_id"],
     },
     {
         "name": "download_attachment",
-        "args_template": 'with email_id="{email_id}" attachment_id="{attachment_id}"',
+        "args_template": 'with email_id="{email_thread_id}" attachment_id="{attachment_id}"',
         "expected_keywords": ["downloaded_attachment_id"],
         "regex_extractors": {
             "downloaded_attachment_id": r"downloaded_attachment_id:\s*([a-z0-9]+)"
         },
-        "description": "download an attachment and return downloaded attachment id, follow the format",
-        "depends_on": ["email_id", "attachment_id"],
+        "description": "download an attachment and return downloaded attachment id",
+        "depends_on": ["email_thread_id", "attachment_id"],
+    },
+    # Final operations/cleanup actions
+    {
+        "name": "archive_email",
+        "args_template": 'with email_id="{email_thread_id}"',
+        "expected_keywords": ["archived_email_id"],
+        "regex_extractors": {"archived_email_id": r"archived_email_id:\s*([a-z0-9]+)"},
+        "description": "archive an email and return archived email id in format archived_email_id: <archived_email_id>",
+        "depends_on": ["email_thread_id"],
     },
     {
         "name": "trash_email",
-        "args_template": 'with email_id="{email_id}"',
+        "args_template": 'with email_id="{email_thread_id}"',
         "expected_keywords": ["trashed_email_id"],
         "regex_extractors": {"trashed_email_id": r"trashed_email_id:\s*([a-z0-9]+)"},
-        "description": "trash an email and return trashed email id, follow the format",
-        "depends_on": ["email_id"],
+        "description": "trash an email and return trashed email id in format trashed_email_id: <trashed_email_id>",
+        "depends_on": ["email_thread_id"],
     },
 ]
 
@@ -210,5 +169,5 @@ def context():
 
 @pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
-async def test_hubspot_tool(client, context, test_config):
+async def test_gmail_tool(client, context, test_config):
     return await run_tool_test(client, context, test_config)
