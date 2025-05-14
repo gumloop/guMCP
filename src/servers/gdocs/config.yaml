@@ -2,12 +2,27 @@ name: "Google Docs guMCP Server"
 icon: "assets/icon.png"
 description: "Create and manage Google Docs documents"
 documentation_path: "README.md"
+resources:
+  - name: "documents"
+    description: "Google Docs documents created by the user or shared with them"
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+      - "https://www.googleapis.com/auth/documents"
 tools:
   - name: "search_docs"
     description: "Search for Google Docs in Drive"
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
   - name: "create_doc"
     description: "Create a new Google Doc"
+    required_scopes:
+      - "https://www.googleapis.com/auth/drive.file"
+      - "https://www.googleapis.com/auth/documents"
   - name: "append_to_doc"
     description: "Append content to an existing Google Doc"
+    required_scopes:
+      - "https://www.googleapis.com/auth/documents"
   - name: "update_doc"
     description: "Update content in an existing Google Doc"
+    required_scopes:
+      - "https://www.googleapis.com/auth/documents"

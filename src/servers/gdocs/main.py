@@ -155,6 +155,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                requiredScopes=["https://www.googleapis.com/auth/drive.file"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Search results showing documents that match the query, with their titles, URIs, and modification dates",
+                    "examples": [
+                        "Found 10 Google Docs matching 'test':\nGumloop basics (URI: gdocs://document/abc123, Modified: 2025-05-08T21:44:04.696Z)\nMe at the zoo (URI: gdocs://document/def456, Modified: 2025-05-10T01:45:06.753Z)\nMy YouTube Video Blog Post (URI: gdocs://document/ghi789, Modified: 2025-05-10T02:06:32.640Z)"
+                    ],
+                },
             ),
             Tool(
                 name="create_doc",
@@ -169,6 +178,18 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["title", "content"],
+                },
+                requiredScopes=[
+                    "https://www.googleapis.com/auth/drive.file",
+                    "https://www.googleapis.com/auth/documents",
+                ],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of document creation with the new document's title, URI, and web link",
+                    "examples": [
+                        "Created new Google Doc 'Test Document'\nResource URI: gdocs://document/abc123\nDocument link: https://docs.google.com/document/d/abc123/edit"
+                    ],
                 },
             ),
             Tool(
@@ -185,6 +206,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["doc_id", "content"],
                 },
+                requiredScopes=["https://www.googleapis.com/auth/documents"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of content append operation with the document's URI and web link",
+                    "examples": [
+                        "Successfully appended content to Google Doc\nResource URI: gdocs://document/abc123\nDocument link: https://docs.google.com/document/d/abc123/edit"
+                    ],
+                },
             ),
             Tool(
                 name="update_doc",
@@ -199,6 +229,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["doc_id", "content"],
+                },
+                requiredScopes=["https://www.googleapis.com/auth/documents"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of document update with the document's URI and web link",
+                    "examples": [
+                        "Successfully updated Google Doc\nResource URI: gdocs://document/abc123\nDocument link: https://docs.google.com/document/d/abc123/edit"
+                    ],
                 },
             ),
         ]
