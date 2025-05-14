@@ -179,9 +179,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Full content of the requested Google Doc",
+                    "description": "Raw document structure from the Google Docs API",
                     "examples": [
-                        "Gumloop Basics\nIf you're looking to automate workflows without diving into complex coding, Gumloop might be just what you need. This document provides an overview of key features and concepts."
+                        "{'body': {'content': [{'paragraph': {'elements': [{'textRun': {'content': 'Document title\\n', 'textStyle': {}}}], 'paragraphStyle': {}}}, {'paragraph': {'elements': [{'textRun': {'content': 'Document content with formatting...', 'textStyle': {}}}], 'paragraphStyle': {}}}]}}"
                     ],
                 },
             ),
