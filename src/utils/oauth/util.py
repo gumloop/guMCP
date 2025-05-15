@@ -180,7 +180,7 @@ def run_oauth_flow(
     # Add headers if header builder is provided
     headers = token_header_builder(oauth_config) if token_header_builder else None
     response = requests.post(token_url, data=token_data, headers=headers)
-    if response.status_code != 200:
+    if response.status_code not in [200, 201]:
         raise ValueError(
             f"Failed to exchange authorization code for tokens: {response.text}"
         )
