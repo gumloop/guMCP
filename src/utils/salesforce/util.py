@@ -16,19 +16,38 @@ from src.utils.oauth.util import (
 logger = logging.getLogger(__name__)
 
 
-def get_salesforce_url(service: str, url_type: str) -> str:
-    # Open the JSON config for the given service
-    config_path = Path(f"local_auth/oauth_configs/{service}/oauth.json")
-    with config_path.open("r") as f:
-        oauth_config = json.load(f)
+def get_salesforce_url(
+    user_id: str, service_name: str, url_type: str, api_key: str = None
+) -> str:
+    from src.auth.factory import create_auth_client
 
-    # Fall back to login.salesforce.com if "login_domain" is not in the config
-    login_domain = oauth_config.get("login_domain", "login.salesforce.com")
+    if api_key:
+        auth_client = create_auth_client(api_key=api_key)
+    else:
+        auth_client = create_auth_client()
+
+    environment = os.environ.get("ENVIRONMENT", "local").lower()
+
+    custom_subdomain = "login.salesforce.com"
+
+    # For non-local environments, try to get subdomain from credentials
+    if environment != "local":
+        credentials = auth_client.get_user_credentials(service_name, user_id)
+        if isinstance(credentials, dict) and "custom_subdomain" in credentials:
+            custom_subdomain = credentials["custom_subdomain"]
+    else:
+        try:
+            oauth_config = auth_client.get_oauth_config(service_name)
+            if "custom_subdomain" in oauth_config:
+                custom_subdomain = oauth_config["custom_subdomain"]
+        except Exception as e:
+            logger.error(f"Error getting OAuth config: {str(e)}")
+            raise ValueError(f"Could not retrieve Salesforce configuration: {str(e)}")
 
     if url_type == "auth":
-        return f"https://{login_domain}/services/oauth2/authorize"
+        return f"https://{custom_subdomain}.my.salesforce.com/services/oauth2/authorize"
     else:
-        return f"https://{login_domain}/services/oauth2/token"
+        return f"https://{custom_subdomain}.my.salesforce.com/services/oauth2/token"
 
 
 def build_salesforce_auth_params(
@@ -171,8 +190,8 @@ def authenticate_and_save_credentials(
         Dictionary containing final credentials (e.g., access_token).
     """
     # Construct the authorization and token URLs
-    auth_url = get_salesforce_url(service_name, "auth")
-    token_url = get_salesforce_url(service_name, "token")
+    auth_url = get_salesforce_url(user_id, service_name, "auth")
+    token_url = get_salesforce_url(user_id, service_name, "token")
 
     return run_oauth_flow(
         service_name=service_name,
@@ -201,7 +220,8 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
     Returns:
         A valid access token string.
     """
-    token_url = get_salesforce_url(service_name, "token")
+    token_url = get_salesforce_url(user_id, service_name, "token", api_key)
+
     salesforce_token_data = await refresh_token_if_needed(
         user_id=user_id,
         service_name=service_name,
