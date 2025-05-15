@@ -98,7 +98,9 @@ async def run_tool_test(client, context: dict, test_config: dict) -> dict:
 
     if "regex_extractors" in test_config:
         for key, pattern in test_config["regex_extractors"].items():
-            match = re.search(pattern, response, re.DOTALL | re.IGNORECASE)
+            match = re.search(
+                pattern, " ".join(response.split("\n")[2:]), re.DOTALL | re.IGNORECASE
+            )  # split("\n")[2:] to ignore first  line of the response to avoid the calling tool message (line 124 - /tests/clients/LocalMCPTestClient.py)
             if match and len(match.groups()) > 0:
                 context[key] = match.group(1).strip()
             else:
