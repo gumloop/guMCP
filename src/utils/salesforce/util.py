@@ -1,7 +1,10 @@
-import logging
-import time
 import os
-from typing import Dict, List, Any, Optional
+import base64
+import logging
+from typing import Dict, List, Any
+import json
+from pathlib import Path
+import time
 
 from src.utils.oauth.util import (
     run_oauth_flow,
@@ -10,19 +13,38 @@ from src.utils.oauth.util import (
     generate_code_challenge,
 )
 
-# Salesforce OAuth endpoints
-# These will be formatted with the Salesforce subdomain from config
-SALESFORCE_OAUTH_AUTHORIZE_URL = "https://{subdomain}.my.salesforce.com/services/oauth2/authorize"
-SALESFORCE_OAUTH_TOKEN_URL = "https://{subdomain}.my.salesforce.com/services/oauth2/token"
-SALESFORCE_API_BASE_URL = "https://{subdomain}.my.salesforce.com/services/data/v52.0"
-
 logger = logging.getLogger(__name__)
+
+
+def get_salesforce_url(service: str, url_type: str) -> str:
+    # Open the JSON config for the given service
+    config_path = Path(f"local_auth/oauth_configs/{service}/oauth.json")
+    with config_path.open("r") as f:
+        oauth_config = json.load(f)
+
+    # Fall back to login.salesforce.com if "login_domain" is not in the config
+    login_domain = oauth_config.get("login_domain", "login.salesforce.com")
+
+    if url_type == "auth":
+        return f"https://{login_domain}/services/oauth2/authorize"
+    else:
+        return f"https://{login_domain}/services/oauth2/token"
 
 
 def build_salesforce_auth_params(
     oauth_config: Dict[str, Any], redirect_uri: str, scopes: List[str]
 ) -> Dict[str, str]:
-    """Build the authorization parameters for Salesforce OAuth."""
+    """
+    Build the authorization parameters for Salesforce OAuth.
+
+    Args:
+        oauth_config: OAuth configuration dictionary with client_id, redirect_uri, etc.
+        redirect_uri: Redirect URI configured for the Snowflake application.
+        scopes: List of scopes (e.g., ['session:role:any']).
+
+    Returns:
+        Dictionary of query params for the OAuth URL.
+    """
     # Generate PKCE code verifier and challenge
     code_verifier = generate_code_verifier()
     code_challenge = generate_code_challenge(code_verifier)
@@ -43,7 +65,18 @@ def build_salesforce_auth_params(
 def build_salesforce_token_data(
     oauth_config: Dict[str, Any], redirect_uri: str, scopes: List[str], auth_code: str
 ) -> Dict[str, str]:
-    """Build the token request data for Salesforce OAuth."""
+    """
+    Build the token request data for Salesforce OAuth.
+
+    Args:
+        oauth_config: OAuth configuration dictionary.
+        redirect_uri: Redirect URI used in the flow.
+        scopes: Scopes list.
+        auth_code: The authorization code returned from Snowflake.
+
+    Returns:
+        POST body dictionary for token exchange.
+    """
     return {
         "grant_type": "authorization_code",
         "code": auth_code,
@@ -54,50 +87,92 @@ def build_salesforce_token_data(
     }
 
 
-def build_salesforce_token_header(oauth_config: Dict[str, Any]) -> Dict[str, str]:
-    """Build headers for token exchange request."""
+def build_salesforce_token_headers(oauth_config: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Build the token request headers for Salesforce OAuth.
+
+    Uses Basic Auth header with base64 encoded client_id:client_secret.
+
+    Args:
+        oauth_config: OAuth configuration dictionary.
+
+    Returns:
+        Dictionary of headers.
+    """
+    credentials = f'{oauth_config["client_id"]}:{oauth_config["client_secret"]}'
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+
     return {
+        "Authorization": f"Basic {encoded_credentials}",
         "Content-Type": "application/x-www-form-urlencoded",
     }
 
 
 def process_salesforce_token_response(token_response: Dict[str, Any]) -> Dict[str, Any]:
-    """Process Salesforce token response."""
+    """
+    Process Snowflake token response.
+
+    Args:
+        token_response: Raw token response JSON from Snowflake.
+        account: Snowflake account identifier.
+
+    Returns:
+        Cleaned-up and standardized credentials dictionary.
+
+    Raises:
+        ValueError: If response is missing required access token.
+    """
     if "error" in token_response:
         raise ValueError(
             f"Token exchange failed: {token_response.get('error_description', token_response.get('error', 'Unknown error'))}"
         )
 
-    if not token_response.get("access_token"):
-        raise ValueError("No access token found in response")
+    print("token_response", token_response)
+
+    # Compute expires_at using Salesforce issued_at or default TTL
+    issued_at = token_response.get("issued_at")
+    try:
+        if issued_at:
+            issued_at_sec = int(issued_at) // 1000
+            expires_at = issued_at_sec + 3600
+        else:
+            expires_at = int(time.time()) + 3600
+    except Exception:
+        expires_at = int(time.time()) + 3600
 
     return {
         "access_token": token_response.get("access_token"),
         "refresh_token": token_response.get("refresh_token"),
         "token_type": token_response.get("token_type", "Bearer"),
-        "expires_in": token_response.get("expires_in"),
+        "expires_at": expires_at,
         "scope": token_response.get("scope", ""),
         "username": token_response.get("username"),
         "instance_url": token_response.get("instance_url"),
+        "custom_subdomain": (
+            token_response.get("instance_url", "").replace("https://", "").split(".")[0]
+            if token_response.get("instance_url")
+            else ""
+        ),
     }
 
 
 def authenticate_and_save_credentials(
     user_id: str, service_name: str, scopes: List[str]
 ) -> Dict[str, Any]:
-    """Authenticate with Salesforce and save credentials"""
-    logger.info(f"Launching Salesforce auth flow for user {user_id}...")
+    """
+    Authenticate with Salesforce and save credentials securely.
 
-    # Get the Salesforce subdomain from the oauth config
-    from src.auth.factory import create_auth_client
+    Args:
+        user_id: ID of the user being authenticated.
+        service_name: Service identifier (e.g., 'snowflake').
+        scopes: List of scopes (e.g., ['session:role:any']).
 
-    auth_client = create_auth_client()
-    oauth_config = auth_client.get_oauth_config(service_name)
-    subdomain = oauth_config.get("custom_subdomain", "login")
-
+    Returns:
+        Dictionary containing final credentials (e.g., access_token).
+    """
     # Construct the authorization and token URLs
-    auth_url = SALESFORCE_OAUTH_AUTHORIZE_URL.format(subdomain=subdomain)
-    token_url = SALESFORCE_OAUTH_TOKEN_URL.format(subdomain=subdomain)
+    auth_url = get_salesforce_url(service_name, "auth")
+    token_url = get_salesforce_url(service_name, "token")
 
     return run_oauth_flow(
         service_name=service_name,
@@ -107,115 +182,48 @@ def authenticate_and_save_credentials(
         token_url=token_url,
         auth_params_builder=build_salesforce_auth_params,
         token_data_builder=build_salesforce_token_data,
-        process_token_response=process_salesforce_token_response,
-        token_header_builder=build_salesforce_token_header,
+        token_header_builder=build_salesforce_token_headers,
+        process_token_response=lambda response: process_salesforce_token_response(
+            response
+        ),
     )
 
 
-async def get_credentials(
-    user_id: str, service_name: str, api_key: Optional[str] = None
-) -> Dict[str, Any]:
+async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
     """
-    Get Salesforce access token and instance URL
+    Retrieve (or refresh if needed) the access token for Snowflake.
+
+    Args:
+        user_id: ID of the user.
+        service_name: Name of the service (snowflake).
+        api_key: Optional API key (used by auth client abstraction).
 
     Returns:
-        Dictionary with access_token and instance_url
+        A valid access token string.
     """
-    logger.info(f"Getting Salesforce credentials for user {user_id}")
+    token_url = get_salesforce_url(service_name, "token")
+    salesforce_token_data = await refresh_token_if_needed(
+        user_id=user_id,
+        service_name=service_name,
+        token_url=token_url,
+        token_data_builder=lambda credentials, oauth_config: {
+            "grant_type": "refresh_token",
+            "refresh_token": credentials.get("refresh_token"),
+            "client_id": oauth_config.get("client_id"),
+            "client_secret": oauth_config.get("client_secret"),
+        },
+        token_header_builder=build_salesforce_token_headers,
+        api_key=api_key,
+        return_full_credentials=True,
+    )
 
-    # Get auth client
-    from src.auth.factory import create_auth_client
-
-    auth_client = create_auth_client(api_key=api_key)
-
-    # Get the credentials
-    credentials = auth_client.get_user_credentials(service_name, user_id)
-
-    # Check environment
-    environment = os.environ.get("ENVIRONMENT", "local").lower()
-
-    # For non-local environments where credentials contains all we need
-    if environment != "local" and isinstance(credentials, dict):
-        if "access_token" in credentials and "instance_url" in credentials:
-            logger.info(f"Using credentials from {environment} environment")
-            return {
-                "access_token": credentials["access_token"],
-                "instance_url": credentials["instance_url"],
-            }
-
-    # For local environment, refresh token if needed
-    try:
-        # Get the Salesforce subdomain from the oauth config
-        oauth_config = auth_client.get_oauth_config(service_name)
-        subdomain = oauth_config.get("custom_subdomain", "login")
-        token_url = SALESFORCE_OAUTH_TOKEN_URL.format(subdomain=subdomain)
-
-        # Define token data builder for refresh
-        def token_data_builder(
-            oauth_config: Dict[str, Any], redirect_uri: str, credentials: Dict[str, Any]
-        ) -> Dict[str, str]:
-            return {
-                "grant_type": "refresh_token",
-                "refresh_token": credentials.get("refresh_token"),
-                "client_id": oauth_config.get("client_id"),
-                "client_secret": oauth_config.get("client_secret"),
-            }
-
-        # Get the token
-        credentials = await refresh_token_if_needed(
-            user_id=user_id,
-            service_name=service_name,
-            token_url=token_url,
-            token_data_builder=token_data_builder,
-            process_token_response=process_salesforce_token_response,
-            token_header_builder=build_salesforce_token_header,
-            api_key=api_key,
-            return_full_credentials=True,
+    if os.environ.get("ENVIRONMENT", "local") == "gumloop":
+        # For Gumloop environment, construct the instance URL from the custom subdomain
+        salesforce_token_data["instance_url"] = (
+            "https://"
+            + salesforce_token_data["custom_subdomain"]
+            + ".my.salesforce.com"
         )
+        return salesforce_token_data
 
-        return credentials
-
-    except Exception as e:
-        # If we already have credentials with access_token, use it as fallback
-        if isinstance(credentials, dict) and "access_token" in credentials and "instance_url" in credentials:
-            logger.warning(
-                f"Error using OAuth config: {str(e)}. Falling back to existing credentials."
-            )
-            return {
-                "access_token": credentials["access_token"],
-                "instance_url": credentials["instance_url"],
-            }
-        raise
-
-
-async def get_service_config(
-    user_id: str, service_name: str, api_key: Optional[str] = None
-) -> Dict[str, str]:
-    """
-    Get service-specific configuration parameters
-    """
-    # Get auth client
-    from src.auth.factory import create_auth_client
-
-    auth_client = create_auth_client(api_key=api_key)
-
-    environment = os.environ.get("ENVIRONMENT", "local").lower()
-
-    # For non-local environments, try to get subdomain from credentials
-    if environment != "local":
-        credentials = auth_client.get_user_credentials(service_name, user_id)
-        if isinstance(credentials, dict) and "custom_subdomain" in credentials:
-            return {"custom_subdomain": credentials["custom_subdomain"]}
-
-    # For local environment or as fallback, get from OAuth config
-    try:
-        oauth_config = auth_client.get_oauth_config(service_name)
-        if "custom_subdomain" in oauth_config:
-            return {"custom_subdomain": oauth_config["custom_subdomain"]}
-        else:
-            raise ValueError(
-                "No Salesforce subdomain configured. Please add custom_subdomain in your configuration."
-            )
-    except Exception as e:
-        logger.error(f"Error getting OAuth config: {str(e)}")
-        raise ValueError(f"Could not retrieve Salesforce configuration: {str(e)}")
+    return salesforce_token_data
