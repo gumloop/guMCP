@@ -1,7 +1,7 @@
 import os
 import base64
 import logging
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import json
 from pathlib import Path
 
@@ -11,12 +11,27 @@ from src.utils.oauth.util import (
     generate_code_verifier,
     generate_code_challenge,
 )
+from src.auth.factory import create_auth_client
 
 logger = logging.getLogger(__name__)
 
 
-def get_salesforce_url(service: str, url_type: str) -> str:
-    # Open the JSON config for the given service
+def get_salesforce_url(service: str, url_type: str, user_id: str = None) -> str:
+    """
+    Get the Salesforce URL for authentication or token endpoints.
+    """
+    # If user_id is available, try to get custom_subdomain from credentials
+    if os.environ.get("ENVIRONMENT", "local") == "gumloop":
+        auth_client = create_auth_client()
+        credentials = auth_client.get_user_credentials(service, user_id)
+        if isinstance(credentials, dict) and credentials.get("custom_subdomain"):
+            custom_subdomain = credentials.get("custom_subdomain")
+            if url_type == "auth":
+                return f"https://{custom_subdomain}.my.salesforce.com/services/oauth2/authorize"
+            else:
+                return f"https://{custom_subdomain}.my.salesforce.com/services/oauth2/token"
+
+    # Otherwise, use the config file
     config_path = Path(f"local_auth/oauth_configs/{service}/oauth.json")
     with config_path.open("r") as f:
         oauth_config = json.load(f)
@@ -152,8 +167,8 @@ def authenticate_and_save_credentials(
         Dictionary containing final credentials (e.g., access_token).
     """
     # Construct the authorization and token URLs
-    auth_url = get_salesforce_url(service_name, "auth")
-    token_url = get_salesforce_url(service_name, "token")
+    auth_url = get_salesforce_url(service_name, "auth", user_id)
+    token_url = get_salesforce_url(service_name, "token", user_id)
 
     return run_oauth_flow(
         service_name=service_name,
@@ -182,7 +197,8 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
     Returns:
         A valid access token string.
     """
-    token_url = get_salesforce_url(service_name, "token")
+    token_url = get_salesforce_url(service_name, "token", user_id)
+
     salesforce_token_data = await refresh_token_if_needed(
         user_id=user_id,
         service_name=service_name,
