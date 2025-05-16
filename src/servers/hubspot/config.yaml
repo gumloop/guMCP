@@ -5,80 +5,159 @@ documentation_path: "README.md"
 resources:
   - name: "contact"
     description: "HubSpot contacts with personal and professional information including name, email, phone, company affiliation, and other profile data"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "company"
     description: "HubSpot company records with business information including name, domain, industry, size, location, and other organization details"
+    required_scopes:
+      - "crm.objects.companies.read"
   - name: "deal"
     description: "HubSpot deals that track sales opportunities with details on value, stage, associated contacts/companies, and pipeline progress"
+    required_scopes:
+      - "crm.objects.deals.read"
   - name: "ticket"
     description: "HubSpot support tickets with subject, status, priority, associated contacts, and conversation history"
+    required_scopes:
+      - "tickets"
   - name: "product"
     description: "HubSpot product catalog items with name, description, price, SKU, and other inventory information"
+    required_scopes:
+      - "e-commerce"
   - name: "list"
     description: "HubSpot contact lists that can be static (manually created) or dynamic (automatically updated based on criteria)"
+    required_scopes:
+      - "crm.lists.read"
   - name: "engagement"
     description: "HubSpot engagements that track activities such as calls, emails, meetings, tasks, and notes related to contacts, companies, deals, or tickets"
+    required_scopes:
+      - "crm.objects.contacts.read"
 tools:
   - name: "list_contacts"
     description: "List HubSpot contacts with optional filtering"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "create_contact"
     description: "Create a new HubSpot contact"
+    required_scopes:
+      - "crm.objects.contacts.write"
   - name: "update_contact"
     description: "Update an existing HubSpot contact"
+    required_scopes:
+      - "crm.objects.contacts.write"
   - name: "search_contacts"
     description: "Search for HubSpot contacts using advanced filters"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "list_companies"
     description: "List HubSpot companies with optional filtering"
+    required_scopes:
+      - "crm.objects.companies.read"
   - name: "create_company"
     description: "Create a new HubSpot company"
+    required_scopes:
+      - "crm.objects.companies.write"
   - name: "update_company"
     description: "Update an existing HubSpot company"
+    required_scopes:
+      - "crm.objects.companies.write"
   - name: "list_deals"
     description: "List HubSpot deals with optional filtering"
+    required_scopes:
+      - "crm.objects.deals.read"
   - name: "create_deal"
     description: "Create a new HubSpot deal"
+    required_scopes:
+      - "crm.objects.deals.write"
   - name: "update_deal"
     description: "Update an existing HubSpot deal"
+    required_scopes:
+      - "crm.objects.deals.write"
   - name: "get_engagements"
     description: "Get engagement data (calls, emails, meetings, etc.) for a contact"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "send_email"
     description: "Send an email to a HubSpot contact"
+    required_scopes:
+      - "crm.objects.contacts.read"
+      - "crm.objects.contacts.write"
   - name: "list_tickets"
     description: "List HubSpot tickets with optional filtering"
+    required_scopes:
+      - "tickets"
   - name: "get_ticket"
     description: "Get a specific HubSpot ticket by ID"
+    required_scopes:
+      - "tickets"
   - name: "create_ticket"
     description: "Create a new HubSpot ticket"
+    required_scopes:
+      - "tickets"
   - name: "update_ticket"
     description: "Update an existing HubSpot ticket"
+    required_scopes:
+      - "tickets"
   - name: "delete_ticket"
     description: "Archive/delete a HubSpot ticket"
+    required_scopes:
+      - "tickets"
   - name: "merge_tickets"
     description: "Merge two HubSpot tickets into one"
+    required_scopes:
+      - "tickets"
   - name: "list_products"
     description: "List HubSpot products with optional filtering"
+    required_scopes:
+      - "e-commerce"
   - name: "get_product"
     description: "Get a specific HubSpot product by ID"
+    required_scopes:
+      - "e-commerce"
   - name: "create_product"
     description: "Create a new HubSpot product"
+    required_scopes:
+      - "e-commerce"
   - name: "update_product"
     description: "Update an existing HubSpot product"
+    required_scopes:
+      - "e-commerce"
   - name: "delete_product"
     description: "Archive/delete a HubSpot product"
+    required_scopes:
+      - "e-commerce"
   - name: "get_engagement"
     description: "Get a specific HubSpot engagement by ID"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "list_engagements"
     description: "List HubSpot engagements with optional filtering"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "get_recent_engagements"
     description: "Get recently created or updated HubSpot engagements"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "get_call_dispositions"
     description: "Get all possible dispositions for sales calls in HubSpot"
+    required_scopes:
+      - "crm.objects.contacts.read"
   - name: "create_engagement"
     description: "Create a new HubSpot engagement (email, call, meeting, task, or note)"
+    required_scopes:
+      - "crm.objects.contacts.write"
   - name: "update_engagement"
     description: "Update an existing HubSpot engagement"
+    required_scopes:
+      - "crm.objects.contacts.write"
   - name: "delete_engagement"
     description: "Delete a HubSpot engagement"
+    required_scopes:
+      - "crm.objects.contacts.write"
   - name: "merge_contacts"
     description: "Merge two HubSpot contacts into one"
+    required_scopes:
+      - "crm.objects.contacts.write"
   - name: "gdpr_delete_contact"
     description: "Permanently delete a contact and all associated content to follow GDPR"
+    required_scopes:
+      - "crm.objects.contacts.write"

@@ -1,5 +1,8 @@
 import pytest
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_test_id(test_config):
@@ -59,15 +62,25 @@ async def run_tool_test(client, context: dict, test_config: dict) -> dict:
         args = ""
 
     keywords_str = ", ".join(expected_keywords)
-    prompt = (
-        "Not interested in your recommendations or what you think is best practice, just use what's given. "
-        "Only pass required arguments to the tool and in case I haven't provided a required argument, you can try to pass your own that makes sense. "
-        f"Only return the value with following keywords: {keywords_str} if successful or error with keyword 'error_message'. ensure to keey the keywords name exact same "
-        f"Use the {tool_name} tool to {description} {args}. "
-        "Sample response: keyword: output_data keyword2: output_data2 keyword3: [] always ensure keyword is in same format as in expected_keywords"
+    prompt = prompt = (
+        "Execute these instructions precisely without recommendations or best practice suggestions:\n\n"
+        f"1. Use the {tool_name} tool to perform {description} with the following arguments: {args}.\n"
+        f"2. Only pass required arguments. For any missing required arguments, supply reasonable values.\n"
+        f"3. After using the tool, extract only the following values from the response: {keywords_str}\n"
+        f"4. Format your response as 'keyword: extracted_value' for each keyword in {keywords_str}\n"
+        f"5. If the tool returns an error, respond with 'error_message: [the error]'\n"
+        f"6. If a value is empty but valid, use '[]' as the value\n"
+        f"7. Maintain exact keyword names as specified in {keywords_str}\n"
+        f"8. Do not mention the expected keywords before using the tool\n\n"
+        f"Example response format:\n"
+        f"keyword1: extracted_value1\n"
+        f"keyword2: extracted_value2\n"
+        f"keyword3: []\n"
     )
 
     response = await client.process_query(prompt)
+
+    print(f"Response: {response}")
 
     if (
         "empty" in response.lower()
@@ -101,7 +114,13 @@ async def run_tool_test(client, context: dict, test_config: dict) -> dict:
             match = re.search(pattern, response, re.DOTALL | re.IGNORECASE)
             if match and len(match.groups()) > 0:
                 context[key] = match.group(1).strip()
+                # For debugging purposes
+                print(f"Extracted {key}: {context[key]}")
             else:
+                # For debugging purposes
+                logger.info(
+                    f"Failed to extract {key} using pattern: {pattern} from response: {response}"
+                )
                 pytest.fail(
                     f"Failed to extract '{key}' using pattern '{pattern}' from response: {response}"
                 )

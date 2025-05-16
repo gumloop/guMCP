@@ -319,9 +319,9 @@ def create_server(user_id, api_key=None):
                 outputSchema={
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Array of JSON string containing response of the message send operation",
+                    "description": "JSON string containing response of the message send operation with status, timestamp and message details",
                     "examples": [
-                        '[{"status":"success","channel":"C12345","ts":"1234567890.123456","message":{"user":"U12345","type":"message","ts":"1234567890.123456","text":"This is a test message","team":"T12345"}}]'
+                        '{\n  "status": "success",\n  "error": null,\n  "channel": "C12345",\n  "ts": "1234567890.123456",\n  "message": {\n    "user": "U12345",\n    "type": "message",\n    "ts": "1234567890.123456",\n    "text": "This is a test message",\n    "team": "T12345"\n  }\n}'
                     ],
                 },
                 requiredScopes=["chat:write", "chat:write.customize"],
@@ -816,7 +816,21 @@ def create_server(user_id, api_key=None):
                     "thread_ts": args.get("thread_ts"),
                 },
                 "postprocess": lambda response: [
-                    TextContent(type="text", text=json.dumps(response, indent=2))
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "status": (
+                                    "success" if response.get("ok", False) else "error"
+                                ),
+                                "error": response.get("error", None),
+                                "channel": response.get("channel", ""),
+                                "ts": response.get("ts", ""),
+                                "message": response.get("message", {}),
+                            },
+                            indent=2,
+                        ),
+                    )
                 ],
             },
             "create_canvas": {
@@ -840,14 +854,15 @@ def create_server(user_id, api_key=None):
                     TextContent(
                         type="text",
                         text=json.dumps(
-                            [
-                                {
-                                    "status": "success",
-                                    "channel": response["channel"],
-                                    "ts": response["ts"],
-                                    "message": response.get("message", {}),
-                                }
-                            ],
+                            {
+                                "status": (
+                                    "success" if response.get("ok", False) else "error"
+                                ),
+                                "error": response.get("error", None),
+                                "channel": response.get("channel", ""),
+                                "ts": response.get("ts", ""),
+                                "message": response.get("message", {}),
+                            },
                             indent=2,
                         ),
                     )
@@ -1001,15 +1016,24 @@ def create_server(user_id, api_key=None):
                 "preprocess": lambda args: {
                     "resolved_channel": (
                         get_channel_id_sync(slack_client, server, args["channel"])
-                        if args["channel"].startswith("#")
-                        else args["channel"]
+                        if args.get("channel", "").startswith("#")
+                        else args.get("channel") or args.get("channel_id")
                     ),
                     "resolved_user": (
                         get_user_id_sync(slack_client, server, args["user"])
-                        if not args["user"].startswith("U")
-                        else args["user"]
+                        if args.get("user", "").startswith("U") is False
+                        else args.get("user") or args.get("user_id")
                     ),
                 },
+                "postprocess": lambda response: [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            response.data if hasattr(response, "data") else response,
+                            indent=2,
+                        ),
+                    )
+                ],
             },
             "create_channel": {
                 "handler": lambda args: slack_client.conversations_create(

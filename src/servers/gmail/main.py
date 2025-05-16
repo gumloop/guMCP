@@ -210,6 +210,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Email details including ID, thread ID, labels, headers, and content",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["INBOX", "UNREAD"], "subject": "Meeting Tomorrow", "from": "colleague@example.com", "to": "you@example.com", "date": "Mon, 01 Jan 2023 10:00:00 -0700", "body": "Let\'s discuss the project tomorrow.", "attachments": [], "hasAttachments": false}'
+                    ],
+                },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
@@ -249,6 +257,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["to", "subject", "body"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the sent email including ID and thread ID",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["SENT", "INBOX"]}'
+                    ],
+                },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
@@ -273,6 +289,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Updated email details with modified labels",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["INBOX", "STARRED"]}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
@@ -306,6 +330,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["to", "subject", "body"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Draft email details including ID and message information",
+                    "examples": [
+                        '{"id": "r123456789", "message": {"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["DRAFT"]}}'
+                    ],
+                },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
@@ -328,6 +360,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email_id", "to"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Forwarded email details including ID and labels",
+                    "examples": [
+                        '{"id": "f1g2h3i4j5k6", "threadId": "f1g2h3i4j5k6", "labelIds": ["SENT", "UNREAD", "INBOX"]}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
@@ -352,6 +392,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Created label details including ID and visibility settings",
+                    "examples": [
+                        '{"id": "Label_123", "name": "Important Projects", "messageListVisibility": "show", "labelListVisibility": "labelShow"}'
+                    ],
+                },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
@@ -366,6 +414,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Archived email details with updated labels",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["SENT"]}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
@@ -382,6 +438,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Trashed email details showing TRASH label",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["TRASH", "SENT"]}'
+                    ],
+                },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
@@ -396,6 +460,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Starred email details showing STARRED label",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["STARRED", "SENT", "INBOX"]}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
@@ -412,6 +484,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Unstarred email details with STARRED label removed",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["SENT", "INBOX"]}'
+                    ],
+                },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
             Tool(
@@ -426,6 +506,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Complete email message with detailed attachment information",
+                    "examples": [
+                        '{"id": "a1b2c3d4e5f6", "threadId": "a1b2c3d4e5f6", "labelIds": ["INBOX"], "payload": {"mimeType": "multipart/mixed", "parts": [{"partId": "0", "mimeType": "text/plain"}, {"partId": "1", "mimeType": "application/pdf", "filename": "document.pdf", "body": {"attachmentId": "attachment_id_123", "size": 5000}}]}}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
@@ -449,6 +537,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["email_id", "attachment_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Attachment download information including content data",
+                    "examples": [
+                        '{"filename": "document.pdf", "mimeType": "application/pdf", "size": 5000, "data": "base64_encoded_content_truncated_for_brevity", "downloadUrl": "temporary_download_url"}'
+                    ],
                 },
                 requiredScopes=["https://www.googleapis.com/auth/gmail.modify"],
             ),
