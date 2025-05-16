@@ -1,5 +1,6 @@
-import pytest
 import re
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -173,3 +174,67 @@ async def test_error_handling(client):
     print(f"  Invalid ID: {invalid_id_response}")
     print(f"  Missing params: {missing_param_response}")
     print("✅ Error handling working correctly")
+
+
+@pytest.mark.asyncio
+async def test_list_articles_tool(client):
+    """Test listing articles from the help center"""
+    # Request articles with pagination parameters
+    response = await client.process_query(
+        "Use the list_articles tool to list help center articles with a limit of 5 articles per page."
+    )
+
+    # Verify the response contains article-related language
+    article_terms = ["article", "help center", "found", "list"]
+    assert any(
+        term in response.lower() for term in article_terms
+    ), f"Response should indicate articles were listed: {response}"
+
+    print("List articles results:")
+    print(f"\t{response}")
+    print("✅ Article listing functionality working")
+
+
+@pytest.mark.asyncio
+async def test_get_article_tool(client):
+    """Test getting a specific article by ID"""
+    # First list articles to get a valid article ID
+    list_response = await client.process_query(
+        "Use the list_articles tool to list help center articles."
+    )
+
+    # Try to extract an article ID from the response
+    article_id_match = re.search(r"article[^\d]*(\d+)", list_response.lower())
+
+    if article_id_match:
+        article_id = article_id_match.group(1)
+        # Get the specific article
+        get_response = await client.process_query(
+            f"Use the get_article tool to get the article with ID {article_id}."
+        )
+
+        # Verify the response contains article-specific information
+        article_detail_terms = ["article", "title", "content", "body", "id"]
+        assert any(
+            term in get_response.lower() for term in article_detail_terms
+        ), f"Response should contain article details: {get_response}"
+
+        print("Get article results:")
+        print(f"\t{get_response}")
+        print("✅ Article retrieval functionality working")
+    else:
+        # If no article ID found, use a fallback test with a potentially invalid ID
+        # This tests error handling for the get_article tool
+        fallback_response = await client.process_query(
+            "Use the get_article tool to get the article with ID 99999999."
+        )
+
+        # Check that we either got article info or a proper error message
+        success_or_error_terms = ["article", "title", "error", "not found", "invalid"]
+        assert any(
+            term in fallback_response.lower() for term in success_or_error_terms
+        ), f"Response should either show article details or error: {fallback_response}"
+
+        print("Get article results (fallback):")
+        print(f"\t{fallback_response}")
+        print("✅ Article retrieval functionality tested with fallback")

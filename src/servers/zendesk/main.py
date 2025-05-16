@@ -1,7 +1,7 @@
+import json
 import os
 import sys
-from typing import Optional, Iterable
-import json
+from typing import Iterable, Optional
 
 # Add both project root and src directory to Python path
 # Get the project root directory and add to path
@@ -13,20 +13,21 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 
 import logging
 from pathlib import Path
-import httpx
 
+import httpx
+from mcp.server import NotificationOptions, Server
+from mcp.server.lowlevel.helper_types import ReadResourceContents
+from mcp.server.models import InitializationOptions
 from mcp.types import (
     AnyUrl,
+    EmbeddedResource,
+    ImageContent,
     Resource,
     TextContent,
     Tool,
-    ImageContent,
-    EmbeddedResource,
 )
-from mcp.server.lowlevel.helper_types import ReadResourceContents
-from mcp.server import NotificationOptions, Server
-from mcp.server.models import InitializationOptions
 
+from src.utils.utils import ToolResponse
 from src.utils.zendesk.util import (
     authenticate_and_save_credentials,
     get_credentials,
@@ -293,6 +294,38 @@ def create_server(user_id, api_key=None):
                     "required": ["ticket_id", "comment"],
                 },
             ),
+            Tool(
+                name="list_articles",
+                description="List articles from Zendesk Help Center",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "per_page": {
+                            "type": "integer",
+                            "description": "Number of articles per page (default 10, max 100)",
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number to retrieve (default 1)",
+                        },
+                    },
+                    "required": [],
+                },
+            ),
+            Tool(
+                name="get_article",
+                description="Get a single article from Zendesk Help Center by article ID",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "article_id": {
+                            "type": "integer",
+                            "description": "ID of the article to retrieve",
+                        },
+                    },
+                    "required": ["article_id"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -328,39 +361,26 @@ def create_server(user_id, api_key=None):
                 # Filter to just tickets
                 tickets = [r for r in results if r.get("type") == "ticket"]
 
-                if not tickets:
-                    return [
-                        TextContent(
-                            type="text", text="No tickets found matching your query."
-                        )
-                    ]
-
-                ticket_list = []
-                for ticket in tickets:
-                    status = ticket.get("status", "unknown")
-                    priority = ticket.get("priority", "normal")
-
-                    ticket_list.append(
-                        f"Ticket #{ticket['id']}: {ticket['subject']}\n"
-                        f"  Status: {status}\n"
-                        f"  Priority: {priority}\n"
-                        f"  Created: {ticket.get('created_at')}\n"
-                        f"  Updated: {ticket.get('updated_at')}"
-                    )
-
-                formatted_result = "\n\n".join(ticket_list)
+                response: ToolResponse = {
+                    "success": True,
+                    "data": tickets,
+                    "error": None,
+                }
                 return [
                     TextContent(
                         type="text",
-                        text=f"Found {len(tickets)} tickets:\n\n{formatted_result}",
+                        text=json.dumps(response, indent=2),
                     )
                 ]
 
             except Exception as e:
                 logger.error(f"Error searching tickets: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error searching tickets: {str(e)}")
-                ]
+                response: ToolResponse = {
+                    "success": False,
+                    "data": None,
+                    "error": str(e),
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
         elif name == "create_ticket":
             required_fields = ["subject", "comment"]
@@ -389,30 +409,26 @@ def create_server(user_id, api_key=None):
                 )
                 ticket = result.get("ticket", {})
 
-                if ticket:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Ticket created successfully!\n\n"
-                            f"Ticket ID: {ticket.get('id')}\n"
-                            f"Subject: {ticket.get('subject')}\n"
-                            f"Status: {ticket.get('status')}\n"
-                            f"URL: https://{subdomain}.zendesk.com/agent/tickets/{ticket.get('id')}",
-                        )
-                    ]
-                else:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Failed to create ticket: {result}",
-                        )
-                    ]
+                response: ToolResponse = {
+                    "success": bool(ticket),
+                    "data": ticket,
+                    "error": None if ticket else result,
+                }
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(response, indent=2),
+                    )
+                ]
 
             except Exception as e:
                 logger.error(f"Error creating ticket: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error creating ticket: {str(e)}")
-                ]
+                response: ToolResponse = {
+                    "success": False,
+                    "data": None,
+                    "error": str(e),
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
         elif name == "update_ticket":
             if not arguments or "ticket_id" not in arguments:
@@ -451,30 +467,26 @@ def create_server(user_id, api_key=None):
 
                 ticket = result.get("ticket", {})
 
-                if ticket:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Ticket updated successfully!\n\n"
-                            f"Ticket ID: {ticket.get('id')}\n"
-                            f"Subject: {ticket.get('subject')}\n"
-                            f"Status: {ticket.get('status')}\n"
-                            f"URL: https://{subdomain}.zendesk.com/agent/tickets/{ticket.get('id')}",
-                        )
-                    ]
-                else:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Failed to update ticket: {result}",
-                        )
-                    ]
+                response: ToolResponse = {
+                    "success": bool(ticket),
+                    "data": ticket,
+                    "error": None if ticket else result,
+                }
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(response, indent=2),
+                    )
+                ]
 
             except Exception as e:
                 logger.error(f"Error updating ticket: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error updating ticket: {str(e)}")
-                ]
+                response: ToolResponse = {
+                    "success": False,
+                    "data": None,
+                    "error": str(e),
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
         elif name == "add_comment":
             required_fields = ["ticket_id", "comment"]
@@ -501,30 +513,93 @@ def create_server(user_id, api_key=None):
 
                 ticket = result.get("ticket", {})
 
-                if ticket:
-                    comment_type = "public comment" if is_public else "internal note"
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Added {comment_type} to ticket successfully!\n\n"
-                            f"Ticket ID: {ticket.get('id')}\n"
-                            f"Subject: {ticket.get('subject')}\n"
-                            f"URL: https://{subdomain}.zendesk.com/agent/tickets/{ticket.get('id')}",
-                        )
-                    ]
-                else:
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Failed to add comment: {result}",
-                        )
-                    ]
+                response: ToolResponse = {
+                    "success": bool(ticket),
+                    "data": ticket,
+                    "error": None if ticket else result,
+                }
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(response, indent=2),
+                    )
+                ]
 
             except Exception as e:
                 logger.error(f"Error adding comment: {str(e)}")
+                response: ToolResponse = {
+                    "success": False,
+                    "data": None,
+                    "error": str(e),
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
+
+        elif name == "list_articles":
+            params = {}
+            if arguments:
+                if "per_page" in arguments:
+                    params["per_page"] = arguments["per_page"]
+                if "page" in arguments:
+                    params["page"] = arguments["page"]
+            try:
+                result = await make_zendesk_request(
+                    "get",
+                    "help_center/articles.json",
+                    access_token,
+                    subdomain,
+                    params=params,
+                )
+                articles = result.get("articles", [])
+                response: ToolResponse = {
+                    "success": True,
+                    "data": articles,
+                    "error": None,
+                }
                 return [
-                    TextContent(type="text", text=f"Error adding comment: {str(e)}")
+                    TextContent(
+                        type="text",
+                        text=json.dumps(response, indent=2),
+                    )
                 ]
+            except Exception as e:
+                logger.error(f"Error listing articles: {str(e)}")
+                response: ToolResponse = {
+                    "success": False,
+                    "data": None,
+                    "error": str(e),
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        elif name == "get_article":
+            if not arguments or "article_id" not in arguments:
+                raise ValueError("Missing required parameter: article_id")
+            article_id = arguments["article_id"]
+            try:
+                result = await make_zendesk_request(
+                    "get",
+                    f"help_center/articles/{article_id}.json",
+                    access_token,
+                    subdomain,
+                )
+                article = result.get("article", {})
+                response: ToolResponse = {
+                    "success": bool(article),
+                    "data": article,
+                    "error": None if article else result,
+                }
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(response, indent=2),
+                    )
+                ]
+            except Exception as e:
+                logger.error(f"Error getting article: {str(e)}")
+                response: ToolResponse = {
+                    "success": False,
+                    "data": None,
+                    "error": str(e),
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
         raise ValueError(f"Unknown tool: {name}")
 
