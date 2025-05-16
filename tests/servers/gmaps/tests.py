@@ -1,4 +1,7 @@
 import pytest
+import re
+
+place_id = ""
 
 
 @pytest.mark.asyncio
@@ -62,6 +65,7 @@ async def test_search_places(client):
     Args:
         client: The test client fixture for the MCP server.
     """
+    global place_id
 
     coordinates = "37.774929, -122.419418"
     query = "Rincon Park"
@@ -71,13 +75,16 @@ async def test_search_places(client):
     response = await client.process_query(
         f"Use the search_places tool to search for places around the coordinates: {coordinates}. "
         f"The query is: {query}, the limit is: {limit}, and the radius is: {radius}."
-        "If successful, start your response with 'Here are the places' and then list them."
+        "If successful, start your response with 'Here are the places' and return place_id: place_id"
     )
 
     assert (
         "here are the places" in response.lower()
     ), f"Expected success phrase not found in response: {response}"
     assert response, "No response returned from search_places"
+
+    match = re.search(r"place_id:\s*([^\s]+)", response)
+    place_id = match.group(1) if match else None
 
     print(f"Response: {response}")
     print("✅ search_places passed.")
@@ -92,8 +99,6 @@ async def test_get_place_details(client):
     Args:
         client: The test client fixture for the MCP server.
     """
-
-    place_id = "ChIJnaPjZwBT6DkRaN-P2--EBA8"  # Mount Everest
 
     response = await client.process_query(
         f"Use the get_place_details tool to fetch the details of the place: {place_id}. "
@@ -119,7 +124,6 @@ async def test_get_place_reviews(client):
         client: The test client fixture for the MCP server.
     """
 
-    place_id = "ChIJnaPjZwBT6DkRaN-P2--EBA8"  # Mount Everest
     limit = 1
 
     response = await client.process_query(
