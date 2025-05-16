@@ -175,6 +175,20 @@ def process_salesforce_token_response(token_response: Dict[str, Any]) -> Dict[st
     }
 
 
+def build_salesforce_refresh_token_data(
+    oauth_config: Dict[str, Any], refresh_token: str, credentials: Dict[str, Any]
+) -> Dict[str, str]:
+    """
+    Build the token refresh request data for Salesforce OAuth.
+    """
+    return {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": oauth_config.get("client_id"),
+        "client_secret": oauth_config.get("client_secret"),
+    }
+
+
 def authenticate_and_save_credentials(
     user_id: str, service_name: str, scopes: List[str]
 ) -> Dict[str, Any]:
@@ -210,11 +224,11 @@ def authenticate_and_save_credentials(
 
 async def get_credentials(user_id: str, service_name: str, api_key: str = None) -> str:
     """
-    Retrieve (or refresh if needed) the access token for Snowflake.
+    Retrieve (or refresh if needed) the access token for Salesforce.
 
     Args:
         user_id: ID of the user.
-        service_name: Name of the service (snowflake).
+        service_name: Name of the service (salesforce).
         api_key: Optional API key (used by auth client abstraction).
 
     Returns:
@@ -226,13 +240,9 @@ async def get_credentials(user_id: str, service_name: str, api_key: str = None) 
         user_id=user_id,
         service_name=service_name,
         token_url=token_url,
-        token_data_builder=lambda credentials, oauth_config: {
-            "grant_type": "refresh_token",
-            "refresh_token": credentials.get("refresh_token"),
-            "client_id": oauth_config.get("client_id"),
-            "client_secret": oauth_config.get("client_secret"),
-        },
+        token_data_builder=build_salesforce_refresh_token_data,
         token_header_builder=build_salesforce_token_headers,
+        process_token_response=process_salesforce_token_response,
         api_key=api_key,
         return_full_credentials=True,
     )

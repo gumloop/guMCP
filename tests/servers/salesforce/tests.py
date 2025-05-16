@@ -1,317 +1,191 @@
 import pytest
 import uuid
 
-# Global variables to store created record IDs
-created_account_id = None
-created_contact_id = None
+from tests.utils.test_tools import get_test_id, run_tool_test
 
 
+# Shared context dictionary for test values
+SHARED_CONTEXT = {
+    "test_email": "",  # replace with an email from salesforce account
+}
+
+
+# Test configurations for Salesforce tools - one test per tool type
+TOOL_TESTS = [
+    {
+        "name": "describe_object",
+        "args_template": 'with object_name="Account"',
+        "expected_keywords": ["object_name"],
+        "regex_extractors": {"object_name": r"object_name:\s*([^\s]+)"},
+        "description": "Retrieve detailed metadata about a Salesforce object",
+    },
+    {
+        "name": "get_org_limits",
+        "args_template": "",
+        "expected_keywords": ["api_requests_remaining"],
+        "regex_extractors": {
+            "api_requests_remaining": r"api_requests_remaining:\s*(\d+)"
+        },
+        "description": "Retrieve current organization limits and return the api_requests_remaining value",
+    },
+    {
+        "name": "create_record",
+        "args_template": 'with object_name="Account" data={{"Name": "Test Account {random_id}", "Industry": "Technology"}}',
+        "expected_keywords": ["account_id"],
+        "regex_extractors": {"account_id": r"account_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create a new Account record",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "get_record",
+        "args_template": 'with object_name="Account" record_id="{account_id}"',
+        "expected_keywords": ["account_id"],
+        "regex_extractors": {"account_id": r"account_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Retrieve a specific Salesforce record by ID and return the account_id",
+        "depends_on": ["account_id"],
+    },
+    {
+        "name": "soql_query",
+        "args_template": "with query=\"SELECT Id, Name FROM Account WHERE Id = '{account_id}'\"",
+        "expected_keywords": ["record_id"],
+        "regex_extractors": {"record_id": r"record_id:\s*([^\s]+)"},
+        "description": "Execute a SOQL query to retrieve Salesforce records and return any one record_id",
+        "depends_on": ["account_id"],
+    },
+    {
+        "name": "create_record",
+        "args_template": 'with object_name="Contact" data={{"FirstName": "Test", "LastName": "Contact {random_id}", "Email": "test.contact{random_id}@example.com", "AccountId": "{account_id}"}}',
+        "expected_keywords": ["contact_id"],
+        "regex_extractors": {"contact_id": r"contact_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create a new Contact record related to the test Account",
+        "depends_on": ["account_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "update_record",
+        "args_template": 'with object_name="Account" record_id="{account_id}" data={{"Description": "Updated description as of {random_id}"}}',
+        "expected_keywords": ["record_id"],
+        "regex_extractors": {"record_id": r"record_id:\s*([^\s]+)"},
+        "description": "Update an existing Account record and return the record_id",
+        "depends_on": ["account_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "list_campaigns",
+        "args_template": "with limit=5",
+        "expected_keywords": ["campaign_id"],
+        "regex_extractors": {"campaign_id": r"campaign_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "List campaigns in Salesforce and return any one campaign ID",
+    },
+    {
+        "name": "add_contact_to_campaign",
+        "args_template": 'with contact_id="{contact_id}" campaign_id="{campaign_id}" status="Sent"',
+        "expected_keywords": ["status"],
+        "regex_extractors": {"status": r"status:\s*([^\s,}]+)"},
+        "description": "Add a contact to a campaign and return the status",
+        "depends_on": ["contact_id", "campaign_id"],
+    },
+    {
+        "name": "create_child_records",
+        "args_template": 'with parent_id="{account_id}" child_object_name="Contact" parent_field_name="AccountId" records=[{{"FirstName": "Child", "LastName": "Record {random_id}", "Email": "child{random_id}@example.com"}}]',
+        "expected_keywords": ["child_id"],
+        "regex_extractors": {"child_id": r"child_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create child records from line items and sets the parent-child relationship",
+        "depends_on": ["account_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "find_child_records",
+        "args_template": 'with parent_id="{account_id}" child_object_name="Contact" parent_field_name="AccountId"',
+        "expected_keywords": ["child_id"],
+        "regex_extractors": {"child_id": r"child_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Find child records for a given parent ID and return any one child_id",
+        "depends_on": ["account_id"],
+    },
+    {
+        "name": "create_enhanced_note",
+        "args_template": 'with title="Test Note {random_id}" content="<h1>Test Note Content</h1><p>This is a test note created during testing.</p>"',
+        "expected_keywords": ["note_id"],
+        "regex_extractors": {"note_id": r"note_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create an enhanced note (ContentNote)",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "create_file",
+        "args_template": 'with title="Test File {random_id}" path_on_client="test_file.txt" version_data="VGhpcyBpcyBhIHRlc3QgZmlsZSBjb250ZW50IGNyZWF0ZWQgZHVyaW5nIHRlc3RpbmcuCg==" description="Test file description"',
+        "expected_keywords": ["file_id"],
+        "regex_extractors": {"file_id": r"file_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create a file (ContentVersion)",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "create_record",
+        "args_template": 'with object_name="Lead" data={{"FirstName": "Test", "LastName": "Lead {random_id}", "Company": "Test Company", "Email": "test.lead{random_id}@example.com", "Status": "Open - Not Contacted"}}',
+        "expected_keywords": ["lead_id"],
+        "regex_extractors": {"lead_id": r"lead_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create a new Lead record",
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "add_lead_to_campaign",
+        "args_template": 'with lead_id="{lead_id}" campaign_id="{campaign_id}" status="Sent"',
+        "expected_keywords": ["status"],
+        "regex_extractors": {"status": r"status:\s*([^\s,}]+)"},
+        "description": "Add a lead to a campaign and return the status",
+        "depends_on": ["lead_id", "campaign_id"],
+    },
+    {
+        "name": "convert_lead",
+        "args_template": 'with lead_id="{lead_id}" converted_status="Closed - Converted" create_opportunity=true opportunity_name="Test Opportunity {random_id}"',
+        "expected_keywords": ["success"],
+        "regex_extractors": {"success": r"success:\s*(true|false)"},
+        "description": "Convert a lead to account, contact, and opportunity",
+        "depends_on": ["lead_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "create_note",
+        "args_template": 'with parent_id="{account_id}" title="Test Note {random_id}" body="This is a test note created during testing."',
+        "expected_keywords": ["note_id"],
+        "regex_extractors": {"note_id": r"note_id:\s*([A-Za-z0-9]{15,18})"},
+        "description": "Create a legacy note linked to a parent record",
+        "depends_on": ["account_id"],
+        "setup": lambda context: {"random_id": str(uuid.uuid4())[:8]},
+    },
+    {
+        "name": "list_email_templates",
+        "args_template": "with limit=5",
+        "expected_keywords": ["template_id"],
+        "regex_extractors": {
+            "template_id": r'"?template_id"?\s*[:=]\s*"?([A-Za-z0-9]{15,18})"?'
+        },
+        "description": "List email templates and return any one template ID",
+    },
+    {
+        "name": "delete_record",
+        "args_template": 'with object_name="Contact" record_id="{contact_id}"',
+        "expected_keywords": ["status"],
+        "regex_extractors": {"status": r"status:\s*([^\s,}]+)"},
+        "description": "Delete the test Contact record and return the status",
+        "depends_on": ["contact_id"],
+    },
+    {
+        "name": "delete_record",
+        "args_template": 'with object_name="Account" record_id="{account_id}"',
+        "expected_keywords": ["status"],
+        "regex_extractors": {"status": r"status:\s*([^\s,}]+)"},
+        "description": "Delete the test Account record and return the status",
+        "depends_on": ["account_id"],
+    },
+]
+
+
+@pytest.fixture(scope="module")
+def context():
+    return SHARED_CONTEXT
+
+
+@pytest.mark.parametrize("test_config", TOOL_TESTS, ids=get_test_id)
 @pytest.mark.asyncio
-async def test_soql_query(client):
-    """Execute a SOQL query to retrieve Salesforce records.
-
-    Verifies that query results are returned successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    query = "SELECT Id, Name FROM Account LIMIT 5"
-
-    response = await client.process_query(
-        f"Use the soql_query tool to execute this SOQL query: '{query}'. "
-        "If successful, start your response with 'Here are the query results' and then show them."
-    )
-
-    assert (
-        "here are the query results" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from soql_query"
-
-    print(f"Response: {response}")
-    print("✅ soql_query passed.")
-
-
-@pytest.mark.asyncio
-async def test_sosl_search(client):
-    """Perform a text-based search across multiple Salesforce objects using SOSL.
-
-    Verifies that search results are returned successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    search = "FIND {Test} IN ALL FIELDS RETURNING Account, Contact"
-
-    response = await client.process_query(
-        f"Use the sosl_search tool to execute this SOSL search: '{search}'. "
-        "If successful, start your response with 'Here are the search results' and then show them."
-    )
-
-    assert (
-        "here are the search results" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from sosl_search"
-
-    print(f"Response: {response}")
-    print("✅ sosl_search passed.")
-
-
-@pytest.mark.asyncio
-async def test_describe_object(client):
-    """Retrieve detailed metadata about a Salesforce object.
-
-    Verifies that object metadata is returned successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    object_name = "Account"
-
-    response = await client.process_query(
-        f"Use the describe_object tool to get metadata for the '{object_name}' object. "
-        "If successful, start your response with 'Here is the object metadata' and then show the details."
-    )
-
-    assert (
-        "here is the object metadata" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from describe_object"
-
-    print(f"Response: {response}")
-    print("✅ describe_object passed.")
-
-
-@pytest.mark.asyncio
-async def test_create_account(client):
-    """Create a new Account record in Salesforce.
-
-    Verifies that the record is created successfully.
-    Stores the created record ID for use in subsequent tests.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    global created_account_id
-    name = f"Test Account {str(uuid.uuid4())[:8]}"
-    industry = "Technology"
-
-    response = await client.process_query(
-        f"""Use the create_record tool to create a new Account with these details:
-        - Name: {name}
-        - Industry: {industry}
-        If successful, start your response with 'Created account successfully' and include the record ID.
-        Return account id in format ID: <id>"""
-    )
-
-    assert (
-        "created account successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from create_record"
-
-    # Extract record ID from response
-    try:
-        created_account_id = response.split("ID: ")[1].split()[0]
-    except Exception:
-        pytest.fail("Could not extract account ID from response")
-
-    print(f"Response: {response}")
-    print("✅ create_account passed.")
-
-
-@pytest.mark.asyncio
-async def test_get_record(client):
-    """Retrieve a specific Salesforce record by ID.
-
-    Verifies that the record details are returned successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    if not created_account_id:
-        pytest.skip("No account ID available - run create_account test first")
-
-    response = await client.process_query(
-        f"""Use the get_record tool to retrieve the Account with ID {created_account_id}.
-        If successful, start your response with 'Here are the account details' and show the details."""
-    )
-
-    assert (
-        "here are the account details" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from get_record"
-
-    print(f"Response: {response}")
-    print("✅ get_record passed.")
-
-
-@pytest.mark.asyncio
-async def test_create_contact(client):
-    """Create a new Contact record related to the test Account.
-
-    Verifies that the record is created successfully.
-    Stores the created record ID for use in subsequent tests.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    global created_contact_id, created_account_id
-
-    if not created_account_id:
-        pytest.skip("No account ID available - run create_account test first")
-
-    first_name = "Test"
-    last_name = f"Contact {str(uuid.uuid4())[:8]}"
-    email = f"test.{last_name.lower().replace(' ', '.')}@example.com"
-
-    response = await client.process_query(
-        f"""Use the create_record tool to create a new Contact with these details:
-        - FirstName: {first_name}
-        - LastName: {last_name}
-        - Email: {email}
-        - AccountId: {created_account_id}
-        If successful, start your response with 'Created contact successfully' and include the record ID.
-        Your response for contact id should be ID: <id>"""
-    )
-
-    assert (
-        "created contact successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from create_record"
-
-    try:
-        created_contact_id = response.split("ID: ")[1].split()[0]
-        print(f"Created contact ID: {created_contact_id}")
-    except Exception:
-        pytest.fail("Could not extract contact ID from response")
-
-    print(f"Response: {response}")
-    print("✅ create_contact passed.")
-
-
-@pytest.mark.asyncio
-async def test_update_record(client):
-    """Update an existing Account record in Salesforce.
-
-    Verifies that the record is updated successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    if not created_account_id:
-        pytest.skip("No account ID available - run create_account test first")
-
-    description = f"Updated description as of {uuid.uuid4()}"
-
-    response = await client.process_query(
-        f"""Use the update_record tool to update the Account with ID {created_account_id}.
-        Add a Description field with value: "{description}"
-        If successful, start your response with 'Updated account successfully'."""
-    )
-
-    assert (
-        "updated account successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from update_record"
-
-    print(f"Response: {response}")
-    print("✅ update_record passed.")
-
-
-@pytest.mark.asyncio
-async def test_get_org_limits(client):
-    """Retrieve current organization limits and usage.
-
-    Verifies that the limits data is returned successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    response = await client.process_query(
-        """Use the get_org_limits tool to retrieve the current Salesforce org limits.
-        If successful, start your response with 'Here are the organization limits' and show the details."""
-    )
-
-    assert (
-        "here are the organization limits" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from get_org_limits"
-
-    print(f"Response: {response}")
-    print("✅ get_org_limits passed.")
-
-
-@pytest.mark.asyncio
-async def test_get_specific_limit(client):
-    """Retrieve a specific organization limit.
-
-    Verifies that the specific limit data is returned successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    limit_type = "DailyApiRequests"
-
-    response = await client.process_query(
-        f"""Use the get_org_limits tool to retrieve the '{limit_type}' limit specifically.
-        If successful, start your response with 'Here is the specific limit' and show the details."""
-    )
-
-    assert (
-        "here is the specific limit" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from get_org_limits"
-
-    print(f"Response: {response}")
-    print("✅ get_specific_limit passed.")
-
-
-@pytest.mark.asyncio
-async def test_delete_record(client):
-    """Delete the test Contact record.
-
-    Verifies that the record is deleted successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    if not created_contact_id:
-        pytest.skip("No contact ID available - run create_contact test first")
-
-    response = await client.process_query(
-        f"""Use the delete_record tool to delete the Contact with ID {created_contact_id}.
-        If successful, start your response with 'Deleted contact successfully'."""
-    )
-
-    assert (
-        "deleted contact successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from delete_record"
-
-    print(f"Response: {response}")
-    print("✅ delete_contact passed.")
-
-
-@pytest.mark.asyncio
-async def test_delete_account(client):
-    """Delete the test Account record.
-
-    Verifies that the record is deleted successfully.
-
-    Args:
-        client: The test client fixture for the MCP server.
-    """
-    if not created_account_id:
-        pytest.skip("No account ID available - run create_account test first")
-
-    response = await client.process_query(
-        f"""Use the delete_record tool to delete the Account with ID {created_account_id}.
-        If successful, start your response with 'Deleted account successfully'."""
-    )
-
-    assert (
-        "deleted account successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from delete_record"
-
-    print(f"Response: {response}")
-    print("✅ delete_account passed.")
+async def test_salesforce_tool(client, context, test_config):
+    return await run_tool_test(client, context, test_config)

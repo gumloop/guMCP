@@ -5,17 +5,88 @@ documentation_path: "README.md"
 tools:
   - name: "soql_query"
     description: "Executes a SOQL query to retrieve Salesforce records with support for relationships and complex filters"
+    required_scopes:
+      - "api"
   - name: "sosl_search"
     description: "Performs a text-based search across multiple Salesforce objects using SOSL"
+    required_scopes:
+      - "api"
   - name: "describe_object"
     description: "Retrieves detailed metadata about a Salesforce object including fields, relationships, and permissions"
+    required_scopes:
+      - "api"
   - name: "get_record"
     description: "Retrieves a specific Salesforce record by ID with all accessible fields"
+    required_scopes:
+      - "api"
   - name: "create_record"
     description: "Creates a new record in Salesforce"
+    required_scopes:
+      - "api"
+      - "refresh_token"
   - name: "update_record"
     description: "Updates an existing Salesforce record"
+    required_scopes:
+      - "api"
+      - "refresh_token"
   - name: "delete_record"
     description: "Deletes a Salesforce record"
+    required_scopes:
+      - "api"
+      - "refresh_token"
   - name: "get_org_limits"
     description: "Retrieves current organization limits and usage"
+    required_scopes:
+      - "api"
+  - name: "add_contact_to_campaign"
+    description: "Adds an existing contact to an existing campaign"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "add_file_to_record"
+    description: "Adds an existing file to an existing record"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "add_lead_to_campaign"
+    description: "Adds an existing lead to an existing campaign"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "convert_lead"
+    description: "Converts a lead to an account, contact, and optionally an opportunity"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "create_child_records"
+    description: "Creates child records from line items and sets the parent-child relationship"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "create_enhanced_note"
+    description: "Creates a new enhanced note (ContentNote) with optional record attachment"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "create_file"
+    description: "Creates a new file (ContentVersion) with optional record attachment"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "create_note"
+    description: "Creates a new note (legacy Note object) and links it to a parent record"
+    required_scopes:
+      - "api"
+      - "refresh_token"
+  - name: "find_child_records"
+    description: "Finds child records for a given parent ID and returns them as line items"
+    required_scopes:
+      - "api"
+  - name: "list_campaigns"
+    description: "Lists existing campaigns in Salesforce"
+    required_scopes:
+      - "api"
+  - name: "list_email_templates"
+    description: "Retrieves available email templates in Salesforce"
+    required_scopes:
+      - "api"
