@@ -17,9 +17,11 @@ from mcp.types import (
     Tool,
     ImageContent,
     EmbeddedResource,
+    AnyUrl,
 )
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 from src.utils.shopify.util import get_credentials, get_service_config
 from src.utils.shopify.graphql_schemas import (
@@ -35,6 +37,13 @@ from src.utils.shopify.graphql_schemas import (
 )
 
 SERVICE_NAME = Path(__file__).parent.name
+SCOPES = [
+    "read_products",
+    "write_products",
+    "read_inventory",
+    "write_inventory",
+    "read_locations",
+]
 
 
 def authenticate_and_save_credentials(user_id, scopes=None):
@@ -105,7 +114,103 @@ def create_server(user_id, api_key=None):
     async def handle_list_resources(
         cursor: Optional[str] = None,
     ) -> List[Resource]:
-        return []
+        try:
+            # Fetch shop details to use as a resource
+            result = await execute_graphql_query(
+                server.user_id,
+                SHOP_DETAILS_GRAPHQL_QUERY,
+                variables={},
+                api_key=server.api_key,
+            )
+
+            resources = []
+
+            if (
+                result.get("_status_code") >= 200
+                and result.get("_status_code") < 300
+                and "data" in result
+                and "shop" in result["data"]
+            ):
+
+                shop = result["data"]["shop"]
+                shop_id = shop.get("id", "")
+                shop_name = shop.get("name", "Unknown Shop")
+                shop_domain = shop.get("myshopifyDomain", "")
+
+                # Add shop as a resource
+                resources.append(
+                    Resource(
+                        uri=f"shopify://shop/{shop_id}",
+                        mimeType="application/json",
+                        name=shop_name,
+                        description=f"Shopify shop: {shop_name} ({shop_domain})",
+                    )
+                )
+
+            return resources
+
+        except Exception as e:
+            # Log error but return empty list to avoid breaking the client
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> List[ReadResourceContents]:
+        """Read resources from the Shopify store"""
+        try:
+            # Parse URI to determine resource type and ID
+            uri_str = str(uri)
+            if not uri_str.startswith("shopify://"):
+                raise ValueError(f"Invalid Shopify URI: {uri_str}")
+
+            parts = uri_str.replace("shopify://", "").split("/")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid Shopify URI format: {uri_str}")
+
+            resource_type, resource_id = parts
+
+            if resource_type == "shop":
+                # Fetch shop details
+                result = await execute_graphql_query(
+                    server.user_id,
+                    SHOP_DETAILS_GRAPHQL_QUERY,
+                    variables={},
+                    api_key=server.api_key,
+                )
+
+                if (
+                    result.get("_status_code") >= 200
+                    and result.get("_status_code") < 300
+                    and "data" in result
+                    and "shop" in result["data"]
+                ):
+                    shop_data = result["data"]["shop"]
+                    return [
+                        ReadResourceContents(
+                            content=json.dumps(shop_data, indent=2),
+                            mime_type="application/json",
+                        )
+                    ]
+                else:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error fetching shop details: {json.dumps(result)}",
+                            mime_type="text/plain",
+                        )
+                    ]
+            else:
+                return [
+                    ReadResourceContents(
+                        content=f"Resource type '{resource_type}' not supported",
+                        mime_type="text/plain",
+                    )
+                ]
+
+        except Exception as e:
+            return [
+                ReadResourceContents(
+                    content=f"Error reading resource: {str(e)}", mime_type="text/plain"
+                )
+            ]
 
     @server.list_tools()
     async def handle_list_tools() -> List[Tool]:
@@ -117,6 +222,15 @@ def create_server(user_id, api_key=None):
                     "type": "object",
                     "properties": {},
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Shop details including ID, name, email, domain, currency settings, and contact information",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"shop": {"id": "gid://shopify/Shop/123456789", "name": "example_store", "email": "example@example.com", "myshopifyDomain": "example-store.myshopify.com", "url": "https://example-store.myshopify.com", "plan": {"displayName": "Developer Preview", "partnerDevelopment": true, "shopifyPlus": false}, "currencyCode": "USD", "currencyFormats": {"moneyFormat": "${{amount}}", "moneyWithCurrencyFormat": "${{amount}} USD"}, "contactEmail": "example@example.com"}}}'
+                    ],
+                },
+                requiredScopes=["read_products"],
             ),
             Tool(
                 name="create_product",
@@ -231,6 +345,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["title"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created product including ID, title, handle, status, creation timestamp and variant information",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"productCreate": {"product": {"id": "gid://shopify/Product/1234567890", "title": "Test Product", "handle": "test-product", "status": "ACTIVE", "createdAt": "2023-01-01T00:00:00Z", "variants": {"edges": [{"node": {"id": "gid://shopify/ProductVariant/1234567890", "title": "Default Title", "price": "0.00", "sku": "", "inventoryItem": {"id": "gid://shopify/InventoryItem/1234567890"}}}]}}, "userErrors": []}}}'
+                    ],
+                },
+                requiredScopes=["write_products"],
             ),
             Tool(
                 name="get_products",
@@ -283,6 +406,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of products with their details including ID, title, description, variants, and pagination information",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"products": {"edges": [{"cursor": "cursor1", "node": {"id": "gid://shopify/Product/1234567890", "title": "Product Example", "description": "Product description", "handle": "product-example", "status": "ACTIVE", "variants": {"edges": [{"node": {"id": "gid://shopify/ProductVariant/1234567890", "title": "Default Title", "price": "0.00", "sku": "", "inventoryItem": {"id": "gid://shopify/InventoryItem/1234567890"}}}]}}}, {"cursor": "cursor2", "node": {"id": "gid://shopify/Product/9876543210", "title": "Another Product", "description": "Another description", "handle": "another-product", "status": "DRAFT"}}], "pageInfo": {"hasNextPage": true, "hasPreviousPage": false, "startCursor": "cursor1", "endCursor": "cursor2"}}}}'
+                    ],
+                },
+                requiredScopes=["read_products"],
             ),
             Tool(
                 name="get_product",
@@ -297,6 +429,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["product_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about a specific product including variants, images, and metadata",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"product": {"id": "gid://shopify/Product/1234567890", "title": "Example Product", "description": "Product description", "handle": "example-product", "productType": "Example Type", "vendor": "Example Vendor", "status": "ACTIVE", "createdAt": "2023-01-01T00:00:00Z", "updatedAt": "2023-01-02T00:00:00Z", "variants": {"edges": [{"node": {"id": "gid://shopify/ProductVariant/1234567890", "title": "Default Title", "price": "0.00", "sku": "", "inventoryQuantity": 0, "inventoryItem": {"id": "gid://shopify/InventoryItem/1234567890"}}}]}, "images": {"edges": []}}}}'
+                    ],
+                },
+                requiredScopes=["read_products"],
             ),
             Tool(
                 name="delete_product",
@@ -311,6 +452,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Confirmation of product deletion with the deleted product ID",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"productDelete": {"deletedProductId": "gid://shopify/Product/1234567890", "userErrors": []}}}'
+                    ],
+                },
+                requiredScopes=["write_products"],
             ),
             Tool(
                 name="get_inventory_level",
@@ -329,6 +479,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["inventory_item_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Inventory level information for a specific inventory item including available quantity and location details",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"inventoryItem": {"id": "gid://shopify/InventoryItem/1234567890", "tracked": true, "inventoryLevels": {"edges": [{"node": {"id": "gid://shopify/InventoryLevel/123456?inventory_item_id=1234567890", "available": 5, "location": {"id": "gid://shopify/Location/123456", "name": "Main Store"}}}]}}}}'
+                    ],
+                },
+                requiredScopes=["read_inventory", "read_locations"],
             ),
             Tool(
                 name="adjust_inventory",
@@ -350,6 +509,15 @@ def create_server(user_id, api_key=None):
                         "quantity_adjustment",
                     ],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of inventory adjustment operation including the updated inventory level",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"inventoryAdjustQuantity": {"inventoryLevel": {"id": "gid://shopify/InventoryLevel/123456?inventory_item_id=1234567890", "available": 10}, "userErrors": []}}}'
+                    ],
+                },
+                requiredScopes=["write_inventory"],
             ),
             Tool(
                 name="update_inventory_tracking",
@@ -371,6 +539,15 @@ def create_server(user_id, api_key=None):
                         "tracked",
                     ],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of inventory tracking update operation showing the updated tracking status",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"inventoryItemUpdate": {"inventoryItem": {"id": "gid://shopify/InventoryItem/1234567890", "tracked": true}, "userErrors": []}}}'
+                    ],
+                },
+                requiredScopes=["write_inventory"],
             ),
             Tool(
                 name="get_variant_inventory_item",
@@ -385,6 +562,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["variant_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Inventory item information for a specific product variant including tracking status and inventory levels",
+                    "examples": [
+                        '{"_status_code": 200, "data": {"productVariant": {"id": "gid://shopify/ProductVariant/1234567890", "inventoryItem": {"id": "gid://shopify/InventoryItem/1234567890", "tracked": false, "inventoryLevels": {"edges": [{"node": {"id": "gid://shopify/InventoryLevel/123456?inventory_item_id=1234567890", "location": {"id": "gid://shopify/Location/123456", "name": "Store location"}}}]}}}}}'
+                    ],
+                },
+                requiredScopes=["read_inventory", "read_products"],
             ),
         ]
 

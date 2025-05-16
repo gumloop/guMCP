@@ -2,22 +2,47 @@ name: "Shopify guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Shopify's Admin API using GraphQL"
 documentation_path: "README.md"
+resources:
+  - name: "shop"
+    description: "Shopify shop details including name, domain, and settings"
+    required_scopes:
+      - "read_products"
 tools:
   - name: "get_shop_details"
     description: "Gets the details of a shop in Shopify"
+    required_scopes:
+      - "read_products"
   - name: "create_product"
     description: "Creates a product on Shopify"
+    required_scopes:
+      - "write_products"
   - name: "get_products"
     description: "Retrieves a list of products from Shopify"
+    required_scopes:
+      - "read_products"
   - name: "get_product"
     description: "Retrieves a single product from Shopify by product ID"
+    required_scopes:
+      - "read_products"
   - name: "delete_product"
     description: "Deletes a product from Shopify, including all associated variants and media"
+    required_scopes:
+      - "write_products"
   - name: "get_inventory_level"
     description: "Gets the inventory level for a specific inventory item"
+    required_scopes:
+      - "read_inventory"
+      - "read_locations"
   - name: "adjust_inventory"
     description: "Adjusts inventory levels for a specific inventory item"
+    required_scopes:
+      - "write_inventory"
   - name: "update_inventory_tracking" 
     description: "Enable or disable inventory tracking for a specific inventory item"
+    required_scopes:
+      - "write_inventory"
   - name: "get_variant_inventory_item"
     description: "Gets the inventory item ID for a specific product variant"
+    required_scopes:
+      - "read_inventory"
+      - "read_products"
