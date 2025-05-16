@@ -2,48 +2,121 @@ name: "Github GuMCP Server"
 icon: "assets/icon.png"
 description: "Server for interacting with Github"
 documentation_path: "README.md"
+resources:
+  - name: "repositories"
+    description: "GitHub repositories that the user owns or has access to"
+    required_scopes:
+      - "repo"
+      - "public_repo"
 tools:
   - name: "create_repository"
     description: "Create a new repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "search_repositories"
     description: "Search for repositories"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "list_public_user_repositories"
     description: "List all public repositories for the given user username"
+    required_scopes:
+      - "public_repo"
   - name: "list_organization_repositories"
     description: "List all repositories for the given organization name"
+    required_scopes:
+      - "read:org"
   - name: "get_contents"
     description: "Get the contents of a file or in a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "list_repository_languages"
     description: "List all languages used in a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "add_file_to_repository"
     description: "Add a file to a repository with a commit message"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "list_commits"
     description: "List all commits for a repository by branch"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "get_commit"
     description: "The api provides commit content with read access"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "star_repository"
     description: "Star a repository for the authenticated user"
+    required_scopes:
+      - "user"
   - name: "list_stargazers"
     description: "List all stargazers for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "get_stargazers_count"
     description: "Get the number of stargazers for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "list_starred_repos_by_user"
     description: "List all repositories starred by the user"
+    required_scopes:
+      - "user"
   - name: "list_issues"
     description: "List all issues for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "get_issue"
     description: "Get a specific issue for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "create_issue"
     description: "Create a new issue for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "update_issue"
     description: "Update a specific issue for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "add_comment_to_issue"
     description: "Add a comment to a specific issue for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "list_branches"
     description: "List all branches for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "list_pull_requests"
     description: "List all pull requests for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "get_pull_request"
     description: "Get a specific pull request for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
   - name: "create_pull_request"
     description: "Create a new pull request for a repository"
+    required_scopes:
+      - "repo"
+      - "public_repo"
+  - name: "fork_repository"
+    description: "Fork a repository to the authenticated user's account"
+    required_scopes:
+      - "repo"
+      - "public_repo"
