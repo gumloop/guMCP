@@ -31,38 +31,6 @@ logging.basicConfig(
 logger = logging.getLogger(SERVICE_NAME)
 
 
-def format_item(item):
-    """Format a HN item for display"""
-    item_type = item.get("type", "unknown")
-
-    if item_type == "story":
-        title = item.get("title", "Untitled")
-        item_id = item.get("id", "")
-        url = item.get("url", "")
-        score = item.get("score", 0)
-        by = item.get("by", "anonymous")
-        time_posted = datetime.fromtimestamp(item.get("time", 0))
-        formatted_time = time_posted.strftime("%Y-%m-%d %H:%M:%S")
-        descendants = item.get("descendants", 0)
-
-        result = f"ID : {item_id} | Title: {title}\n"
-        result += f"By: {by} | Score: {score} | Comments: {descendants} | Posted: {formatted_time}\n"
-        if url:
-            result += f"URL: {url}\n"
-        return result
-
-    elif item_type == "comment":
-        by = item.get("by", "anonymous")
-        text = item.get("text", "")
-        time_posted = datetime.fromtimestamp(item.get("time", 0))
-        formatted_time = time_posted.strftime("%Y-%m-%d %H:%M:%S")
-
-        return f"Comment by {by} at {formatted_time}:\n{text}\n"
-
-    else:
-        return f"Item type '{item_type}' with id {item.get('id', 'unknown')}"
-
-
 def get_item(item_id):
     """Get a HN item by ID
     Args:
@@ -114,6 +82,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Array of top stories with metadata. First item is metadata about the response, followed by individual story objects.",
+                    "examples": [
+                        '{"metadata": {"type": "stories", "count": 1, "endpoint": "topstories"}}',
+                        '{"by": "username", "descendants": 11, "id": 12345678, "kids": [12345680, 12345681], "score": 118, "text": "Story content here...", "time": 1600000000, "title": "Show HN: Project Name", "type": "story", "url": "https://example.com/project"}',
+                    ],
+                },
             ),
             types.Tool(
                 name="get_latest_posts",
@@ -126,6 +103,15 @@ def create_server(user_id, api_key=None):
                             "description": "Maximum number of stories to return (default: 10, max: 30)",
                         },
                     },
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Array of latest stories with metadata. First item is metadata about the response, followed by individual story objects.",
+                    "examples": [
+                        '{"metadata": {"type": "stories", "count": 2, "endpoint": "newstories"}}',
+                        '{"by": "username", "descendants": 0, "id": 12345678, "score": 1, "time": 1600000000, "title": "News Article Title", "type": "story", "url": "https://example.com/news"}',
+                    ],
                 },
             ),
             types.Tool(
@@ -140,6 +126,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["id"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "Detailed information about a specific story including title, author, score, and content.",
+                    "examples": [
+                        '{"by": "username", "descendants": 11, "id": 12345678, "kids": [12345680, 12345681], "score": 118, "text": "Story content here...", "time": 1600000000, "title": "Story Title", "type": "story", "url": "https://example.com/story"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -159,6 +152,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["story_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Array of comments with metadata. First item is metadata about the response, followed by individual comment objects.",
+                    "examples": [
+                        '{"metadata": {"type": "comments", "count": 2, "story_id": 12345678, "story_title": "Story Title"}}',
+                        '{"by": "username", "id": 12345680, "parent": 12345678, "text": "Comment text here...", "time": 1600000000, "type": "comment"}',
+                    ],
+                },
             ),
             types.Tool(
                 name="get_user",
@@ -172,6 +174,13 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["username"],
+                },
+                outputSchema={
+                    "type": "object",
+                    "description": "User information including creation date, karma score, and submitted items.",
+                    "examples": [
+                        '{"created": 1600000000, "id": "username", "karma": 48, "submitted": [12345678, 12345679, 12345680]}'
+                    ],
                 },
             ),
             types.Tool(
@@ -191,6 +200,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["type"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Array of stories of specified type with metadata. First item is metadata about the response, followed by individual story objects.",
+                    "examples": [
+                        '{"metadata": {"type": "stories", "count": 2, "story_type": "job", "endpoint": "jobstories"}}',
+                        '{"by": "username", "id": 12345678, "score": 1, "time": 1600000000, "title": "Company is Hiring – Position", "type": "job", "url": "https://example.com/jobs"}',
+                    ],
                 },
             ),
         ]
@@ -218,7 +236,6 @@ def create_server(user_id, api_key=None):
         try:
             if name == "get_top_stories":
                 limit = arguments.get("limit", 10)
-
                 response = requests.get(f"{HN_API_BASE}/topstories.json", timeout=20)
 
                 if response.status_code == 200:
@@ -228,73 +245,111 @@ def create_server(user_id, api_key=None):
                     for story_id in story_ids:
                         story = get_item(story_id)
                         if story:
-                            stories.append(format_item(story))
+                            stories.append(story)
 
-                    result = {"stories": stories}
+                    # Return each story as a separate TextContent with metadata first
+                    result = [
+                        types.TextContent(
+                            type="text",
+                            text=json.dumps(
+                                {
+                                    "metadata": {
+                                        "type": "stories",
+                                        "count": len(stories),
+                                        "endpoint": "topstories",
+                                    }
+                                },
+                                indent=2,
+                            ),
+                        )
+                    ]
 
+                    # Add each story as a separate item
+                    result.extend(
+                        [
+                            types.TextContent(
+                                type="text", text=json.dumps(story, indent=2)
+                            )
+                            for story in stories
+                        ]
+                    )
+                    return result
                 else:
-                    result = {
+                    error = {
                         "error": "Failed to fetch top stories",
                         "status_code": response.status_code,
                         "message": response.text,
                     }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
+                    ]
+
             elif name == "get_latest_posts":
                 limit = arguments.get("limit", 10)
                 response = requests.get(f"{HN_API_BASE}/newstories.json", timeout=20)
+
                 if response.status_code == 200:
                     story_ids = response.json()[:limit]
 
                     stories = []
-                    stories_details = []
                     for story_id in story_ids:
                         story = get_item(story_id)
                         if story:
-                            stories.append(format_item(story))
-                            # Add detailed information for each story
-                            story_detail = {
-                                "id": story.get("id"),
-                                "title": story.get("title", "Untitled"),
-                                "url": story.get("url", ""),
-                                "score": story.get("score", 0),
-                                "by": story.get("by", "anonymous"),
-                                "time": datetime.fromtimestamp(
-                                    story.get("time", 0)
-                                ).strftime("%Y-%m-%d %H:%M:%S"),
-                                "descendants": story.get("descendants", 0),
-                                "type": story.get("type", "unknown"),
-                                "kids": story.get("kids", []),
-                                "text": story.get("text", ""),
-                                "comment_count": len(story.get("kids", [])),
-                            }
-                            stories_details.append(story_detail)
+                            stories.append(story)
 
-                    result = {
-                        "type": "latest",
-                        "count": len(stories),
-                        "formatted_stories": "Latest stories:\n\n"
-                        + "\n---\n".join(stories),
-                        "stories": stories_details,
-                        "fetch_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    }
+                    # Return each story as a separate TextContent with metadata first
+                    result = [
+                        types.TextContent(
+                            type="text",
+                            text=json.dumps(
+                                {
+                                    "metadata": {
+                                        "type": "stories",
+                                        "count": len(stories),
+                                        "endpoint": "newstories",
+                                    }
+                                },
+                                indent=2,
+                            ),
+                        )
+                    ]
 
+                    # Add each story as a separate item
+                    result.extend(
+                        [
+                            types.TextContent(
+                                type="text", text=json.dumps(story, indent=2)
+                            )
+                            for story in stories
+                        ]
+                    )
+                    return result
                 else:
-                    result = {
+                    error = {
                         "error": "Failed to fetch latest posts",
                         "status_code": response.status_code,
                         "message": response.text,
                     }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
+                    ]
 
             elif name == "get_story_details":
                 story_id = arguments["id"]
                 story = get_item(story_id)
 
                 if story:
-                    result = format_item(story)
+                    return [
+                        types.TextContent(type="text", text=json.dumps(story, indent=2))
+                    ]
                 else:
-                    result = {
+                    error = {
                         "error": "Failed to fetch story",
                         "message": "Story not found",
                     }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
+                    ]
 
             elif name == "get_comments":
                 story_id = arguments["story_id"]
@@ -314,87 +369,93 @@ def create_server(user_id, api_key=None):
                                 and not comment.get("deleted")
                                 and not comment.get("dead")
                             ):
-                                comments.append(format_item(comment))
+                                comments.append(comment)
 
-                        result = (
-                            f"Comments for: {story.get('title', 'Unknown story')}\n\n"
+                        # Return each comment as a separate TextContent with metadata first
+                        result = [
+                            types.TextContent(
+                                type="text",
+                                text=json.dumps(
+                                    {
+                                        "metadata": {
+                                            "type": "comments",
+                                            "count": len(comments),
+                                            "story_id": story_id,
+                                            "story_title": story.get(
+                                                "title", "Unknown"
+                                            ),
+                                        }
+                                    },
+                                    indent=2,
+                                ),
+                            )
+                        ]
+
+                        # Add each comment as a separate item
+                        result.extend(
+                            [
+                                types.TextContent(
+                                    type="text", text=json.dumps(comment, indent=2)
+                                )
+                                for comment in comments
+                            ]
                         )
-                        result += "\n---\n".join(comments)
-
+                        return result
                     else:
-                        result = {
+                        error = {
                             "error": "Failed to fetch comments",
                             "message": "No comments found",
                         }
+                        return [
+                            types.TextContent(
+                                type="text", text=json.dumps(error, indent=2)
+                            )
+                        ]
                 else:
-                    result = {
+                    error = {
                         "error": "Failed to fetch comments",
                         "message": "Story not found",
                     }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
+                    ]
 
             elif name == "get_user":
                 username = arguments["username"]
-
                 response = requests.get(
                     f"{HN_API_BASE}/user/{username}.json", timeout=20
                 )
-                if response.status_code == 200:
 
+                if response.status_code == 200:
                     user = response.json()
                     if user:
-
-                        created = datetime.fromtimestamp(user.get("created", 0))
-                        formatted_created = created.strftime("%Y-%m-%d %H:%M:%S")
-
-                        result = f"User: {user.get('id')}\n"
-                        result += f"Created: {formatted_created}\n"
-                        result += f"Karma: {user.get('karma', 0)}\n"
-                        result += f"About: {user.get('about', 'No about section')}\n"
-                        result += f"Submitted: {user.get('submitted', [])}"
-                        # Add number of submissions
-                        submission_count = len(user.get("submitted", []))
-                        result += f"\nSubmission Count: {submission_count}"
-
-                        # Add full name if available
-                        if "fullname" in user:
-                            result += f"\nFull Name: {user.get('fullname')}"
-
-                        # Add additional user details if available
-                        if "delay" in user:
-                            result += f"\nDelay: {user.get('delay')}"
-
-                        if "created" in user:
-                            account_age_days = (
-                                datetime.now()
-                                - datetime.fromtimestamp(user.get("created", 0))
-                            ).days
-                            result += f"\nAccount Age: {account_age_days} days"
-
-                        # Add average karma per day if account is older than 1 day
-                        if account_age_days > 0:
-                            karma_per_day = round(
-                                user.get("karma", 0) / account_age_days, 2
+                        # Return raw user data
+                        return [
+                            types.TextContent(
+                                type="text", text=json.dumps(user, indent=2)
                             )
-                            result += f"\nAverage Karma Per Day: {karma_per_day}"
-
-                        if "about" in user and user["about"]:
-                            result += f"About: {user['about']}\n"
-
+                        ]
                     else:
-                        result = {
+                        error = {
                             "error": "Failed to fetch user",
                             "message": "User not found",
                         }
-
+                        return [
+                            types.TextContent(
+                                type="text", text=json.dumps(error, indent=2)
+                            )
+                        ]
                 else:
-                    result = {
+                    error = {
                         "error": "Failed to fetch user",
                         "status_code": response.status_code,
                         "message": response.text,
                     }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
+                    ]
 
             elif name == "get_stories_by_type":
-
                 story_type = arguments["type"]
                 limit = arguments.get("limit", 10)
 
@@ -411,17 +472,12 @@ def create_server(user_id, api_key=None):
                 elif story_type == "job":
                     endpoint = "jobstories"
                 else:
+                    error = {
+                        "error": "Invalid story type",
+                        "message": f"Invalid story type '{story_type}'",
+                    }
                     return [
-                        types.TextContent(
-                            type="text",
-                            text=json.dumps(
-                                {
-                                    "error": "Invalid story type",
-                                    "message": f"Invalid story type '{story_type}'",
-                                },
-                                indent=2,
-                            ),
-                        )
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
                     ]
 
                 response = requests.get(f"{HN_API_BASE}/{endpoint}.json", timeout=20)
@@ -429,52 +485,56 @@ def create_server(user_id, api_key=None):
                     story_ids = response.json()[:limit]
 
                     stories = []
-                    stories_details = []
                     for story_id in story_ids:
                         story = get_item(story_id)
                         if story:
-                            stories.append(format_item(story))
-                            # Add detailed information for each story
-                            story_detail = {
-                                "id": story.get("id"),
-                                "title": story.get("title", "Untitled"),
-                                "url": story.get("url", ""),
-                                "score": story.get("score", 0),
-                                "by": story.get("by", "anonymous"),
-                                "time": datetime.fromtimestamp(
-                                    story.get("time", 0)
-                                ).strftime("%Y-%m-%d %H:%M:%S"),
-                                "descendants": story.get("descendants", 0),
-                                "type": story.get("type", "unknown"),
-                                "kids": story.get("kids", []),
-                                "text": story.get("text", ""),
-                                "comment_count": len(story.get("kids", [])),
-                            }
-                            stories_details.append(story_detail)
+                            stories.append(story)
 
-                    result = {
-                        "type": story_type,
-                        "count": len(stories),
-                        "formatted_stories": f"{story_type.capitalize()} stories:\n\n"
-                        + "\n---\n".join(stories),
-                        "stories": stories_details,
-                        "fetch_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    }
+                    # Return each story as a separate TextContent with metadata first
+                    result = [
+                        types.TextContent(
+                            type="text",
+                            text=json.dumps(
+                                {
+                                    "metadata": {
+                                        "type": "stories",
+                                        "count": len(stories),
+                                        "story_type": story_type,
+                                        "endpoint": endpoint,
+                                    }
+                                },
+                                indent=2,
+                            ),
+                        )
+                    ]
 
+                    # Add each story as a separate item
+                    result.extend(
+                        [
+                            types.TextContent(
+                                type="text", text=json.dumps(story, indent=2)
+                            )
+                            for story in stories
+                        ]
+                    )
+                    return result
                 else:
-                    result = {
+                    error = {
                         "error": "Failed to fetch stories",
                         "status_code": response.status_code,
                         "message": response.text,
                     }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error, indent=2))
+                    ]
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
-            return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
             logger.error(f"Error calling Hacker News API: {e}")
-            return [types.TextContent(type="text", text=str(e))]
+            error = {"error": "API Error", "message": str(e)}
+            return [types.TextContent(type="text", text=json.dumps(error, indent=2))]
 
     return server
 
