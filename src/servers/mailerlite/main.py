@@ -64,7 +64,7 @@ def create_server(user_id, api_key=None):
         async def handle_list_resources(
             cursor: Optional[str] = None,
         ) -> list[Resource]:
-            """List MailerLite resources (lists, campaigns, subscribers)"""
+            """List MailerLite resources (forms, campaigns)"""
             logger.info(
                 f"Listing resources for user: {server.user_id} with cursor: {cursor}"
             )
@@ -73,19 +73,6 @@ def create_server(user_id, api_key=None):
             try:
                 client = await mailer.ensure_client()
                 resources = []
-
-                # List all webhooks
-                webhooks_response = client.webhooks.list()
-                logger.info(f"Webhooks response: {webhooks_response}")
-                for webhook in webhooks_response.get("data", []):
-                    resources.append(
-                        Resource(
-                            uri=f"mailerlite://webhook/{webhook['id']}",
-                            mimeType="application/json",
-                            name=f"Webhook: {webhook['name']}",
-                            description=f"MailerLite webhook ({webhook.get('status', 'unknown')})",
-                        )
-                    )
 
                 # List all forms
                 popup_forms_response = client.forms.list(
@@ -140,18 +127,6 @@ def create_server(user_id, api_key=None):
                         )
                     )
 
-                # List all groups
-                groups_response = client.groups.list()
-                for group in groups_response.get("data", []):
-                    resources.append(
-                        Resource(
-                            uri=f"mailerlite://group/{group['id']}",
-                            mimeType="application/json",
-                            name=f"Group: {group['name']}",
-                            description=f"MailerLite group with {group.get('total', 0)} subscribers",
-                        )
-                    )
-
                 return resources
 
             except Exception as e:
@@ -170,18 +145,7 @@ def create_server(user_id, api_key=None):
                 client = await mailer.ensure_client()
                 uri_str = str(uri)
 
-                if uri_str.startswith("mailerlite://webhook/"):
-                    # Handle webhook resource
-                    webhook_id = uri_str.replace("mailerlite://webhook/", "")
-                    webhook_data = client.webhooks.get(int(webhook_id))
-                    return [
-                        ReadResourceContents(
-                            content=json.dumps(webhook_data, indent=2),
-                            mime_type="application/json",
-                        )
-                    ]
-
-                elif uri_str.startswith("mailerlite://form/"):
+                if uri_str.startswith("mailerlite://form/"):
                     # Handle form resource
                     form_id = uri_str.replace("mailerlite://form/", "")
                     form_data = client.forms.get(int(form_id))
@@ -199,19 +163,6 @@ def create_server(user_id, api_key=None):
                     return [
                         ReadResourceContents(
                             content=json.dumps(campaign_data, indent=2),
-                            mime_type="application/json",
-                        )
-                    ]
-
-                elif uri_str.startswith("mailerlite://group/"):
-                    # Handle group resource
-                    group_id = uri_str.replace("mailerlite://group/", "")
-                    subscribers = client.groups.get_group_subscribers(int(group_id))
-
-                    combined_data = {"group_id": group_id, "subscribers": subscribers}
-                    return [
-                        ReadResourceContents(
-                            content=json.dumps(combined_data, indent=2),
                             mime_type="application/json",
                         )
                     ]
@@ -255,6 +206,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual subscriber items, one per TextContent. Each item contains subscriber details including ID, email, status, and fields.",
+                        "examples": [
+                            '{"id": 123456789, "email": "example@email.com", "status": "active", "fields": {"name": "John", "last_name": "Doe"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="create_subscriber",
@@ -282,6 +241,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                         "required": ["email"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the newly created subscriber",
+                        "examples": [
+                            '{"data": {"id": 123456789, "email": "example@email.com", "status": "active", "fields": {"name": "John", "last_name": "Doe"}}}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -311,6 +278,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["email", "fields"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the updated subscriber",
+                        "examples": [
+                            '{"data": {"id": 123456789, "email": "example@email.com", "status": "active", "fields": {"name": "Updated Name", "last_name": "Updated Last Name"}}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="get_subscriber",
@@ -325,6 +300,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["email"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Detailed information about the requested subscriber",
+                        "examples": [
+                            '{"data": {"id": 123456789, "email": "example@email.com", "status": "active", "fields": {"name": "John", "last_name": "Doe"}, "subscribed_at": "2023-01-15 10:00:00", "updated_at": "2023-01-20 12:30:45"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="delete_subscriber",
@@ -338,6 +321,12 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["subscriber_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the delete operation",
+                        "examples": ['{"success": true}'],
                     },
                 ),
                 types.Tool(
@@ -367,6 +356,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual group items, one per TextContent. Each item contains group details including ID, name, and subscriber counts.",
+                        "examples": [
+                            '{"id": 12345, "name": "Newsletter Subscribers", "active_count": 42, "sent_count": 15, "opened_count": 10, "clicked_count": 5, "unsubscribed_count": 2, "created_at": "2023-01-15 10:00:00"}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="create_group",
@@ -380,6 +377,14 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["group_name"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the newly created group",
+                        "examples": [
+                            '{"data": {"id": 12345, "name": "New Group", "total": 0, "active_count": 0, "unsubscribed_count": 0, "bounced_count": 0, "created_at": "2023-04-10 09:30:00"}}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -399,6 +404,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["group_id", "group_name"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the updated group",
+                        "examples": [
+                            '{"data": {"id": 12345, "name": "Updated Group Name", "total": 42, "active_count": 40, "unsubscribed_count": 2, "bounced_count": 0, "created_at": "2023-01-15 10:00:00", "updated_at": "2023-04-10 14:25:30"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="delete_group",
@@ -412,6 +425,12 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["group_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the delete operation",
+                        "examples": ['{"success": true}'],
                     },
                 ),
                 types.Tool(
@@ -442,6 +461,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["group_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual subscribers in the group, one per TextContent. Each item contains subscriber details.",
+                        "examples": [
+                            '{"id": 123456789, "email": "subscriber@example.com", "status": "active", "fields": {"name": "John", "last_name": "Doe"}, "subscribed_at": "2023-02-10 15:20:00"}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="assign_subscriber_to_group",
@@ -460,6 +487,12 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["subscriber_id", "group_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of assigning the subscriber to the group",
+                        "examples": ['{"success": true}'],
+                    },
                 ),
                 types.Tool(
                     name="unassign_subscriber_from_group",
@@ -477,6 +510,12 @@ def create_server(user_id, api_key=None):
                             },
                         },
                         "required": ["subscriber_id", "group_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of removing the subscriber from the group",
+                        "examples": ['{"success": true}'],
                     },
                 ),
                 types.Tool(
@@ -510,6 +549,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual custom fields, one per TextContent. Each item contains field details.",
+                        "examples": [
+                            '{"id": 789, "name": "phone_number", "key": "phone_number", "type": "text", "created_at": "2023-01-05 08:15:30"}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="create_field",
@@ -527,6 +574,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                         "required": ["name", "type"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the newly created custom field",
+                        "examples": [
+                            '{"data": {"id": 789, "name": "Company Size", "key": "company_size", "type": "number", "created_at": "2023-04-20 11:30:45"}}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -546,6 +601,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["field_id", "name"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the updated custom field",
+                        "examples": [
+                            '{"data": {"id": 789, "name": "Updated Field Name", "key": "company_size", "type": "number", "created_at": "2023-04-20 11:30:45", "updated_at": "2023-04-22 09:15:00"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="delete_field",
@@ -559,6 +622,12 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["field_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the delete operation",
+                        "examples": ['{"success": true}'],
                     },
                 ),
                 types.Tool(
@@ -587,6 +656,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual campaign items, one per TextContent. Each item contains campaign details including ID, name, status, and statistics.",
+                        "examples": [
+                            '{"id": 456789, "name": "Monthly Newsletter", "type": "regular", "status": "sent", "sent_at": "2023-03-15 09:00:00", "created_at": "2023-03-10 14:30:00", "stats": {"sent": 1000, "opened": 450, "clicked": 200}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="get_campaign",
@@ -600,6 +677,14 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["campaign_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Detailed information about the requested campaign",
+                        "examples": [
+                            '{"data": {"id": 456789, "name": "Monthly Newsletter", "type": "regular", "status": "sent", "subject": "March Updates", "from_name": "Marketing Team", "from_email": "marketing@example.com", "language_id": 1, "emails": [{"id": 123, "subject": "March Updates", "from_name": "Marketing Team", "from": "marketing@example.com", "content": "Newsletter content here"}], "created_at": "2023-03-10 14:30:00", "updated_at": "2023-03-15 08:55:00", "scheduled_for": "2023-03-15 09:00:00", "sent_at": "2023-03-15 09:00:00"}}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -653,6 +738,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["name", "language_id", "type", "emails"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the newly created campaign",
+                        "examples": [
+                            '{"data": {"id": 456789, "name": "New Campaign", "type": "regular", "status": "draft", "language_id": 1, "emails": [{"id": 123, "subject": "Welcome", "from_name": "Marketing", "from": "marketing@example.com", "content": "Welcome content"}], "created_at": "2023-04-25 10:20:00"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="update_campaign",
@@ -705,6 +798,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["campaign_id", "name", "language_id", "emails"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the updated campaign",
+                        "examples": [
+                            '{"data": {"id": 456789, "name": "Updated Campaign", "type": "regular", "status": "draft", "language_id": 7, "emails": [{"id": 123, "subject": "Updated Subject", "from_name": "Updated Name", "from": "updated@example.com", "content": "Updated content"}], "created_at": "2023-04-20 10:00:00", "updated_at": "2023-04-25 15:30:00"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="schedule_campaign",
@@ -731,6 +832,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["campaign_id", "date", "hours", "minutes"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the scheduling operation",
+                        "examples": [
+                            '{"data": {"campaign_id": 456789, "scheduled_for": "2023-12-31 12:00:00", "status": "scheduled"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="cancel_campaign",
@@ -744,6 +853,14 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["campaign_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the cancel operation",
+                        "examples": [
+                            '{"success": true, "campaign_id": 456789, "status": "draft"}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -759,10 +876,16 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["campaign_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the delete operation",
+                        "examples": ['{"success": true}'],
+                    },
                 ),
                 types.Tool(
                     name="list_forms",
-                    description="List all forms in MailerLite",
+                    description="List all forms with optional filtering by type and name.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -798,6 +921,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["type"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual form items, one per TextContent. Each item contains form details including ID, name, type, and status.",
+                        "examples": [
+                            '{"id": 987654, "name": "Newsletter Signup", "type": "popup", "status": "active", "created_at": "2023-02-05 11:20:00", "updated_at": "2023-02-05 11:20:00", "total_subscribers": 150}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="get_form",
@@ -811,6 +942,14 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["form_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Detailed information about the requested form",
+                        "examples": [
+                            '{"data": {"id": 987654, "name": "Newsletter Signup", "type": "popup", "status": "active", "settings": {"title": "Join Our Newsletter", "button_text": "Subscribe"}, "created_at": "2023-02-05 11:20:00", "updated_at": "2023-02-05 11:20:00", "total_subscribers": 150}}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -830,6 +969,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["form_id", "name"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the updated form",
+                        "examples": [
+                            '{"data": {"id": 987654, "name": "Updated Form Name", "type": "popup", "status": "active", "created_at": "2023-02-05 11:20:00", "updated_at": "2023-04-10 09:45:00", "total_subscribers": 150}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="delete_form",
@@ -844,16 +991,38 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["form_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the delete operation",
+                        "examples": ['{"success": true}'],
+                    },
                 ),
                 types.Tool(
                     name="list_campaign_languages",
                     description="Get a list of available languages for campaigns",
                     inputSchema={"type": "object", "properties": {}},
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Array of available language options for campaign creation and editing",
+                        "examples": [
+                            '{"data": [{"id": 1, "name": "English", "code": "en"}, {"id": 7, "name": "Spanish", "code": "es"}]}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="list_webhooks",
-                    description="List all webhooks in MailerLite",
+                    description="List all webhooks in the MailerLite account",
                     inputSchema={"type": "object", "properties": {}},
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Individual webhook items, one per TextContent. Each item contains webhook details including ID, name, URL, and event types.",
+                        "examples": [
+                            '{"id": 54321, "name": "Subscriber Webhook", "url": "https://example.com/webhook", "events": ["subscriber.created", "subscriber.updated"], "status": "enabled", "created_at": "2023-01-20 14:10:30"}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="get_webhook",
@@ -868,10 +1037,18 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["webhook_id"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Detailed information about the requested webhook",
+                        "examples": [
+                            '{"data": {"id": 54321, "name": "Subscriber Webhook", "url": "https://example.com/webhook", "events": ["subscriber.created", "subscriber.updated"], "status": "enabled", "created_at": "2023-01-20 14:10:30", "updated_at": "2023-01-20 14:10:30"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="create_webhook",
-                    description="Create a new webhook",
+                    description="Create a new webhook for event notifications",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -890,6 +1067,14 @@ def create_server(user_id, api_key=None):
                             },
                         },
                         "required": ["events", "url", "name"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the newly created webhook",
+                        "examples": [
+                            '{"data": {"id": 54321, "name": "New Webhook", "url": "https://example.com/new-webhook", "events": ["subscriber.created"], "status": "enabled", "created_at": "2023-04-25 16:45:00"}}'
+                        ],
                     },
                 ),
                 types.Tool(
@@ -923,6 +1108,14 @@ def create_server(user_id, api_key=None):
                         },
                         "required": ["webhook_id", "events", "url", "name"],
                     },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Details of the updated webhook",
+                        "examples": [
+                            '{"data": {"id": 54321, "name": "Updated Webhook", "url": "https://example.com/updated-webhook", "events": ["subscriber.created", "subscriber.deleted"], "status": "enabled", "created_at": "2023-01-20 14:10:30", "updated_at": "2023-04-25 17:30:00"}}'
+                        ],
+                    },
                 ),
                 types.Tool(
                     name="delete_webhook",
@@ -936,6 +1129,12 @@ def create_server(user_id, api_key=None):
                             }
                         },
                         "required": ["webhook_id"],
+                    },
+                    outputSchema={
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Result of the delete operation",
+                        "examples": ['{"success": true}'],
                     },
                 ),
             ]
@@ -955,18 +1154,34 @@ def create_server(user_id, api_key=None):
 
             try:
                 client = await mailer.ensure_client()
+
+                # Helper function to handle array responses
+                def process_response(response):
+                    # Check if response contains an array of items in data field
+                    if "data" in response and isinstance(response["data"], list):
+                        return [
+                            TextContent(
+                                type="text",
+                                text=json.dumps(item),
+                            )
+                            for item in response["data"]
+                        ]
+                    # Handle non-array responses
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps(response),
+                        )
+                    ]
+
+                # Subscriber Management
                 if name == "list_all_subscribers":
                     limit = arguments.get("limit", 10)
                     filter_status = arguments.get("filter", {}).get("status", "active")
                     response = client.subscribers.list(
                         limit=limit, filter={"status": filter_status}
                     )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
 
                 elif name == "create_subscriber":
                     email = arguments.get("email")
@@ -975,7 +1190,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "update_subscriber":
@@ -985,7 +1200,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "get_subscriber":
@@ -994,7 +1209,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "delete_subscriber":
@@ -1003,9 +1218,11 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
+
+                # Group Management
                 elif name == "list_groups":
                     limit = arguments.get("limit", 10)
                     filter_name = arguments.get("filter", {}).get("name")
@@ -1013,19 +1230,15 @@ def create_server(user_id, api_key=None):
                     response = client.groups.list(
                         limit=limit, filter={"name": filter_name}, sort=sort
                     )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
+
                 elif name == "create_group":
                     group_name = arguments.get("group_name")
                     response = client.groups.create(group_name)
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "update_group":
@@ -1035,7 +1248,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "delete_group":
@@ -1044,7 +1257,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "get_group_subscribers":
@@ -1054,12 +1267,8 @@ def create_server(user_id, api_key=None):
                     response = client.groups.get_group_subscribers(
                         group_id, limit=limit, filter={"status": filter_status}
                     )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
+
                 elif name == "assign_subscriber_to_group":
                     subscriber_id = arguments.get("subscriber_id")
                     group_id = arguments.get("group_id")
@@ -1069,7 +1278,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "unassign_subscriber_from_group":
@@ -1081,9 +1290,11 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
+
+                # Field Management
                 elif name == "list_fields":
                     limit = arguments.get("limit", 10)
                     filter_keyword = arguments.get("filter", {}).get("keyword")
@@ -1094,12 +1305,8 @@ def create_server(user_id, api_key=None):
                         filter={"keyword": filter_keyword, "type": filter_type},
                         sort=sort,
                     )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
+
                 elif name == "create_field":
                     name = arguments.get("name")
                     field_type = arguments.get("type")
@@ -1107,7 +1314,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "update_field":
@@ -1117,7 +1324,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "delete_field":
@@ -1126,28 +1333,26 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
+
+                # Campaign Management
                 elif name == "list_campaigns":
                     limit = arguments.get("limit", 10)
                     filter_status = arguments.get("filter", {}).get("status")
                     response = client.campaigns.list(
                         limit=limit, filter={"status": filter_status}
                     )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
+
                 elif name == "get_campaign":
                     campaign_id = arguments.get("campaign_id")
                     response = client.campaigns.get(campaign_id)
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "create_campaign":
@@ -1161,7 +1366,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "update_campaign":
@@ -1175,7 +1380,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "schedule_campaign":
@@ -1189,7 +1394,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "cancel_campaign":
@@ -1198,7 +1403,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "delete_campaign":
@@ -1207,10 +1412,19 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
+                        )
+                    ]
+                elif name == "list_campaign_languages":
+                    response = client.campaigns.languages()
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps(response),
                         )
                     ]
 
+                # Form Management
                 elif name == "list_forms":
                     form_type = arguments.get("type", "popup")
                     limit = arguments.get("limit", 10)
@@ -1224,19 +1438,15 @@ def create_server(user_id, api_key=None):
                         sort=sort,
                         filter={"name": filter_name},
                     )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
+
                 elif name == "get_form":
                     form_id = arguments.get("form_id")
                     response = client.forms.get(form_id)
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "update_form":
@@ -1246,7 +1456,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "delete_form":
@@ -1255,32 +1465,21 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
-                elif name == "list_campaign_languages":
-                    response = client.campaigns.languages()
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+
+                # Webhook Management
                 elif name == "list_webhooks":
                     response = client.webhooks.list()
-                    return [
-                        TextContent(
-                            type="text",
-                            text=str(response),
-                        )
-                    ]
+                    return process_response(response)
                 elif name == "get_webhook":
                     webhook_id = arguments.get("webhook_id")
                     response = client.webhooks.get(webhook_id)
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "create_webhook":
@@ -1291,7 +1490,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "update_webhook":
@@ -1306,7 +1505,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
                 elif name == "delete_webhook":
@@ -1315,7 +1514,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=str(response),
+                            text=json.dumps(response),
                         )
                     ]
 
@@ -1324,7 +1523,7 @@ def create_server(user_id, api_key=None):
 
             except Exception as e:
                 logger.error(f"Error calling tool {name}: {e}")
-                return [TextContent(type="text", text=f"Error: {str(e)}")]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
     return server
 

@@ -1,7 +1,12 @@
 name: "MailerLite guMCP Server"
 icon: "assets/icon.png"
-description: "Interact with MailerLite for email marketing automation, including subscriber management, campaign creation, and webhook integration."
+description: "Interact with MailerLite for email marketing automation, including subscriber management, campaign creation, and form integration."
 documentation_path: "README.md"
+resources:
+  - name: "form"
+    description: "MailerLite forms for collecting subscriber information, including popup, embedded, and promotion forms."
+  - name: "campaign"
+    description: "MailerLite email campaigns including draft, ready, and sent status. Contains email content and delivery settings."
 tools:
   # Subscriber Management
   - name: "list_all_subscribers"
