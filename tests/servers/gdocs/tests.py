@@ -2,7 +2,7 @@ import uuid
 import pytest
 
 
-doc_id = ""  # add doc_id here
+doc_id = ""  # Set this to a valid Google Doc ID or skip the test_read_doc_tool test
 
 
 @pytest.mark.asyncio
