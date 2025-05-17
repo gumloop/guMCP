@@ -2,6 +2,9 @@ name: "Mailchimp guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Mailchimp using the Mailchimp API, including audience management, campaign operations, subscriber management, and email marketing automation."
 documentation_path: "README.md"
+resources:
+  - name: "campaigns"
+    description: "Mailchimp campaigns created in your account, including regular campaigns, automations, and plain-text campaigns."
 tools:
   - name: get_audience_list
     description: List all available audiences.
