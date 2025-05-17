@@ -2,6 +2,11 @@ name: "Hunter.io guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Hunter.io using the Hunter.io API, including email finding and verification, domain and company email searches, lead management, campaign management, and email and company enrichment."
 documentation_path: "README.md"
+resources:
+  - name: "lead"
+    description: "Hunter.io lead resource containing contact information. Resources include leads from your Hunter.io account."
+  - name: "campaign"
+    description: "Hunter.io campaign resource containing campaign data, status, and recipient information."
 tools:
   - name: domain_search
     description: Search for all email addresses associated with a given domain.

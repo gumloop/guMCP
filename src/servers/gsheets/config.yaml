@@ -2,22 +2,46 @@ name: "Google Sheets guMCP Server"
 icon: "assets/icon.png"
 description: "Read, write and update your Google Sheets"
 documentation_path: "README.md"
+resources:
+  - name: "spreadsheet"
+    description: "Google Sheets documents owned by or shared with the user. Content includes data from the spreadsheet."
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
+      - "https://www.googleapis.com/auth/drive.readonly"
 tools:
   - name: "get_spreadsheet_info"
     description: "Retrieves spreadsheet metadata (title, sheets, etc.)"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "get_sheet_names"
     description: "Lists all sheet (tab) names in a spreadsheet"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "create_google_sheet"
     description: "Creates a new Google Sheets document"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "batch_get"
     description: "Reads values from multiple ranges"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "batch_update"
     description: "Writes values to multiple ranges"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "append_values"
     description: "Appends values to the end of a range (like inserting rows)"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "lookup_spreadsheet_row"
     description: "Searches for a row by column value in a specified range"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "clear_values"
     description: "Clears values from a given range"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"
   - name: "copy_sheet"
     description: "Copies a sheet from one spreadsheet to another"
+    required_scopes:
+      - "https://www.googleapis.com/auth/spreadsheets"

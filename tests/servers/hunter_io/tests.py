@@ -209,23 +209,6 @@ async def test_update_lead(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_lead(client):
-    if not created_lead_id:
-        pytest.skip("No lead ID available")
-    response = await client.process_query(
-        f"Use the delete_lead tool to delete lead with ID {created_lead_id}. "
-        "If successful, start your response with 'Lead deleted successfully'."
-    )
-    assert (
-        "lead deleted successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from delete_lead"
-
-    print(f"Response: {response}")
-    print("✅ delete_lead passed.")
-
-
-@pytest.mark.asyncio
 async def test_get_leads_list(client):
     if not created_list_id:
         pytest.skip("No list ID available")
@@ -258,23 +241,6 @@ async def test_update_leads_list(client):
 
     print(f"Response: {response}")
     print("✅ update_leads_list passed.")
-
-
-@pytest.mark.asyncio
-async def test_delete_leads_list(client):
-    if not created_list_id:
-        pytest.skip("No list ID available")
-    response = await client.process_query(
-        f"Use the delete_leads_list tool to delete leads list with ID {created_list_id}. "
-        "If successful, start your response with 'Leads list deleted successfully'."
-    )
-    assert (
-        "leads list deleted successfully" in response.lower()
-    ), f"Expected success phrase not found in response: {response}"
-    assert response, "No response returned from delete_leads_list"
-
-    print(f"Response: {response}")
-    print("✅ delete_leads_list passed.")
 
 
 # ---------------------- CAMPAIGN FLOW ----------------------
@@ -389,3 +355,40 @@ async def test_cancel_campaign_recipients(client):
 
     print(f"Response: {response}")
     print("✅ cancel_campaign_recipients passed.")
+
+
+# ---------------------- CLEANUP ----------------------
+
+
+@pytest.mark.asyncio
+async def test_delete_lead(client):
+    if not created_lead_id:
+        pytest.skip("No lead ID available")
+    response = await client.process_query(
+        f"Use the delete_lead tool to delete lead with ID {created_lead_id}. "
+        "If successful, start your response with 'Lead deleted successfully'."
+    )
+    assert (
+        "lead deleted successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from delete_lead"
+
+    print(f"Response: {response}")
+    print("✅ delete_lead passed.")
+
+
+@pytest.mark.asyncio
+async def test_delete_leads_list(client):
+    if not created_list_id:
+        pytest.skip("No list ID available")
+    response = await client.process_query(
+        f"Use the delete_leads_list tool to delete leads list with ID {created_list_id}. "
+        "If successful, start your response with 'Leads list deleted successfully'."
+    )
+    assert (
+        "leads list deleted successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from delete_leads_list"
+
+    print(f"Response: {response}")
+    print("✅ delete_leads_list passed.")

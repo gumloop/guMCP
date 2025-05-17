@@ -31,8 +31,20 @@ from src.utils.intercom.utils import authenticate_and_save_credentials, get_cred
 SERVICE_NAME = Path(__file__).parent.name
 INTERCOM_API_URL = "https://api.intercom.io"
 SCOPES = [
-    "read",
-    "write",
+    "contacts.read",
+    "contacts.write",
+    "conversations.read",
+    "conversations.write",
+    "companies.read",
+    "companies.write",
+    "articles.read",
+    "articles.write",
+    "tickets.read",
+    "tickets.write",
+    "admins.read",
+    "teams.read",
+    "tags.read",
+    "tags.write",
 ]
 
 logging.basicConfig(
@@ -97,21 +109,14 @@ def create_server(user_id, api_key=None):
             params["starting_after"] = cursor
 
         try:
-            tags_result = await execute_intercom_request(
-                "get", "tags", params=None, access_token=access_token
-            )
-
-            tags = tags_result.get("data", [])
-            tag_resources = []
-
-            for tag in tags:
-                tag_resources.append(
-                    Resource(
-                        uri=f"intercom://tag/{tag['id']}",
-                        mimeType="application/json",
-                        name=f"Tag: {tag['name']}",
-                    )
+            try:
+                test_result = await execute_intercom_request(
+                    "get", "contacts", params={"per_page": 1}, access_token=access_token
                 )
+                logger.info("API token validation successful")
+            except Exception as test_error:
+                logger.error(f"API token validation failed: {str(test_error)}")
+                return []
 
             conversations_result = await execute_intercom_request(
                 "get", "conversations", params=params, access_token=access_token
@@ -131,27 +136,17 @@ def create_server(user_id, api_key=None):
                     )
                 )
 
-            contacts_result = await execute_intercom_request(
-                "get", "contacts", params=params, access_token=access_token
-            )
-
-            contacts = contacts_result.get("data", [])
-            contact_resources = []
-
-            for contact in contacts:
-                contact_type = "User" if contact.get("role") == "user" else "Lead"
-                name = contact.get("name", "Unnamed Contact")
-                email = contact.get("email", "No Email")
-
-                contact_resources.append(
+            if not conversation_resources:
+                conversation_resources.append(
                     Resource(
-                        uri=f"intercom://contact/{contact['id']}",
+                        uri="intercom://placeholder/no-conversations",
                         mimeType="application/json",
-                        name=f"{contact_type}: {name} ({email})",
+                        name="No conversations available",
+                        description="Your Intercom account has no conversations or your API token lacks permission to access them",
                     )
                 )
 
-            return tag_resources + conversation_resources + contact_resources
+            return conversation_resources
 
         except Exception as e:
             import traceback
@@ -166,23 +161,23 @@ def create_server(user_id, api_key=None):
         access_token = await get_intercom_client()
         uri_str = str(uri)
 
-        if uri_str.startswith("intercom://tag/"):
-            tag_id = uri_str.replace("intercom://tag/", "")
-
-            tag_result = await execute_intercom_request(
-                "get", f"tags/{tag_id}", access_token=access_token
-            )
-
-            if not tag_result:
-                raise ValueError(f"Tag not found: {tag_id}")
-
-            formatted_content = json.dumps(tag_result, indent=2)
+        if uri_str.startswith("intercom://placeholder/"):
+            # Handle placeholder resources
+            placeholder_info = {
+                "message": "No conversations available",
+                "possible_reasons": [
+                    "Your Intercom account has no conversations",
+                    "Your API token lacks permission to access conversations",
+                    "You need a token with admin access",
+                ],
+                "help": "Check your Intercom account and ensure your API token has appropriate access",
+            }
             return [
                 ReadResourceContents(
-                    content=formatted_content, mime_type="application/json"
+                    content=json.dumps(placeholder_info, indent=2),
+                    mime_type="application/json",
                 )
             ]
-
         elif uri_str.startswith("intercom://conversation/"):
             conversation_id = uri_str.replace("intercom://conversation/", "")
 
@@ -194,23 +189,6 @@ def create_server(user_id, api_key=None):
                 raise ValueError(f"Conversation not found: {conversation_id}")
 
             formatted_content = json.dumps(conversation_result, indent=2)
-            return [
-                ReadResourceContents(
-                    content=formatted_content, mime_type="application/json"
-                )
-            ]
-
-        elif uri_str.startswith("intercom://contact/"):
-            contact_id = uri_str.replace("intercom://contact/", "")
-
-            contact_result = await execute_intercom_request(
-                "get", f"contacts/{contact_id}", access_token=access_token
-            )
-
-            if not contact_result:
-                raise ValueError(f"Contact not found: {contact_id}")
-
-            formatted_content = json.dumps(contact_result, indent=2)
             return [
                 ReadResourceContents(
                     content=formatted_content, mime_type="application/json"
@@ -235,6 +213,15 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["query"],
+                },
+                requiredScopes=["contacts.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Contact data including ID, name, email and other attributes",
+                    "examples": [
+                        '{"id":"5f1234abc5678de90123f456","role":"user","email":"user@example.com","name":"John Smith","created_at":1642579234}'
+                    ],
                 },
             ),
             Tool(
@@ -263,6 +250,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email"],
                 },
+                requiredScopes=["contacts.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Created contact data including ID, name, email and other attributes",
+                    "examples": [
+                        '{"id":"5f1234abc5678de90123f456","role":"user","email":"user@example.com","name":"John Smith","created_at":1642579234}'
+                    ],
+                },
             ),
             Tool(
                 name="create_conversation",
@@ -289,6 +285,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["contact_id", "message"],
+                },
+                requiredScopes=["conversations.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Created conversation data including ID, author, parts, and timestamps",
+                    "examples": [
+                        '{"id":"123456789","type":"conversation","created_at":1642579234,"updated_at":1642579234,"source":{"id":"abc123","type":"user"},"state":"open"}'
+                    ],
                 },
             ),
             Tool(
@@ -317,6 +322,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["message"],
                 },
+                requiredScopes=["conversations.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Reply data including ID, author, body, and timestamps",
+                    "examples": [
+                        '{"id":"reply123","type":"conversation_part","part_type":"comment","body":"This is a reply message","created_at":1642579234,"updated_at":1642579234,"author":{"id":"abc123","type":"admin"}}'
+                    ],
+                },
             ),
             Tool(
                 name="add_tags_to_conversation",
@@ -335,6 +349,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["conversation_id", "tag_ids"],
+                },
+                requiredScopes=["conversations.write", "tags.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of tagging operation with status and updated conversation data",
+                    "examples": [
+                        '{"type":"conversation","id":"123456789","tags":{"tags":[{"id":"tag123","name":"Support"},{"id":"tag456","name":"High Priority"}]}}'
+                    ],
                 },
             ),
             Tool(
@@ -355,6 +378,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["conversation_id", "tag_ids"],
                 },
+                requiredScopes=["conversations.write", "tags.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the tag removal operation with success status and details",
+                    "examples": [
+                        '{"success":true,"conversation_id":"123456789","removed_tag_ids":["tag123","tag456"],"results":[{"success":true},{"success":true}]}'
+                    ],
+                },
             ),
             Tool(
                 name="list_admins",
@@ -362,6 +394,15 @@ def create_server(user_id, api_key=None):
                 inputSchema={
                     "type": "object",
                     "properties": {},
+                },
+                requiredScopes=["admins.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Admin details including ID, name, email and role",
+                    "examples": [
+                        '{"id":"admin123","type":"admin","name":"Admin User","email":"admin@example.com","job_title":"Support Manager","away_mode_enabled":false,"away_mode_reassign":false}'
+                    ],
                 },
             ),
             Tool(
@@ -376,6 +417,15 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["query"],
+                },
+                requiredScopes=["companies.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Company data including ID, name, and other attributes",
+                    "examples": [
+                        '{"id":"comp123","name":"Example Corp","company_id":"EC123","created_at":1642579234,"updated_at":1642579234,"industry":"Technology","size":250}'
+                    ],
                 },
             ),
             Tool(
@@ -407,6 +457,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["name"],
                 },
+                requiredScopes=["companies.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Created company data including ID, name, and timestamps",
+                    "examples": [
+                        '{"id":"comp123","name":"New Company","company_id":"NC123","created_at":1642579234,"updated_at":1642579234,"industry":"Technology","website":"https://example.com"}'
+                    ],
+                },
             ),
             Tool(
                 name="associate_contact_with_company",
@@ -425,6 +484,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["contact_id", "company_id"],
                 },
+                requiredScopes=["contacts.write", "companies.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the association operation with updated contact data",
+                    "examples": [
+                        '{"type":"contact","id":"contact123","companies":{"companies":[{"id":"comp123","name":"Example Corp","company_id":"EC123"}]}}'
+                    ],
+                },
             ),
             Tool(
                 name="list_articles",
@@ -437,6 +505,15 @@ def create_server(user_id, api_key=None):
                             "description": "ID of the article collection (optional)",
                         }
                     },
+                },
+                requiredScopes=["articles.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Help center article data including title, body, author and state",
+                    "examples": [
+                        '{"id":"article123","type":"article","title":"Getting Started Guide","author_id":"admin123","created_at":1642579234,"updated_at":1642579234,"state":"published","url":"https://example.intercom.help/article/123-getting-started-guide"}'
+                    ],
                 },
             ),
             Tool(
@@ -451,6 +528,15 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["id"],
+                },
+                requiredScopes=["articles.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Full article data including title, body, author and state",
+                    "examples": [
+                        '{"id":"article123","type":"article","title":"Getting Started Guide","body":"<p>This is the article content in HTML format.</p>","author_id":"admin123","created_at":1642579234,"updated_at":1642579234,"state":"published","url":"https://example.intercom.help/article/123-getting-started-guide"}'
+                    ],
                 },
             ),
             Tool(
@@ -483,6 +569,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["title", "body", "author_id"],
                 },
+                requiredScopes=["articles.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Created article data including ID, title, state and URL",
+                    "examples": [
+                        '{"id":"article123","type":"article","title":"New Article","author_id":"admin123","created_at":1642579234,"updated_at":1642579234,"state":"draft","url":"https://example.intercom.help/article/123-new-article"}'
+                    ],
+                },
             ),
             # Ticket management tools
             Tool(
@@ -512,6 +607,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                 },
+                requiredScopes=["tickets.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Support ticket data including ID, title, status and contact information",
+                    "examples": [
+                        '{"id":"ticket123","ticket_type_id":"type123","ticket_state":"in_progress","created_at":1642579234,"updated_at":1642579234,"ticket_attributes":{"_default_title_":"Billing question","_default_description_":"I have a question about my invoice"}}'
+                    ],
+                },
             ),
             Tool(
                 name="get_ticket",
@@ -525,6 +629,15 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["ticket_id"],
+                },
+                requiredScopes=["tickets.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed ticket data including ID, status, attributes, contact info and conversation history",
+                    "examples": [
+                        '{"id":"ticket123","ticket_type_id":"type123","ticket_state":"in_progress","created_at":1642579234,"updated_at":1642579234,"ticket_attributes":{"_default_title_":"Billing question","_default_description_":"I have a question about my invoice"},"contacts":{"contacts":[{"id":"contact123","name":"John Smith","email":"john@example.com"}]},"ticket_parts":{"ticket_parts":[{"id":"part123","body":"This is a comment on the ticket","created_at":1642579235,"author":{"id":"admin123","type":"admin","name":"Support Agent"}}]}}'
+                    ],
                 },
             ),
             Tool(
@@ -559,6 +672,15 @@ def create_server(user_id, api_key=None):
                         "title",
                         "description",
                         "ticket_type_id",
+                    ],
+                },
+                requiredScopes=["tickets.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Created ticket data including ID, type, status, title and description",
+                    "examples": [
+                        '{"id":"ticket123","ticket_type_id":"type123","ticket_state":"submitted","created_at":1642579234,"updated_at":1642579234,"ticket_attributes":{"_default_title_":"Billing question","_default_description_":"I have a question about my invoice"}}'
                     ],
                 },
             ),
@@ -596,6 +718,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["ticket_id"],
                 },
+                requiredScopes=["tickets.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Updated ticket data including ID, new status, title, and other modified attributes",
+                    "examples": [
+                        '{"id":"ticket123","ticket_type_id":"type123","ticket_state":"in_progress","created_at":1642579234,"updated_at":1642589234,"ticket_attributes":{"_default_title_":"Updated Billing Question","_default_description_":"I have a question about my invoice"},"admin_assignee_id":"admin123"}'
+                    ],
+                },
             ),
             Tool(
                 name="add_comment_to_ticket",
@@ -623,11 +754,29 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["ticket_id", "comment", "admin_id"],
                 },
+                requiredScopes=["tickets.write"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Comment data including ID, body, author and timestamp",
+                    "examples": [
+                        '{"id":"part123","type":"ticket_part","part_type":"note","body":"This is an internal note on the ticket","created_at":1642579234,"updated_at":1642579234,"author":{"id":"admin123","type":"admin","name":"Support Agent"}}'
+                    ],
+                },
             ),
             Tool(
                 name="list_ticket_types",
                 description="List all available ticket types in the Intercom workspace",
                 inputSchema={"type": "object", "properties": {}},
+                requiredScopes=["tickets.read"],
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Ticket type definitions including ID, name and description",
+                    "examples": [
+                        '{"id":"type123","name":"Technical Support","description":"Technical issues requiring engineering support"}'
+                    ],
+                },
             ),
         ]
 
@@ -674,33 +823,21 @@ def create_server(user_id, api_key=None):
                 if not contacts:
                     return [
                         TextContent(
-                            type="text", text="No contacts found matching your query."
+                            type="text",
+                            text=json.dumps(
+                                {"message": "No contacts found", "count": 0, "data": []}
+                            ),
                         )
                     ]
 
-                contact_list = []
-                for contact in contacts:
-                    contact_type = "User" if contact.get("role") == "user" else "Lead"
-                    contact_list.append(
-                        f"{contact_type}: {contact.get('name', 'Unnamed')}\n"
-                        f"  Email: {contact.get('email', 'No Email')}\n"
-                        f"  ID: {contact.get('id')}\n"
-                        f"  Created: {contact.get('created_at')}"
-                    )
-
-                formatted_result = "\n\n".join(contact_list)
                 return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(contacts)} contacts:\n\n{formatted_result}",
-                    )
+                    TextContent(type="text", text=json.dumps(contact))
+                    for contact in contacts
                 ]
 
             except Exception as e:
                 logger.error(f"Error searching contacts: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error searching contacts: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "create_contact":
             required_fields = ["email"]
@@ -731,26 +868,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to create contact: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": f"Failed to create contact",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Contact created successfully!\n\n"
-                        f"ID: {contact_result.get('id')}\n"
-                        f"Name: {contact_result.get('name', 'Not provided')}\n"
-                        f"Email: {contact_result.get('email')}\n"
-                        f"Role: {contact_result.get('role', 'user')}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(contact_result))]
 
             except Exception as e:
                 logger.error(f"Error creating contact: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error creating contact: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "create_conversation":
             required_fields = ["contact_id", "message"]
@@ -789,26 +920,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to create conversation: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to create conversation",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Conversation created successfully!\n\n"
-                        f"ID: {conversation_result.get('id')}\n"
-                        f"Created: {conversation_result.get('created_at')}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(conversation_result))]
 
             except Exception as e:
                 logger.error(f"Error creating conversation: {str(e)}")
-                return [
-                    TextContent(
-                        type="text", text=f"Error creating conversation: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "reply_to_conversation":
             required_fields = ["message"]
@@ -838,7 +963,7 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text="Invalid conversation ID. Please provide a valid ID.",
+                            text=json.dumps({"error": "Invalid conversation ID"}),
                         )
                     ]
 
@@ -853,7 +978,12 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to reply to conversation. The conversation ID {conversation_id} may be invalid.",
+                            text=json.dumps(
+                                {
+                                    "error": f"Failed to reply to conversation",
+                                    "conversation_id": conversation_id,
+                                }
+                            ),
                         )
                     ]
 
@@ -864,24 +994,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to reply to conversation: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to reply to conversation",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Reply sent successfully to conversation {conversation_id}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(reply_result))]
 
             except Exception as e:
                 logger.error(f"Error replying to conversation: {str(e)}")
-                return [
-                    TextContent(
-                        type="text", text=f"Error replying to conversation: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "add_tags_to_conversation":
             required_fields = ["conversation_id", "tag_ids"]
@@ -902,16 +1028,11 @@ def create_server(user_id, api_key=None):
                     access_token=access_token,
                 )
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Successfully added {len(tag_ids)} tags to conversation {conversation_id}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(result))]
 
             except Exception as e:
                 logger.error(f"Error adding tags to conversation: {str(e)}")
-                return [TextContent(type="text", text=f"Error adding tags: {str(e)}")]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "remove_tags_from_conversation":
             required_fields = ["conversation_id", "tag_ids"]
@@ -923,24 +1044,33 @@ def create_server(user_id, api_key=None):
             tag_ids = arguments["tag_ids"]
 
             try:
+                results = []
                 # For each tag ID, send a separate request to remove it
                 for tag_id in tag_ids:
-                    await execute_intercom_request(
+                    result = await execute_intercom_request(
                         "delete",
                         f"conversations/{conversation_id}/tags/{tag_id}",
                         access_token=access_token,
                     )
+                    results.append(result)
 
                 return [
                     TextContent(
                         type="text",
-                        text=f"Successfully removed {len(tag_ids)} tags from conversation {conversation_id}",
+                        text=json.dumps(
+                            {
+                                "success": True,
+                                "conversation_id": conversation_id,
+                                "removed_tag_ids": tag_ids,
+                                "results": results,
+                            }
+                        ),
                     )
                 ]
 
             except Exception as e:
                 logger.error(f"Error removing tags from conversation: {str(e)}")
-                return [TextContent(type="text", text=f"Error removing tags: {str(e)}")]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "list_admins":
             try:
@@ -951,30 +1081,26 @@ def create_server(user_id, api_key=None):
                 admins = admins_result.get("admins", [])
 
                 if not admins:
-                    return [TextContent(type="text", text="No admins found.")]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps(
+                                {"message": "No admins found", "count": 0, "data": []}
+                            ),
+                        )
+                    ]
 
-                admin_list = []
-                for admin in admins:
-                    admin_list.append(
-                        f"Admin: {admin.get('name')}\n"
-                        f"  Email: {admin.get('email')}\n"
-                        f"  ID: {admin.get('id')}\n"
-                        f"  Role: {admin.get('job_title', 'Not specified')}"
-                    )
-
-                formatted_result = "\n\n".join(admin_list)
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(admins)} admins:\n\n{formatted_result}",
-                    )
-                ]
+                if len(admins) == 1:
+                    return [TextContent(type="text", text=json.dumps(admins[0]))]
+                else:
+                    return [
+                        TextContent(type="text", text=json.dumps(admin))
+                        for admin in admins
+                    ]
 
             except Exception as e:
                 logger.error(f"Error listing admins: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error listing admins: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "search_companies":
             if not arguments or "query" not in arguments:
@@ -998,34 +1124,28 @@ def create_server(user_id, api_key=None):
                 if not companies:
                     return [
                         TextContent(
-                            type="text", text="No companies found matching your query."
+                            type="text",
+                            text=json.dumps(
+                                {
+                                    "message": "No companies found",
+                                    "count": 0,
+                                    "data": [],
+                                }
+                            ),
                         )
                     ]
 
-                company_list = []
-                for company in companies:
-                    company_list.append(
-                        f"Company: {company.get('name', 'Unnamed')}\n"
-                        f"  ID: {company.get('id')}\n"
-                        f"  Company ID: {company.get('company_id', 'Not specified')}\n"
-                        f"  Created: {company.get('created_at')}"
-                    )
-
-                formatted_result = "\n\n".join(company_list)
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(companies)} companies:\n\n{formatted_result}",
-                    )
-                ]
+                if len(companies) == 1:
+                    return [TextContent(type="text", text=json.dumps(companies[0]))]
+                else:
+                    return [
+                        TextContent(type="text", text=json.dumps(company))
+                        for company in companies
+                    ]
 
             except Exception as e:
                 logger.error(f"Error searching companies: {str(e)}")
-                return [
-                    TextContent(
-                        type="text", text=f"Error searching companies: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "create_company":
             data = {"name": arguments["name"]}
@@ -1061,25 +1181,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to create company: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to create company",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Company created successfully!\n\n"
-                        f"ID: {company_result.get('id')}\n"
-                        f"Name: {company_result.get('name')}\n"
-                        f"Created: {company_result.get('created_at')}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(company_result))]
 
             except Exception as e:
                 logger.error(f"Error creating company: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error creating company: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "associate_contact_with_company":
             required_fields = ["contact_id", "company_id"]
@@ -1100,21 +1215,11 @@ def create_server(user_id, api_key=None):
                     access_token=access_token,
                 )
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Successfully associated contact {contact_id} with company {company_id}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(result))]
 
             except Exception as e:
                 logger.error(f"Error associating contact with company: {str(e)}")
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Error associating contact with company: {str(e)}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "list_articles":
             params = {}
@@ -1130,38 +1235,36 @@ def create_server(user_id, api_key=None):
                 total_count = articles_result.get("total_count", 0)
 
                 if not articles:
-                    return [TextContent(type="text", text="No articles found.")]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps(
+                                {"message": "No articles found", "count": 0, "data": []}
+                            ),
+                        )
+                    ]
 
-                article_list = []
-                for article in articles:
-                    article_list.append(
-                        f"Article: {article.get('title')}\n"
-                        f"  ID: {article.get('id')}\n"
-                        f"  State: {article.get('state')}\n"
-                        f"  URL: {article.get('url', 'No URL')}\n"
-                        f"  Updated: {article.get('updated_at')}"
-                    )
-
-                formatted_result = "\n\n".join(article_list)
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {total_count} articles (showing {len(articles)}):\n\n{formatted_result}",
-                    )
-                ]
+                if len(articles) == 1:
+                    return [TextContent(type="text", text=json.dumps(articles[0]))]
+                else:
+                    return [
+                        TextContent(type="text", text=json.dumps(article))
+                        for article in articles
+                    ]
 
             except Exception as e:
                 logger.error(f"Error listing articles: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error listing articles: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "retrieve_article":
             try:
                 if not arguments or "id" not in arguments:
                     return [
                         TextContent(
-                            type="text", text="Missing required article ID parameter"
+                            type="text",
+                            text=json.dumps(
+                                {"error": "Missing required article ID parameter"}
+                            ),
                         )
                     ]
 
@@ -1177,42 +1280,19 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"No article found with ID: {arguments['id']}",
+                            text=json.dumps(
+                                {
+                                    "error": f"No article found with ID: {arguments['id']}"
+                                }
+                            ),
                         )
                     ]
 
-                article_details = (
-                    f"Title: {article_result.get('title')}\n"
-                    f"ID: {article_result.get('id')}\n"
-                    f"State: {article_result.get('state', 'Unknown')}\n"
-                    f"URL: {article_result.get('url', 'No URL')}\n"
-                    f"Author: {article_result.get('author_id', 'Unknown')}\n"
-                    f"Updated: {article_result.get('updated_at', 'Unknown')}"
-                )
-
-                # Add more detailed content preview
-                if article_result.get("body"):
-                    preview_length = 500  # Increased preview length
-                    preview = article_result.get("body")[:preview_length]
-                    if len(article_result.get("body", "")) > preview_length:
-                        preview += "..."
-                    article_details += f"\n\nPreview: {preview}"
-
-                # Add created date if available
-                if article_result.get("created_at"):
-                    article_details += (
-                        f"\n\nCreated: {article_result.get('created_at')}"
-                    )
-
-                logger.info(f"Article details: {article_details}")
-
-                return [TextContent(type="text", text=article_details)]
+                return [TextContent(type="text", text=json.dumps(article_result))]
 
             except Exception as e:
                 logger.error(f"Error retrieving article: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error retrieving article: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "create_article":
             required_fields = ["title", "body", "author_id"]
@@ -1243,26 +1323,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to create article: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to create article",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Article created successfully!\n\n"
-                        f"ID: {article_result.get('id')}\n"
-                        f"Title: {article_result.get('title')}\n"
-                        f"State: {article_result.get('state')}\n"
-                        f"URL: {article_result.get('url')}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(article_result))]
 
             except Exception as e:
                 logger.error(f"Error creating article: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error creating article: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         # Ticket management tool implementations
         elif name == "list_tickets":
@@ -1284,39 +1358,23 @@ def create_server(user_id, api_key=None):
                 tickets = tickets_result.get("tickets", [])
 
                 if not tickets:
-                    return [TextContent(type="text", text="No tickets found.")]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps(
+                                {"message": "No tickets found", "count": 0, "data": []}
+                            ),
+                        )
+                    ]
 
-                ticket_list = []
-                for ticket in tickets:
-                    contact_name = (
-                        ticket.get("contacts", {})
-                        .get("contacts", [{}])[0]
-                        .get("name", "Unknown contact")
-                    )
-                    status = ticket.get("ticket_state", "unknown")
-                    created_at = ticket.get("created_at", "Unknown date")
-
-                    ticket_list.append(
-                        f"Ticket: {ticket.get('ticket_attributes', {}).get('_default_title_', 'No title')}\n"
-                        f"  ID: {ticket.get('id')}\n"
-                        f"  Status: {status}\n"
-                        f"  Contact: {contact_name}\n"
-                        f"  Created: {created_at}"
-                    )
-
-                formatted_result = "\n\n".join(ticket_list)
                 return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(tickets)} tickets:\n\n{formatted_result}",
-                    )
+                    TextContent(type="text", text=json.dumps(ticket))
+                    for ticket in tickets
                 ]
 
             except Exception as e:
                 logger.error(f"Error listing tickets: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error listing tickets: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "get_ticket":
             required_fields = ["ticket_id"]
@@ -1334,69 +1392,18 @@ def create_server(user_id, api_key=None):
                 if not ticket_result or "id" not in ticket_result:
                     return [
                         TextContent(
-                            type="text", text=f"Ticket with ID {ticket_id} not found."
+                            type="text",
+                            text=json.dumps(
+                                {"error": f"Ticket with ID {ticket_id} not found"}
+                            ),
                         )
                     ]
 
-                title = ticket_result.get("ticket_attributes", {}).get(
-                    "_default_title_", "No title"
-                )
-                description = ticket_result.get("ticket_attributes", {}).get(
-                    "_default_description_", "No description"
-                )
-                status = ticket_result.get("ticket_state", "unknown")
-                created_at = ticket_result.get("created_at", "Unknown")
-                updated_at = ticket_result.get("updated_at", "Unknown")
-                ticket_parts = ticket_result.get("ticket_parts", {}).get(
-                    "ticket_parts", []
-                )
-
-                contact_info = "Unknown contact"
-                if ticket_result.get("contacts", {}).get("contacts"):
-                    contact = ticket_result.get("contacts", {}).get("contacts", [])[0]
-                    contact_info = f"{contact.get('name', 'Unknown')} ({contact.get('email', 'No email')})"
-
-                admin_assignee = ticket_result.get("admin_assignee_id", "None")
-
-                ticket_details = (
-                    f"Ticket: {title}\n"
-                    f"ID: {ticket_result.get('id')}\n"
-                    f"Status: {status}\n"
-                    f"Contact: {contact_info}\n"
-                    f"Assignee: {admin_assignee}\n"
-                    f"Created: {created_at}\n"
-                    f"Updated: {updated_at}\n\n"
-                    f"Description:\n{description}\n\n"
-                )
-
-                if ticket_parts:
-                    parts_text = "Activity & Comments:\n\n"
-                    for part in ticket_parts:
-                        part_type = part.get("part_type", "Unknown")
-                        author_info = "System"
-                        if part.get("author"):
-                            author_type = part["author"].get("type", "unknown")
-                            author_name = part["author"].get("name", "Unknown")
-                            author_info = f"{author_name} ({author_type})"
-
-                        created_at = part.get("created_at", "Unknown")
-
-                        parts_text += f"[{created_at}] {author_info} - {part_type}:\n"
-
-                        if part.get("body"):
-                            parts_text += f"{part.get('body')}\n\n"
-                        else:
-                            parts_text += "No content\n\n"
-
-                    ticket_details += parts_text
-
-                return [TextContent(type="text", text=ticket_details)]
+                return [TextContent(type="text", text=json.dumps(ticket_result))]
 
             except Exception as e:
                 logger.error(f"Error retrieving ticket: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error retrieving ticket: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "create_ticket":
             required_fields = ["contact_id", "title", "description"]
@@ -1435,25 +1442,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to create ticket: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to create ticket",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Ticket created successfully!\n\n"
-                        f"ID: {ticket_result.get('id')}\n"
-                        f"Title: {arguments['title']}\n"
-                        f"Status: {ticket_result.get('ticket_state', 'submitted')}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(ticket_result))]
 
             except Exception as e:
                 logger.error(f"Error creating ticket: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error creating ticket: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "update_ticket":
             required_fields = ["ticket_id"]
@@ -1484,7 +1486,17 @@ def create_server(user_id, api_key=None):
                 data["is_shared"] = arguments["is_shared"]
 
             if not data:
-                return [TextContent(type="text", text="No fields provided to update.")]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": "No fields provided to update",
+                                "ticket_id": ticket_id,
+                            }
+                        ),
+                    )
+                ]
 
             try:
                 ticket_result = await execute_intercom_request(
@@ -1500,36 +1512,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to update ticket: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to update ticket",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                update_summary = []
-                if "state" in arguments:
-                    update_summary.append(f"Status: {arguments['state']}")
-                if "admin_id" in arguments:
-                    update_summary.append(f"Assigned to: Admin {arguments['admin_id']}")
-                if "title" in arguments:
-                    update_summary.append(f"Title: {arguments['title']}")
-
-                status_message = (
-                    ", ".join(update_summary) if update_summary else "Fields updated"
-                )
-
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Ticket updated successfully!\n\n"
-                        f"ID: {ticket_result.get('id')}\n"
-                        f"{status_message}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(ticket_result))]
 
             except Exception as e:
                 logger.error(f"Error updating ticket: {str(e)}")
-                return [
-                    TextContent(type="text", text=f"Error updating ticket: {str(e)}")
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "add_comment_to_ticket":
             required_fields = ["ticket_id", "comment", "admin_id"]
@@ -1563,24 +1559,20 @@ def create_server(user_id, api_key=None):
                     return [
                         TextContent(
                             type="text",
-                            text=f"Failed to add comment: {error_message}",
+                            text=json.dumps(
+                                {
+                                    "error": "Failed to add comment",
+                                    "message": error_message,
+                                }
+                            ),
                         )
                     ]
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"Note added successfully to ticket {ticket_id}",
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps(comment_result))]
 
             except Exception as e:
                 logger.error(f"Error adding comment to ticket: {str(e)}")
-                return [
-                    TextContent(
-                        type="text", text=f"Error adding comment to ticket: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         elif name == "list_ticket_types":
             try:
@@ -1593,33 +1585,25 @@ def create_server(user_id, api_key=None):
                 if not ticket_types:
                     return [
                         TextContent(
-                            type="text", text="No ticket types found in this workspace."
+                            type="text",
+                            text=json.dumps(
+                                {
+                                    "message": "No ticket types found",
+                                    "count": 0,
+                                    "data": [],
+                                }
+                            ),
                         )
                     ]
 
-                ticket_type_list = []
-                for ticket_type in ticket_types:
-                    ticket_type_list.append(
-                        f"Ticket Type: {ticket_type.get('name', 'Unnamed')}\n"
-                        f"  ID: {ticket_type.get('id')}\n"
-                        f"  Description: {ticket_type.get('description', 'No description')}"
-                    )
-
-                formatted_result = "\n\n".join(ticket_type_list)
                 return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(ticket_types)} ticket types:\n\n{formatted_result}",
-                    )
+                    TextContent(type="text", text=json.dumps(ticket_type))
+                    for ticket_type in ticket_types
                 ]
 
             except Exception as e:
                 logger.error(f"Error listing ticket types: {str(e)}")
-                return [
-                    TextContent(
-                        type="text", text=f"Error listing ticket types: {str(e)}"
-                    )
-                ]
+                return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
         raise ValueError(f"Unknown tool: {name}")
 
@@ -1643,10 +1627,11 @@ def get_initialization_options(server_instance: Server) -> InitializationOptions
 
 # Main handler allows users to auth
 if __name__ == "__main__":
-    if sys.argv[1].lower() == "auth":
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "auth":
         user_id = "local"
         # Run authentication flow
         authenticate_and_save_credentials(user_id, SERVICE_NAME, SCOPES)
+        print("\nAuthentication complete!")
     else:
         print("Usage:")
         print("  python main.py auth - Run authentication flow for a user")

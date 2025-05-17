@@ -2,7 +2,7 @@ import pytest
 import uuid
 
 # Global variables to store created project and issue IDs
-SITE_NAME = "gumloop"
+SITE_NAME = "testing-mcp"
 project_key = "TEST" + str(uuid.uuid4())[:4].upper()
 
 created_issue_key = None

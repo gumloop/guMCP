@@ -1,4 +1,5 @@
 import pytest
+import re
 
 # Global variables to store post id
 post_id = None
@@ -30,9 +31,11 @@ async def test_get_top_stories(client):
 
     # Extract post ID from response
     try:
-        post_id = response.lower().split("id: ")[1].split()[0]
+        post_id_match = re.search(r"id:\s*(\S+)", response, re.IGNORECASE)
+        username_match = re.search(r"username:\s*(\S+)", response, re.IGNORECASE)
+        post_id = post_id_match.group(1) if post_id_match else None
         print(f"Top story ID: {post_id}")
-        username = response.lower().split("username: ")[1].split()[0]
+        username = username_match.group(1) if username_match else None
         print(f"Top story Username: {username}")
     except IndexError:
         pytest.fail("Could not extract post ID or username from response")

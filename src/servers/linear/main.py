@@ -271,6 +271,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["query"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Individual issues matching the search query, one per TextContent",
+                    "examples": [
+                        '{"id": "f638974f-c932-4bd6-99c8-a62937abf58c", "title": "Connect to Slack", "identifier": "TES-3", "url": "https://linear.app/team/issue/TES-3/connect-to-slack", "state": {"name": "Todo", "color": "#e2e2e2"}, "team": {"key": "TES"}, "priority": 3, "project": null, "assignee": null}'
+                    ],
+                },
+                requiredScopes=["read"],
             ),
             Tool(
                 name="create_issue",
@@ -303,6 +312,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["team_id", "title"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the created issue from Linear API",
+                    "examples": [
+                        '{"data": {"issueCreate": {"issue": {"id": "cb708d67-9542-4d3f-9c01-002ec5e21f0f", "title": "Test Issue", "identifier": "TES-10", "url": "https://linear.app/team/issue/TES-10/test-issue"}, "success": true}}}'
+                    ],
+                },
+                requiredScopes=["write"],
             ),
             Tool(
                 name="update_issue",
@@ -342,6 +360,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["issue_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the updated issue from Linear API",
+                    "examples": [
+                        '{"data": {"issueUpdate": {"issue": {"id": "a1328f64-8441-4e44-bda2-4cda6e9a7635", "title": "Updated Test Issue", "identifier": "TES-11", "url": "https://linear.app/team/issue/TES-11/updated-test-issue", "state": {"name": "Backlog"}}, "success": true}}}'
+                    ],
+                },
+                requiredScopes=["write"],
             ),
         ]
 
@@ -408,43 +435,28 @@ def create_server(user_id, api_key=None):
                 if not issues:
                     return [
                         TextContent(
-                            type="text", text="No issues found matching your query."
+                            type="text",
+                            text=json.dumps(
+                                {
+                                    "status": "empty",
+                                    "message": "No issues found matching your query.",
+                                }
+                            ),
                         )
                     ]
 
-                issue_list = []
-                for issue in issues:
-                    priority_map = {
-                        1: "Urgent",
-                        2: "High",
-                        3: "Medium",
-                        4: "Low",
-                        None: "None",
-                    }
-                    priority_text = priority_map.get(issue.get("priority"))
-                    assignee = issue.get("assignee", {}) or {}
-                    assignee = assignee.get("name", "Unassigned")
-
-                    issue_list.append(
-                        f"{issue['team']['key']}-{issue['identifier']}: {issue['title']}\n"
-                        f"  State: {issue['state']['name']}\n"
-                        f"  Priority: {priority_text}\n"
-                        f"  Assignee: {assignee}\n"
-                        f"  ID: {issue['id']}"
-                    )
-
-                formatted_result = "\n\n".join(issue_list)
+                # Return each issue as separate TextContent
                 return [
-                    TextContent(
-                        type="text",
-                        text=f"Found {len(issues)} issues:\n\n{formatted_result}",
-                    )
+                    TextContent(type="text", text=json.dumps(issue)) for issue in issues
                 ]
 
             except Exception as e:
                 logger.error(f"Error searching issues: {str(e)}")
                 return [
-                    TextContent(type="text", text=f"Error searching issues: {str(e)}")
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"status": "error", "message": str(e)}),
+                    )
                 ]
 
         elif name == "create_issue":
@@ -503,36 +515,16 @@ def create_server(user_id, api_key=None):
                 result = await execute_linear_query(
                     create_mutation, variables, access_token=access_token
                 )
-                create_result = result.get("data", {}).get("issueCreate", {})
-
-                if create_result.get("success"):
-                    issue = create_result.get("issue", {})
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Issue created successfully!\n\n"
-                            f"ID: {issue.get('id')}\n"
-                            f"Title: {issue.get('title')}\n"
-                            f"Identifier: {issue.get('identifier')}\n"
-                            f"URL: {issue.get('url')}",
-                        )
-                    ]
-                else:
-                    errors = result.get("errors", [])
-                    error_messages = "\n".join(
-                        [e.get("message", "Unknown error") for e in errors]
-                    )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Failed to create issue: {error_messages}",
-                        )
-                    ]
+                # Return raw API response as JSON
+                return [TextContent(type="text", text=json.dumps(result))]
 
             except Exception as e:
                 logger.error(f"Error creating issue: {str(e)}")
                 return [
-                    TextContent(type="text", text=f"Error creating issue: {str(e)}")
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"status": "error", "message": str(e)}),
+                    )
                 ]
 
         elif name == "update_issue":
@@ -605,37 +597,16 @@ def create_server(user_id, api_key=None):
                 result = await execute_linear_query(
                     update_mutation, variables, access_token=access_token
                 )
-                update_result = result.get("data", {}).get("issueUpdate", {})
-
-                if update_result.get("success"):
-                    issue = update_result.get("issue", {})
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Issue updated successfully!\n\n"
-                            f"ID: {issue.get('id')}\n"
-                            f"Title: {issue.get('title')}\n"
-                            f"Identifier: {issue.get('identifier')}\n"
-                            f"State: {issue.get('state', {}).get('name')}\n"
-                            f"URL: {issue.get('url')}",
-                        )
-                    ]
-                else:
-                    errors = result.get("errors", [])
-                    error_messages = "\n".join(
-                        [e.get("message", "Unknown error") for e in errors]
-                    )
-                    return [
-                        TextContent(
-                            type="text",
-                            text=f"Failed to update issue: {error_messages}",
-                        )
-                    ]
+                # Return raw API response as JSON
+                return [TextContent(type="text", text=json.dumps(result))]
 
             except Exception as e:
                 logger.error(f"Error updating issue: {str(e)}")
                 return [
-                    TextContent(type="text", text=f"Error updating issue: {str(e)}")
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"status": "error", "message": str(e)}),
+                    )
                 ]
 
         raise ValueError(f"Unknown tool: {name}")

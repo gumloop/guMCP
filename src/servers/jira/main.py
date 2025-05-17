@@ -12,15 +12,19 @@ import logging
 from pathlib import Path
 import json
 import requests
+from typing import Optional, Iterable
 
 from mcp.types import (
     TextContent,
     Tool,
     ImageContent,
     EmbeddedResource,
+    AnyUrl,
+    Resource,
 )
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 from src.utils.jira.util import (
     authenticate_and_save_credentials,
@@ -253,6 +257,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["key", "name", "project_type_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created project with its ID and key",
+                    "examples": [
+                        '{"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/project/10001", "id": 10001, "key": "TESTB700"}'
+                    ],
+                },
+                requiredScopes=["manage:jira-project", "write:jira-work"],
             ),
             Tool(
                 name="get_project",
@@ -268,6 +281,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["project_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about a JIRA project including key, name, lead, components, issue types, etc.",
+                    "examples": [
+                        '{"expand": "description,lead,issueTypes,url,projectKeys,permissions,insight", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/project/10001", "id": "10001", "key": "TESTB700", "description": "Project description", "lead": {"displayName": "User Name"}, "components": [], "issueTypes": [{"name": "Task"}, {"name": "Sub-task"}], "assigneeType": "PROJECT_LEAD", "name": "Project Name", "roles": {}, "projectTypeKey": "software"}'
+                    ],
+                },
+                requiredScopes=["read:jira-work"],
             ),
             Tool(
                 name="update_project",
@@ -292,6 +314,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["project_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Updated project details including all fields that were changed",
+                    "examples": [
+                        '{"expand": "description,lead,issueTypes,url,projectKeys,permissions,insight", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/project/10001", "id": "10001", "key": "TESTB700", "description": "This is an updated test project description.", "lead": {"displayName": "User Name"}, "name": "Updated Project Name", "projectTypeKey": "software"}'
+                    ],
+                },
+                requiredScopes=["manage:jira-project", "write:jira-work"],
             ),
             Tool(
                 name="delete_project",
@@ -307,6 +338,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["project_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Result of the project deletion operation",
+                    "examples": [
+                        '{"success": true, "message": "Project TESTB700 successfully deleted"}'
+                    ],
+                },
+                requiredScopes=["manage:jira-project"],
             ),
             Tool(
                 name="list_projects",
@@ -320,7 +360,18 @@ def create_server(user_id, api_key=None):
                         },
                         **site_selection_properties,
                     },
+                    "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of JIRA projects with basic metadata for each project",
+                    "examples": [
+                        '{"expand": "description,lead,issueTypes,url,projectKeys,permissions,insight", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/project/10000", "id": "10000", "key": "KAN", "name": "Project Name", "avatarUrls": {}, "projectTypeKey": "software", "simplified": true, "style": "next-gen", "isPrivate": false, "properties": {}}',
+                        '{"expand": "description,lead,issueTypes,url,projectKeys,permissions,insight", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/project/10001", "id": "10001", "key": "TESTB700", "name": "Test Project", "avatarUrls": {}, "projectTypeKey": "software", "simplified": false, "style": "classic", "isPrivate": false, "properties": {}}',
+                    ],
+                },
+                requiredScopes=["read:jira-work"],
             ),
             Tool(
                 name="get_issue_types_for_project",
@@ -336,6 +387,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["project_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of issue types for a project with their available statuses",
+                    "examples": [
+                        '[{"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issuetype/10004", "id": "10004", "name": "Task", "subtask": false, "statuses": [{"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/status/10004", "description": "", "name": "Done", "id": "10004", "statusCategory": {"id": 3, "key": "done", "colorName": "green", "name": "Done"}}, {"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/status/3", "description": "This issue is being actively worked on", "name": "In Progress", "id": "3", "statusCategory": {"id": 4, "key": "indeterminate", "colorName": "yellow", "name": "In Progress"}}, {"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/status/10003", "description": "", "name": "To Do", "id": "10003", "statusCategory": {"id": 2, "key": "new", "colorName": "blue-gray", "name": "To Do"}}]}]'
+                    ],
+                },
+                requiredScopes=["read:jira-work"],
             ),
         ]
 
@@ -390,6 +450,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["project_key", "summary", "issue_type"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created issue with its ID and key",
+                    "examples": [
+                        '{"id": "10000", "key": "TESTB700-1", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issue/10000"}'
+                    ],
+                },
+                requiredScopes=["write:jira-work"],
             ),
             Tool(
                 name="get_issue",
@@ -410,6 +479,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["issue_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about a JIRA issue including summary, description, assignee, status, etc.",
+                    "examples": [
+                        '{"expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations", "id": "10000", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issue/10000", "key": "TESTB700-1", "fields": {"summary": "Issue Summary", "status": {"name": "In Progress"}, "assignee": {"displayName": "User Name"}, "description": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Issue description"}]}]}, "issuetype": {"name": "Task"}, "priority": {"name": "Medium"}, "creator": {"displayName": "Creator Name"}, "reporter": {"displayName": "Reporter Name"}}}'
+                    ],
+                },
+                requiredScopes=["read:jira-work"],
             ),
             Tool(
                 name="update_issue",
@@ -451,6 +529,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["issue_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Status of the update operation",
+                    "examples": [
+                        '{"success": true, "message": "Issue TESTB700-1 successfully updated"}'
+                    ],
+                },
+                requiredScopes=["write:jira-work"],
             ),
             Tool(
                 name="delete_issue",
@@ -466,6 +553,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["issue_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Status of the delete operation",
+                    "examples": [
+                        '{"success": true, "message": "Issue TESTB700-1 successfully deleted"}'
+                    ],
+                },
+                requiredScopes=["write:jira-work"],
             ),
             Tool(
                 name="transition_my_issue",
@@ -489,6 +585,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["issue_key", "transition_to"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Status of the transition operation",
+                    "examples": [
+                        '{"success": true, "message": "Issue TESTB700-1 successfully transitioned to in progress"}'
+                    ],
+                },
+                requiredScopes=["write:jira-work"],
             ),
             Tool(
                 name="list_issues",
@@ -505,6 +610,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["jql"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of issues matching the JQL query, one issue per TextContent",
+                    "examples": [
+                        '{"expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations", "id": "10000", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issue/10000", "key": "TESTB700-1", "fields": {"summary": "Issue Summary", "status": {"name": "In Progress"}, "assignee": {"displayName": "User Name"}, "description": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Issue description"}]}]}, "issuetype": {"name": "Task"}, "priority": {"name": "Medium"}, "creator": {"displayName": "Creator Name"}, "reporter": {"displayName": "Reporter Name"}}}'
+                    ],
+                },
+                requiredScopes=["read:jira-work"],
             ),
             Tool(
                 name="comment_on_issue",
@@ -521,6 +635,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["issue_key", "body"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of the newly created comment",
+                    "examples": [
+                        '{"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issue/10000/comment/10000", "id": "10000", "author": {"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/user?accountId=<account-id>", "accountId": "<account-id>", "displayName": "User Name", "active": true}, "body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "This is a test comment."}]}]}, "created": "2025-05-16T16:58:43.046-0700", "updated": "2025-05-16T16:58:43.046-0700", "jsdPublic": true}'
+                    ],
+                },
+                requiredScopes=["write:jira-work"],
             ),
         ]
 
@@ -532,7 +655,17 @@ def create_server(user_id, api_key=None):
                 inputSchema={
                     "type": "object",
                     "properties": {**site_selection_properties},
+                    "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about your account including accountId, email, display name, and more",
+                    "examples": [
+                        '{"self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/user?accountId=<account-id>", "accountId": "<account-id>", "accountType": "atlassian", "emailAddress": "user@example.com", "avatarUrls": {}, "displayName": "User Name", "active": true, "timeZone": "America/Los_Angeles", "locale": "en_US", "groups": {"size": 4, "items": []}, "applicationRoles": {"size": 1, "items": []}, "expand": "groups,applicationRoles"}'
+                    ],
+                },
+                requiredScopes=["read:jira-user"],
             ),
             Tool(
                 name="get_my_issues",
@@ -550,7 +683,17 @@ def create_server(user_id, api_key=None):
                         },
                         **site_selection_properties,
                     },
+                    "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Detailed information about issues assigned to you, one issue per TextContent",
+                    "examples": [
+                        '{"expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations", "id": "10000", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issue/10000", "key": "TESTB700-1", "fields": {"summary": "Issue Summary", "status": {"name": "In Progress"}, "assignee": {"displayName": "User Name"}, "description": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Issue description"}]}]}, "issuetype": {"name": "Task"}, "priority": {"name": "Medium"}, "creator": {"displayName": "Creator Name"}, "reporter": {"displayName": "Reporter Name"}}}'
+                    ],
+                },
+                requiredScopes=["read:jira-work", "read:jira-user"],
             ),
             Tool(
                 name="get_my_recent_activity",
@@ -564,7 +707,17 @@ def create_server(user_id, api_key=None):
                         },
                         **site_selection_properties,
                     },
+                    "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Issues you recently created, commented on, or were assigned to",
+                    "examples": [
+                        '{"expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations", "id": "10000", "self": "https://api.atlassian.com/ex/jira/<cloud-id>/rest/api/3/issue/10000", "key": "TESTB700-1", "fields": {"summary": "Updated Test Issue", "status": {"name": "In Progress"}, "assignee": {"displayName": "User Name"}, "description": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "This is an updated test issue description."}]}]}, "issuetype": {"name": "Task"}, "priority": {"name": "Medium"}, "creator": {"displayName": "Creator Name"}, "reporter": {"displayName": "Reporter Name"}, "created": "2025-05-16T16:58:14.267-0700", "updated": "2025-05-16T16:59:51.618-0700"}}'
+                    ],
+                },
+                requiredScopes=["read:jira-work", "read:jira-user"],
             ),
             Tool(
                 name="get_my_permissions",
@@ -585,6 +738,15 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["project_key"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Details of your permissions in the specified project",
+                    "examples": [
+                        '{"permissions": {"BROWSE_PROJECTS": {"id": "10", "key": "BROWSE_PROJECTS", "name": "Browse Projects", "type": "PROJECT", "description": "Ability to browse projects and the issues within them.", "havePermission": true}, "EDIT_ISSUES": {"id": "12", "key": "EDIT_ISSUES", "name": "Edit Issues", "type": "PROJECT", "description": "Ability to edit issues.", "havePermission": true}, "CREATE_ISSUES": {"id": "11", "key": "CREATE_ISSUES", "name": "Create Issues", "type": "PROJECT", "description": "Ability to create issues.", "havePermission": true}, "ASSIGN_ISSUES": {"id": "13", "key": "ASSIGN_ISSUES", "name": "Assign Issues", "type": "PROJECT", "description": "Ability to assign issues to other people.", "havePermission": true}}}'
+                    ],
+                },
+                requiredScopes=["read:jira-user"],
             ),
         ]
 
@@ -630,12 +792,11 @@ def create_server(user_id, api_key=None):
                 site.get("name", "") for site in jira_client.get("available_sites", [])
             ]
             site_list = ", ".join(available_site_names)
-            return [
-                TextContent(
-                    type="text",
-                    text=f"Error: Multiple Jira sites available. You must specify either 'cloud_id' or 'site_name' for this operation. Available sites: {site_list}",
-                )
-            ]
+            error_response = {
+                "error": f"Multiple Jira sites available. You must specify either 'cloud_id' or 'site_name' for this operation.",
+                "available_sites": available_site_names,
+            }
+            return [TextContent(type="text", text=json.dumps(error_response, indent=2))]
 
         # Make a clean copy of arguments without site selection parameters
         # This ensures we don't pass these to the API
@@ -772,10 +933,13 @@ def create_server(user_id, api_key=None):
 
                 # Special handling for successful delete which returns no content
                 if response.status_code == 204:
+                    success_response = {
+                        "success": True,
+                        "message": f"Project {project_key} successfully deleted",
+                    }
                     return [
                         TextContent(
-                            type="text",
-                            text=f"Project {project_key} successfully deleted",
+                            type="text", text=json.dumps(success_response, indent=2)
                         )
                     ]
 
@@ -808,10 +972,12 @@ def create_server(user_id, api_key=None):
                     )
 
                     if project_check.status_code != 200:
+                        error_response = {
+                            "error": f"Project '{project_key}' not found or not accessible"
+                        }
                         return [
                             TextContent(
-                                type="text",
-                                text=f"Error: Project '{project_key}' not found or not accessible.",
+                                type="text", text=json.dumps(error_response, indent=2)
                             )
                         ]
 
@@ -883,18 +1049,22 @@ def create_server(user_id, api_key=None):
                             return [
                                 TextContent(
                                     type="text",
-                                    text=f"Error creating issue: {json.dumps(error_details, indent=2)}",
+                                    text=json.dumps(error_details, indent=2),
                                 )
                             ]
-                        except Exception as e:
-                            logger.error(f"Error creating issue: {str(e)}")
+                        except Exception:
+                            error_response = {"error": str(e)}
                             return [
                                 TextContent(
-                                    type="text", text=f"Error creating issue: {str(e)}"
+                                    type="text",
+                                    text=json.dumps(error_response, indent=2),
                                 )
                             ]
+                    error_response = {"error": str(e)}
                     return [
-                        TextContent(type="text", text=f"Error creating issue: {str(e)}")
+                        TextContent(
+                            type="text", text=json.dumps(error_response, indent=2)
+                        )
                     ]
 
             elif name == "get_issue":
@@ -949,9 +1119,13 @@ def create_server(user_id, api_key=None):
 
                 # PUT for update returns 204 No Content when successful
                 if response.status_code == 204:
+                    success_response = {
+                        "success": True,
+                        "message": f"Issue {issue_key} successfully updated",
+                    }
                     return [
                         TextContent(
-                            type="text", text=f"Issue {issue_key} successfully updated"
+                            type="text", text=json.dumps(success_response, indent=2)
                         )
                     ]
 
@@ -964,9 +1138,13 @@ def create_server(user_id, api_key=None):
 
                 # DELETE returns 204 No Content when successful
                 if response.status_code == 204:
+                    success_response = {
+                        "success": True,
+                        "message": f"Issue {issue_key} successfully deleted",
+                    }
                     return [
                         TextContent(
-                            type="text", text=f"Issue {issue_key} successfully deleted"
+                            type="text", text=json.dumps(success_response, indent=2)
                         )
                     ]
 
@@ -991,10 +1169,14 @@ def create_server(user_id, api_key=None):
                         break
 
                 if not transition_id:
+                    available_transitions = [t["to"]["name"] for t in transitions]
+                    error_response = {
+                        "error": f"Could not find transition to '{transition_target}'",
+                        "available_transitions": available_transitions,
+                    }
                     return [
                         TextContent(
-                            type="text",
-                            text=f"Error: Could not find transition to '{transition_target}'. Available transitions: {', '.join([t['to']['name'] for t in transitions])}",
+                            type="text", text=json.dumps(error_response, indent=2)
                         )
                     ]
 
@@ -1015,10 +1197,13 @@ def create_server(user_id, api_key=None):
 
                 # Transition returns 204 No Content when successful
                 if response.status_code == 204:
+                    success_response = {
+                        "success": True,
+                        "message": f"Issue {issue_key} successfully transitioned to {transition_target}",
+                    }
                     return [
                         TextContent(
-                            type="text",
-                            text=f"Issue {issue_key} successfully transitioned to {transition_target}",
+                            type="text", text=json.dumps(success_response, indent=2)
                         )
                     ]
 
@@ -1036,10 +1221,12 @@ def create_server(user_id, api_key=None):
                 try:
                     # Verify project_type_key is provided
                     if "project_type_key" not in api_args:
+                        error_response = {
+                            "error": "You must specify 'project_type_key' for project creation"
+                        }
                         return [
                             TextContent(
-                                type="text",
-                                text="Error: You must specify 'project_type_key' for project creation.",
+                                type="text", text=json.dumps(error_response, indent=2)
                             )
                         ]
 
@@ -1054,10 +1241,13 @@ def create_server(user_id, api_key=None):
                                 "accountId"
                             )
                         except requests.exceptions.RequestException:
+                            error_response = {
+                                "error": "Error accessing Jira site. Please verify your permissions."
+                            }
                             return [
                                 TextContent(
                                     type="text",
-                                    text="Error accessing Jira site. Please verify your permissions.",
+                                    text=json.dumps(error_response, indent=2),
                                 )
                             ]
 
@@ -1072,54 +1262,178 @@ def create_server(user_id, api_key=None):
                         timeout=30,
                     )
 
-                    if response.status_code in [200, 201]:
-                        return [
-                            TextContent(
-                                type="text", text=json.dumps(response.json(), indent=2)
-                            )
-                        ]
-                    else:
-                        response.raise_for_status()
+                    response.raise_for_status()
+
                 except Exception as e:
-                    error_message = f"Error creating project: {str(e)}"
+                    error_message = {"error": f"Error creating project: {str(e)}"}
+
                     if hasattr(e, "response") and e.response is not None:
                         try:
                             error_details = e.response.json()
-                            error_message += (
-                                f"\nDetails: {json.dumps(error_details, indent=2)}"
-                            )
-                        except Exception as e:
-                            logger.error(f"Error creating project: {str(e)}")
-                            error_message += f"\nResponse text: {e.response.text}"
-                    return [TextContent(type="text", text=error_message)]
+                            error_message["details"] = error_details
+                        except Exception:
+                            error_message["response_text"] = e.response.text
+
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps(error_message, indent=2)
+                        )
+                    ]
 
             else:
-                return [TextContent(type="text", text=f"Unknown tool: {name}")]
+                error_response = {"error": f"Unknown tool: {name}"}
+                return [
+                    TextContent(type="text", text=json.dumps(error_response, indent=2))
+                ]
 
             # Check if the response was successful
             response.raise_for_status()
 
             # Some endpoints return no content on success
             if response.status_code == 204:
+                success_response = {
+                    "success": True,
+                    "message": "Operation completed successfully",
+                }
                 return [
-                    TextContent(type="text", text="Operation completed successfully")
+                    TextContent(
+                        type="text", text=json.dumps(success_response, indent=2)
+                    )
                 ]
 
+            # Process the response based on its content
             result = response.json()
+
+            # Handle array responses
+            if (
+                isinstance(result, dict)
+                and "issues" in result
+                and isinstance(result["issues"], list)
+            ):
+                return [
+                    TextContent(type="text", text=json.dumps(issue, indent=2))
+                    for issue in result["issues"]
+                ]
+            elif (
+                isinstance(result, dict)
+                and "values" in result
+                and isinstance(result["values"], list)
+            ):
+                return [
+                    TextContent(type="text", text=json.dumps(item, indent=2))
+                    for item in result["values"]
+                ]
+            # Return the result as a single JSON object
             return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except requests.exceptions.RequestException as e:
-            error_message = f"JIRA API error: {str(e)}"
+            error_message = {"error": f"JIRA API error: {str(e)}"}
+
             if hasattr(e, "response") and e.response is not None:
                 try:
                     error_details = e.response.json()
-                    error_message += f"\nDetails: {json.dumps(error_details, indent=2)}"
+                    error_message["details"] = error_details
                 except ValueError:
-                    error_message += f"\nResponse text: {e.response.text}"
+                    error_message["response_text"] = e.response.text
 
-            return [TextContent(type="text", text=error_message)]
+            return [TextContent(type="text", text=json.dumps(error_message, indent=2))]
         except Exception as e:
-            return [TextContent(type="text", text=f"Error: {str(e)}")]
+            error_response = {"error": str(e)}
+            return [TextContent(type="text", text=json.dumps(error_response, indent=2))]
+
+    @server.list_resources()
+    async def handle_list_resources(
+        cursor: Optional[str] = None,
+    ) -> list[Resource]:
+        """List JIRA organization resources (sites)"""
+        logger.info(
+            f"Listing organization resources for user: {server.user_id} with cursor: {cursor}"
+        )
+
+        try:
+            # Get full credentials to access accessible sites
+            jira_client = await create_jira_client(
+                server.user_id, api_key=server.api_key, return_full_credentials=True
+            )
+
+            resources = []
+
+            # List accessible Atlassian sites (organizations)
+            available_sites = jira_client.get("available_sites", [])
+            cloud_id = jira_client.get("cloud_id")
+
+            # Add all sites as resources
+            for site in available_sites:
+                site_id = site.get("id")
+                site_name = site.get("name")
+                site_url = site.get("url", "")
+                is_current = site_id == cloud_id
+
+                resource = Resource(
+                    uri=f"jira://site/{site_id}",
+                    mimeType="application/json",
+                    name=f"{site_name}{' (current)' if is_current else ''}",
+                    description=f"Jira site: {site_name} - {site_url}",
+                )
+                resources.append(resource)
+
+            return resources
+
+        except Exception as e:
+            logger.error(f"Error listing JIRA resources: {e}")
+            return []
+
+    @server.read_resource()
+    async def handle_read_resource(uri: AnyUrl) -> Iterable[ReadResourceContents]:
+        """Read a JIRA organization resource"""
+        logger.info(f"Reading resource: {uri} for user: {server.user_id}")
+
+        jira_client = await create_jira_client(server.user_id, api_key=server.api_key)
+
+        uri_str = str(uri)
+        if not uri_str.startswith("jira://"):
+            raise ValueError(f"Invalid JIRA URI: {uri_str}")
+
+        # Parse the URI to get resource type and ID
+        parts = uri_str.replace("jira://", "").split("/")
+        if len(parts) != 2:
+            raise ValueError(f"Invalid JIRA URI format: {uri_str}")
+
+        resource_type, resource_id = parts
+
+        try:
+            if resource_type == "site":
+                # For site resources, return information about the site
+                available_sites = jira_client.get("available_sites", [])
+                requested_site = None
+
+                for site in available_sites:
+                    if site.get("id") == resource_id:
+                        requested_site = site
+                        break
+
+                if not requested_site:
+                    return [
+                        ReadResourceContents(
+                            content=f"Error: Site with ID {resource_id} not found",
+                            mime_type="text/plain",
+                        )
+                    ]
+
+                return [
+                    ReadResourceContents(
+                        content=json.dumps(requested_site, indent=2),
+                        mime_type="application/json",
+                    )
+                ]
+            else:
+                raise ValueError(f"Unknown resource type: {resource_type}")
+
+        except Exception as e:
+            logger.error(f"Error reading JIRA resource: {e}")
+            return [
+                ReadResourceContents(content=f"Error: {str(e)}", mime_type="text/plain")
+            ]
 
     return server
 

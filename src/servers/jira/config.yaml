@@ -2,43 +2,86 @@ name: "JIRA guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with JIRA for project management, issue tracking, and user information access."
 documentation_path: "README.md"
+resources:
+  - name: "site"
+    description: "Jira sites (organizations) that you have access to"
+    required_scopes:
+      - "read:jira-work"
 tools:
   # Project Management Tools
   - name: "create_project"
     description: "Set up a new JIRA project for a team, client, or initiative"
+    required_scopes:
+      - "manage:jira-project"
+      - "write:jira-work"
   - name: "get_project"
     description: "Retrieve metadata about a specific project"
+    required_scopes:
+      - "read:jira-work"
   - name: "update_project"
     description: "Modify project details like name, lead, or description"
+    required_scopes:
+      - "manage:jira-project"
+      - "write:jira-work"
   - name: "delete_project"
     description: "Delete an entire project and its issues"
+    required_scopes:
+      - "manage:jira-project"
   - name: "list_projects"
     description: "List all accessible JIRA projects"
+    required_scopes:
+      - "read:jira-work"
   - name: "get_issue_types_for_project"
     description: "Get all valid issue types (e.g., Task, Bug, Story) for a project"
+    required_scopes:
+      - "read:jira-work"
     
   # Issue Management Tools
   - name: "create_issue"
     description: "Create a new issue, bug, task, or story in a project"
+    required_scopes:
+      - "write:jira-work"
   - name: "get_issue"
     description: "Get full details of an issue (title, description, status, comments, etc.)"
+    required_scopes:
+      - "read:jira-work"
   - name: "update_issue"
     description: "Modify issue fields such as assignee, priority, or status"
+    required_scopes:
+      - "write:jira-work"
   - name: "delete_issue"
     description: "Permanently remove an issue from a project"
+    required_scopes:
+      - "write:jira-work"
   - name: "transition_my_issue"
     description: "Move an assigned issue to a new status (e.g., 'In Progress', 'Done')"
+    required_scopes:
+      - "write:jira-work"
   - name: "list_issues"
     description: "List issues by JQL query"
+    required_scopes:
+      - "read:jira-work"
   - name: "comment_on_issue"
     description: "Add a comment to an issue"
+    required_scopes:
+      - "write:jira-work"
     
   # User-specific Tools
   - name: "get_myself"
     description: "Get information about the authenticated user"
+    required_scopes:
+      - "read:jira-user"
   - name: "get_my_issues"
     description: "Fetch all open issues assigned to the current user"
+    required_scopes:
+      - "read:jira-work"
+      - "read:jira-user"
   - name: "get_my_recent_activity"
     description: "View recently updated issues the user interacted with"
+    required_scopes:
+      - "read:jira-work"
+      - "read:jira-user"
   - name: "get_my_permissions"
     description: "Determine what actions the user is allowed to perform in a project"
+    required_scopes:
+      - "read:jira-user"

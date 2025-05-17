@@ -2,44 +2,92 @@ name: "Intercom guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Intercom customer messaging and support platform"
 documentation_path: "README.md"
+resources:
+  - name: "conversations"
+    description: "Conversations with users and leads in Intercom"
+    required_scopes:
+      - "conversations.read"
 tools:
   - name: "search_contacts"
     description: "Search for contacts in Intercom by name or email"
+    required_scopes:
+      - "contacts.read"
   - name: "create_contact"
     description: "Create a new contact in Intercom"
+    required_scopes:
+      - "contacts.write"
   - name: "create_conversation"
     description: "Create a new conversation in Intercom"
+    required_scopes:
+      - "conversations.write"
   - name: "reply_to_conversation"
     description: "Reply to an existing conversation in Intercom"
+    required_scopes:
+      - "conversations.write"
   - name: "add_tags_to_conversation"
     description: "Add tags to an existing conversation"
+    required_scopes:
+      - "conversations.write"
+      - "tags.write"
   - name: "remove_tags_from_conversation"
     description: "Remove tags from an existing conversation"
+    required_scopes:
+      - "conversations.write"
+      - "tags.write"
   - name: "list_admins"
     description: "List all admins/team members in the Intercom workspace"
+    required_scopes:
+      - "admins.read"
   - name: "search_companies"
     description: "Search for companies in Intercom"
+    required_scopes:
+      - "companies.read"
   - name: "create_company"
     description: "Create a new company in Intercom"
+    required_scopes:
+      - "companies.write"
   - name: "associate_contact_with_company"
     description: "Associate a contact with a company"
+    required_scopes:
+      - "contacts.write"
+      - "companies.write"
   - name: "list_articles"
     description: "List help center articles"
+    required_scopes:
+      - "articles.read"
   - name: "search_articles"
     description: "Search help center articles"
-  - name: "get_article"
+    required_scopes:
+      - "articles.read"
+  - name: "retrieve_article"
     description: "Get a specific help center article by ID"
+    required_scopes:
+      - "articles.read"
   - name: "create_article"
     description: "Create a new help center article"
+    required_scopes:
+      - "articles.write"
   - name: "list_tickets"
     description: "List support tickets in Intercom"
+    required_scopes:
+      - "tickets.read"
   - name: "get_ticket"
     description: "Get details of a specific support ticket"
+    required_scopes:
+      - "tickets.read"
   - name: "create_ticket"
     description: "Create a new support ticket in Intercom"
+    required_scopes:
+      - "tickets.write"
   - name: "update_ticket"
     description: "Update an existing support ticket in Intercom"
+    required_scopes:
+      - "tickets.write"
   - name: "add_comment_to_ticket"
     description: "Add a comment to an existing support ticket"
+    required_scopes:
+      - "tickets.write"
   - name: "list_ticket_types"
     description: "List all available ticket types in the Intercom workspace"
+    required_scopes:
+      - "tickets.read"

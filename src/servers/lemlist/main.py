@@ -47,112 +47,153 @@ def create_server(user_id, api_key=None):
         return [
             types.Tool(
                 name="get_team",
-                description="Get the team information",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
+                description="Retrieve basic information about the current Lemlist team, including user IDs, name, and beta features.",
+                inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing team data",
+                    "examples": [
+                        '{"_id": "tea_qWoCbAXbjTF73Bxsg", "userIds": ["usr_NJWvZsjbaz9oEJHCC"], "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:27:33.429Z", "beta": ["voip", "lemcalNewLayout", "integrationsN8nMake"], "name": "Gumloop Integrations\'s Team"}'
+                    ],
                 },
             ),
             types.Tool(
                 name="get_senders",
-                description="Get the list of senders",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
+                description="Retrieve all senders associated with the current Lemlist team account.",
+                inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing sender data",
+                    "examples": ["[]"],
                 },
             ),
             types.Tool(
                 name="get_credits",
-                description="Get the credits information",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
+                description="Check the current credit balance for the Lemlist team account. Credits are used for various actions like email verification, enrichment, etc.",
+                inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing credit information",
+                    "examples": [
+                        '{"credits": 500, "details": {"remaining": {"total": 500, "freemium": 0, "subscription": 0, "gifted": 500, "paid": 0}}}'
+                    ],
                 },
             ),
             types.Tool(
                 name="get_user",
-                description="Get the user information",
+                description="Retrieve information about a specific Lemlist user by their user ID.",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "user_id": {
                             "type": "string",
-                            "description": "The ID of the user to retrieve information for.",
-                        },
+                            "description": "The ID of the user to retrieve. Use 'me' for the current user.",
+                        }
                     },
                     "required": ["user_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing user data",
+                    "examples": ["{}"],
                 },
             ),
             types.Tool(
                 name="get_all_campaigns",
-                description="Retrieve a paginated list of Lemlist campaigns. Supports sorting and pagination.",
+                description="Retrieve all campaigns for the current Lemlist team with pagination and sorting options.",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "limit": {
                             "type": "integer",
-                            "description": "Number of campaigns to retrieve per page (max 100). Default is 100.",
+                            "description": "The maximum number of campaigns to return per page.",
                             "default": 100,
                         },
                         "offset": {
                             "type": "integer",
-                            "description": "Offset from the start for pagination. Default is 0.",
+                            "description": "The number of campaigns to skip. Used if page is not provided.",
                             "default": 0,
                         },
                         "page": {
                             "type": "integer",
-                            "description": "Page number to retrieve. Default is 1.",
+                            "description": "The page number to retrieve.",
                             "default": 1,
                         },
                         "sortBy": {
                             "type": "string",
-                            "description": "Field by which to sort campaigns. Only 'createdAt' is supported.",
+                            "description": "The field to sort by: createdAt, name, or status.",
                             "default": "createdAt",
+                            "enum": ["createdAt", "name", "status"],
                         },
                         "sortOrder": {
                             "type": "string",
-                            "description": "Sort direction: 'desc' for descending, or 'asc' for ascending.",
+                            "description": "The sort direction: desc for descending, asc for ascending.",
                             "default": "desc",
                             "enum": ["desc", "asc"],
                         },
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing campaign data with pagination details",
+                    "examples": [
+                        '{"campaigns": [{"_id": "cam_v8cz524NPmtnidwkq", "name": "Test Campaign 84909cc0-5802-4abc-8439-409a9afee8ef", "createdAt": "2025-05-17T00:35:08.903Z", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "status": "draft"}], "pagination": {"totalRecords": 1, "currentPage": 1, "nextPage": 1, "totalPage": 1}}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_campaign",
-                description="Retrieve the details of a specific Lemlist campaign by its campaignId.",
+                description="Retrieve detailed information about a specific Lemlist campaign by its campaignId.",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "campaignId": {
                             "type": "string",
                             "description": "The ID of the campaign to retrieve.",
-                        },
+                        }
                     },
                     "required": ["campaignId"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing detailed campaign data",
+                    "examples": [
+                        '{"_id": "cam_v8cz524NPmtnidwkq", "name": "Test Campaign 84909cc0-5802-4abc-8439-409a9afee8ef", "createdAt": "2025-05-17T00:35:08.903Z", "status": "draft", "creator": {"userId": "usr_NJWvZsjbaz9oEJHCC", "userEmail": "gumloop-integrations@gumloop.com"}, "senders": []}'
+                    ],
                 },
             ),
             types.Tool(
                 name="create_campaign",
-                description="Create a new campaign in Lemlist with optional name. Returns campaign, sequence, and schedule IDs.",
+                description="Create a new campaign in Lemlist with a custom name.",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "name": {
                             "type": "string",
-                            "description": "Optional name for the campaign. If omitted, a default name will be assigned.",
+                            "description": "The name of the campaign.",
                         }
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing data of the created campaign",
+                    "examples": [
+                        '{"_id": "cam_v8cz524NPmtnidwkq", "name": "Test Campaign 84909cc0-5802-4abc-8439-409a9afee8ef", "sequenceId": "seq_JWP2zXbetuc8TMKF5", "scheduleIds": ["skd_Hgd3JfLDy9i4vkhvo"], "displayedVariableKeys": ["companyName"], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:08.903Z", "state": "running", "scannedCount": 0, "reviewedCount": 0, "inSequenceLeadCount": 0, "variableKeys": [], "senders": [], "sendUsers": [], "emoji": "\\ud83d\\udc8c", "stopOnEmailReplied": true, "crmOpportunitiesOnTask": true, "unsubscribe": "campaign"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="update_campaign",
-                description="Update the configuration of a Lemlist campaign by campaignId. Supports updating name and multiple campaign settings.",
+                description="Update a specific Lemlist campaign by campaignId with custom settings like name and various stop conditions.",
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -162,19 +203,19 @@ def create_server(user_id, api_key=None):
                         },
                         "name": {
                             "type": "string",
-                            "description": "Name of the campaign.",
+                            "description": "New name for the campaign.",
                         },
                         "stopOnEmailReplied": {
                             "type": "boolean",
-                            "description": "Whether to stop the campaign when an email is replied to.",
+                            "description": "Whether to stop the campaign sequence when an email is replied to.",
                         },
                         "stopOnMeetingBooked": {
                             "type": "boolean",
-                            "description": "Whether to stop the campaign when a meeting is booked.",
+                            "description": "Whether to stop the campaign sequence when a meeting is booked.",
                         },
                         "stopOnLinkClicked": {
                             "type": "boolean",
-                            "description": "Whether to stop the campaign when any link is clicked.",
+                            "description": "Whether to stop the campaign sequence when a link is clicked.",
                         },
                         "stopOnLinkClickedFilter": {
                             "type": "string",
@@ -215,10 +256,18 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["campaignId"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing updated campaign settings",
+                    "examples": [
+                        '{"name": "Updated Campaign 3be50db3-ebd4-4bbb-bfbf-72ef1a33eaa5", "stopOnEmailReplied": true, "stopOnMeetingBooked": true, "stopOnLinkClicked": true, "leadsPausedByInterest": false, "opportunityReplied": false, "opportunityClicked": false, "autoLeadInterest": false, "sequenceSharing": false, "disableTrackOpen": false, "disableTrackClick": false, "disableTrackReply": false}'
+                    ],
+                },
             ),
             types.Tool(
                 name="pause_lemlist_campaign",
-                description="Pause a running Lemlist campaign by its campaignId. If the campaign is not running, no action is taken.",
+                description="Pause a specific Lemlist campaign by its campaignId. This will stop all sending activity for this campaign.",
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -229,10 +278,16 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["campaignId"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing campaign pause confirmation",
+                    "examples": ['{"_id": "cam_v8cz524NPmtnidwkq", "state": "paused"}'],
+                },
             ),
             types.Tool(
                 name="start_lemlist_campaign_export",
-                description="Initiate an asynchronous export of campaign statistics. Returns export ID for status tracking.",
+                description="Start an asynchronous export of all leads and statistics from a Lemlist campaign. Returns an export ID needed for checking status and downloading the result.",
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -242,6 +297,14 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["campaignId"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing export information and status",
+                    "examples": [
+                        '{"_id": "axp_EvgfS8MuubZWbKsbM", "id": "axp_EvgfS8MuubZWbKsbM", "teamId": "tea_qWoCbAXbjTF73Bxsg", "campaignId": "cam_v8cz524NPmtnidwkq", "campaignName": "Updated Campaign 3be50db3-ebd4-4bbb-bfbf-72ef1a33eaa5", "status": "pending", "startedAt": "2025-05-17T00:40:14.815Z", "progressIndex": 0, "progressTime": 1747442414815, "progressLastStepDuration": 0, "progressType": "starting", "progress": 0, "total": 0}'
+                    ],
                 },
             ),
             types.Tool(
@@ -260,6 +323,15 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["campaignId", "exportId"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing export status information, including URL when complete",
+                    "examples": [
+                        '{"status": {"_id": "axp_TSp7asSM9rkgTubMQ", "id": "axp_TSp7asSM9rkgTubMQ", "teamId": "tea_qWoCbAXbjTF73Bxsg", "campaignId": "cam_v8cz524NPmtnidwkq", "campaignName": "Updated Campaign 3be50db3-ebd4-4bbb-bfbf-72ef1a33eaa5", "status": "done", "url": "https://api.lemlist.com/api/files/exports/fil_axp_TSp7asSM9rkgTubMQ_updated_campaign.csv"}, "csv_url": "https://api.lemlist.com/api/files/exports/fil_axp_TSp7asSM9rkgTubMQ_updated_campaign.csv"}',
+                        '{"error": "{\\"ok\\":false,\\"message\\":\\"Export with id not found\\"}"}',
+                    ],
                 },
             ),
             types.Tool(
@@ -282,6 +354,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["campaignId", "exportId", "email"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing export email delivery status",
+                    "examples": [
+                        '{"ok": true, "status": {"_id": "axp_TSp7asSM9rkgTubMQ", "id": "axp_TSp7asSM9rkgTubMQ", "teamId": "tea_qWoCbAXbjTF73Bxsg", "campaignId": "cam_v8cz524NPmtnidwkq", "campaignName": "Updated Campaign 3be50db3-ebd4-4bbb-bfbf-72ef1a33eaa5", "status": "done", "startedAt": "2025-05-17T00:40:49.998Z", "progressIndex": 6, "progressTime": 1747442450246, "progressLastStepDuration": 0, "progressType": "done", "progress": 0, "total": 0, "fileSize": 626, "endedAt": "2025-05-17T00:40:50.246Z", "url": "https://api.lemlist.com/api/files/exports/fil_axp_TSp7asSM9rkgTubMQ_updated_campaign_3be50db3-ebd4-4bbb-bfbf-72ef1a33eaa5.csv"}}'
+                    ],
                 },
             ),
             types.Tool(
@@ -319,6 +399,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing schedule data with pagination details",
+                    "examples": [
+                        '{"schedules": [{"_id": "skd_Q2vZTaN3kzmYSdkTy", "name": "Test Schedule 45713978-d710-4530-ac14-bdf642bd0a58", "secondsToWait": 1200, "timezone": "UTC", "start": "09:00", "end": "17:00", "weekdays": [1, 2, 3, 4, 5], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:24.153Z"}, {"_id": "skd_Hgd3JfLDy9i4vkhvo", "name": "Default schedule", "secondsToWait": 1200, "timezone": "Europe/Paris", "start": "09:00", "end": "18:00", "weekdays": [1, 2, 3, 4, 5], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:08.882Z"}], "pagination": {"totalRecords": 2, "currentPage": 1, "nextPage": 1, "totalPage": 1}}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_schedule",
@@ -333,6 +421,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["scheduleId"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing detailed schedule data",
+                    "examples": [
+                        '{"_id": "skd_Q2vZTaN3kzmYSdkTy", "name": "Test Schedule 45713978-d710-4530-ac14-bdf642bd0a58", "secondsToWait": 1200, "timezone": "UTC", "start": "09:00", "end": "17:00", "weekdays": [1, 2, 3, 4, 5], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:24.153Z"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_campaign_schedules",
@@ -346,6 +442,14 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["campaignId"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing the campaign's associated schedule data",
+                    "examples": [
+                        '{"_id": "skd_Hgd3JfLDy9i4vkhvo", "name": "Default schedule", "secondsToWait": 1200, "timezone": "Europe/Paris", "start": "09:00", "end": "18:00", "weekdays": [1, 2, 3, 4, 5], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:08.882Z"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -386,6 +490,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["scheduleId"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing updated schedule data",
+                    "examples": [
+                        '{"_id": "skd_Q2vZTaN3kzmYSdkTy", "name": "Updated Schedule 8db8da6e-9937-44c0-b02a-6e35a118fec0", "secondsToWait": 1800, "timezone": "UTC", "start": "10:00", "end": "18:00", "weekdays": [1, 2, 3, 4, 5], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:24.153Z"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="create_schedule",
@@ -421,6 +533,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing data of the created schedule",
+                    "examples": [
+                        '{"_id": "skd_Q2vZTaN3kzmYSdkTy", "name": "Test Schedule 45713978-d710-4530-ac14-bdf642bd0a58", "secondsToWait": 1200, "timezone": "UTC", "start": "09:00", "end": "17:00", "weekdays": [1, 2, 3, 4, 5], "teamId": "tea_qWoCbAXbjTF73Bxsg", "createdBy": "usr_NJWvZsjbaz9oEJHCC", "createdAt": "2025-05-17T00:35:24.153Z"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_schedule",
@@ -434,6 +554,12 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["schedule_id"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing deletion confirmation",
+                    "examples": ['{"_id": "None"}'],
                 },
             ),
             types.Tool(
@@ -452,6 +578,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["campaignId", "scheduleId"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing association confirmation",
+                    "examples": [
+                        '{"scheduleId": "skd_Q2vZTaN3kzmYSdkTy", "campaignId": "cam_v8cz524NPmtnidwkq"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -528,6 +662,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["campaignId"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing data of the created lead",
+                    "examples": [
+                        '{"campaignId": "cam_v8cz524NPmtnidwkq", "campaignName": "Test Campaign 84909cc0-5802-4abc-8439-409a9afee8ef", "firstName": "Test", "lastName": "User", "companyName": "Test Company", "email": "test_62f7c495-8c57-4338-9e4a-f699d29789d8@example.com", "_id": "lea_Y2KaFkKrTAMZgBapx", "isPaused": false}'
+                    ],
+                },
             ),
             types.Tool(
                 name="delete_lead",
@@ -550,6 +692,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["campaignId", "email"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing deleted lead data",
+                    "examples": [
+                        '{"firstName": "Test", "lastName": "User", "companyName": "Test Company", "email": "test_62f7c495-8c57-4338-9e4a-f699d29789d8@example.com", "_id": "lea_Y2KaFkKrTAMZgBapx", "isPaused": false, "campaignId": "cam_v8cz524NPmtnidwkq"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="mark_lead_as_interested_all_campaigns",
@@ -564,6 +714,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing lead data from all affected campaigns",
+                    "examples": [
+                        '[{"firstName": "Test", "lastName": "User", "companyName": "Test Company", "email": "test_62f7c495-8c57-4338-9e4a-f699d29789d8@example.com", "_id": "lea_Y2KaFkKrTAMZgBapx", "isPaused": false, "campaignId": "cam_v8cz524NPmtnidwkq"}]'
+                    ],
+                },
             ),
             types.Tool(
                 name="mark_lead_as_not_interested_all_campaigns",
@@ -577,6 +735,14 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["email"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing lead data from all affected campaigns",
+                    "examples": [
+                        '[{"firstName": "Test", "lastName": "User", "companyName": "Test Company", "email": "test_62f7c495-8c57-4338-9e4a-f699d29789d8@example.com", "_id": "lea_Y2KaFkKrTAMZgBapx", "isPaused": false, "campaignId": "cam_v8cz524NPmtnidwkq"}]'
+                    ],
                 },
             ),
             types.Tool(
@@ -596,6 +762,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["campaignId", "email"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing updated lead data",
+                    "examples": [
+                        '{"firstName": "Test", "lastName": "User", "companyName": "Test Company", "email": "test_62f7c495-8c57-4338-9e4a-f699d29789d8@example.com", "_id": "lea_Y2KaFkKrTAMZgBapx", "isPaused": false, "campaignId": "cam_v8cz524NPmtnidwkq"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="mark_lead_as_not_interested_in_campaign",
@@ -613,6 +787,14 @@ def create_server(user_id, api_key=None):
                         },
                     },
                     "required": ["campaignId", "email"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing updated lead data",
+                    "examples": [
+                        '{"firstName": "Test", "lastName": "User", "companyName": "Test Company", "email": "test_62f7c495-8c57-4338-9e4a-f699d29789d8@example.com", "_id": "lea_Y2KaFkKrTAMZgBapx", "isPaused": false, "campaignId": "cam_v8cz524NPmtnidwkq"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -634,11 +816,25 @@ def create_server(user_id, api_key=None):
                     },
                     "required": [],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing unsubscribes data, empty array if none exist",
+                    "examples": ["[]"],
+                },
             ),
             types.Tool(
                 name="export_unsubscribes",
                 description="Download a CSV file containing all unsubscribed email addresses from Lemlist.",
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing unsubscribes export data in CSV format",
+                    "examples": [
+                        '{"export_data": "value,source,createdAt\\r\\ntest_725f4819-fd51-48a0-839e-ddd5881ea30a@example.com,api,2025-05-17T00:39:29.752Z"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="add_unsubscribe",
@@ -653,6 +849,14 @@ def create_server(user_id, api_key=None):
                         }
                     },
                     "required": ["email"],
+                },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing created unsubscribe data",
+                    "examples": [
+                        '{"_id": "uns_CnQm6RsypbQthQWbd", "value": "test_725f4819-fd51-48a0-839e-ddd5881ea30a@example.com", "email": "test_725f4819-fd51-48a0-839e-ddd5881ea30a@example.com"}'
+                    ],
                 },
             ),
             types.Tool(
@@ -669,6 +873,14 @@ def create_server(user_id, api_key=None):
                     },
                     "required": ["email"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing deleted unsubscribe data",
+                    "examples": [
+                        '{"_id": "uns_Zatdt3xaWHDqkCL7p", "value": "test_ce371194-ab05-48ce-b9ac-fb247a9a1c62@example.com"}'
+                    ],
+                },
             ),
             types.Tool(
                 name="get_database_filters",
@@ -678,6 +890,15 @@ def create_server(user_id, api_key=None):
                     "Use these filters to construct advanced queries for leads or companies."
                 ),
                 inputSchema={"type": "object", "properties": {}, "required": []},
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of JSON strings containing available filter definitions",
+                    "examples": [
+                        '{"filterId": "leadsByIds", "description": "Leads by _id", "mode": ["leads"], "type": "text", "helper": "Use free text search (to fill the in and/or out array)"}',
+                        '{"filterId": "currentTitle", "description": "Current job title", "mode": ["leads"], "type": "autocomplete", "helper": ""}',
+                    ],
+                },
             ),
         ]
 
@@ -710,32 +931,35 @@ def create_server(user_id, api_key=None):
                 response = requests.get(f"{public_host}/team", headers=headers)
 
                 if response.status_code == 200:
-                    result = {"status": "success", "teams": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to list teams: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_senders":
                 response = requests.get(f"{public_host}/team/senders", headers=headers)
 
                 if response.status_code == 200:
-                    result = {"status": "success", "senders": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to list senders: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_credits":
                 response = requests.get(f"{public_host}/team/credits", headers=headers)
 
                 if response.status_code == 200:
-                    result = {"status": "success", "credits": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get credits: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_user":
                 user_id = arguments.get("user_id")
                 response = requests.get(
@@ -743,12 +967,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "user": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get user: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
 
             elif name == "get_all_campaigns":
                 limit = arguments.get("limit", 100)
@@ -764,12 +989,20 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "campaigns": response.json()}
+                    data = response.json()
+                    # If data contains an array, return multiple TextContent objects
+                    if isinstance(data, list):
+                        return [
+                            TextContent(type="text", text=json.dumps(item))
+                            for item in data
+                        ]
+                    return [TextContent(type="text", text=json.dumps(data))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to list campaigns: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_campaign":
                 campaignId = arguments.get("campaignId")
                 response = requests.get(
@@ -777,12 +1010,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "campaign": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "create_campaign":
                 name = arguments.get("name")
                 data = {
@@ -793,12 +1027,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "campaign": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to create campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "update_campaign":
                 campaignId = arguments.get("campaignId")
                 name = arguments.get("name")
@@ -838,12 +1073,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "campaign": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to update campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "pause_lemlist_campaign":
                 campaignId = arguments.get("campaignId")
                 response = requests.post(
@@ -851,15 +1087,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Campaign {campaignId} paused successfully.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to pause campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "start_lemlist_campaign_export":
                 campaignId = arguments.get("campaignId")
                 response = requests.get(
@@ -868,12 +1102,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "export": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to start export: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_campaign_export_status":
                 campaignId = arguments.get("campaignId")
                 exportId = arguments.get("exportId")
@@ -882,19 +1117,17 @@ def create_server(user_id, api_key=None):
                     headers=headers,
                 )
 
-                data = response.json()
-                url = data.get("status", {}).get("url", "URL not available")
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "export": response.json(),
-                        "csv_url": f"CSV url to download :{url}",
-                    }
+                    result = response.json()
+                    url = result.get("status", {}).get("url", "URL not available")
+                    result["csv_url"] = url
+                    return [TextContent(type="text", text=json.dumps(result))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get export status: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "export_lemlist_campaign":
                 campaignId = arguments.get("campaignId")
                 exportId = arguments.get("exportId")
@@ -906,15 +1139,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Export email set successfully. {response.json()}",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to set export email: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_all_schedules":
                 page = arguments.get("page", 1)
                 offset = arguments.get("offset", 0)
@@ -928,12 +1159,20 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "schedules": response.json()}
+                    data = response.json()
+                    # If data contains a schedules array, return each schedule as a separate TextContent
+                    if "schedules" in data and isinstance(data["schedules"], list):
+                        return [
+                            TextContent(type="text", text=json.dumps(item))
+                            for item in data["schedules"]
+                        ]
+                    return [TextContent(type="text", text=json.dumps(data))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to list schedules: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_schedule":
                 scheduleId = arguments.get("scheduleId")
                 response = requests.get(
@@ -941,12 +1180,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "schedule": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get schedule: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_campaign_schedules":
                 campaignId = arguments.get("campaignId")
                 response = requests.get(
@@ -954,12 +1194,19 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "schedules": response.json()}
+                    data = response.json()
+                    if isinstance(data, list):
+                        return [
+                            TextContent(type="text", text=json.dumps(item))
+                            for item in data
+                        ]
+                    return [TextContent(type="text", text=json.dumps(data))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to list campaign schedules: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "create_schedule":
                 data = {}
                 if "name" in arguments:
@@ -979,12 +1226,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "schedule": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to create schedule: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "update_schedule":
                 scheduleId = arguments.get("scheduleId")
                 data = {}
@@ -1005,12 +1253,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "schedule": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to update schedule: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "delete_schedule":
                 scheduleId = arguments.get("scheduleId")
                 response = requests.delete(
@@ -1018,15 +1267,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Schedule {scheduleId} deleted successfully.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to delete schedule: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "associate_schedule_with_campaign":
                 scheduleId = arguments.get("scheduleId")
                 campaignId = arguments.get("campaignId")
@@ -1036,15 +1283,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Schedule {scheduleId} associated with campaign {campaignId}.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to associate schedule with campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "create_lead_in_campaign":
                 campaignId = arguments.get("campaignId")
                 email = arguments.get("email")
@@ -1074,12 +1319,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "lead": response.json()}
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to create lead in campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "delete_lead":
                 campaignId = arguments.get("campaignId")
                 leadId = arguments.get("leadId")
@@ -1095,15 +1341,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Lead {leadId} deleted from campaign {campaignId}.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to delete lead: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "mark_lead_as_interested_all_campaigns":
                 email = arguments.get("email")
                 response = requests.post(
@@ -1111,15 +1355,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Lead {email} marked as interested.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to mark lead as interested: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "mark_lead_as_not_interested_all_campaigns":
                 email = arguments.get("email")
                 response = requests.post(
@@ -1127,15 +1369,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Lead {email} marked as not interested.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to mark lead as not interested: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "mark_lead_as_interested_in_campaign":
                 campaignId = arguments.get("campaignId")
                 email = arguments.get("email")
@@ -1145,49 +1385,13 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Lead {email} marked as interested in campaign {campaignId}.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to mark lead as interested in campaign: {response.text}",
-                    }
-            elif name == "add_unsubscribe":
-                email = arguments.get("email")
-                response = requests.post(
-                    f"{public_host}/unsubscribes/{email}", headers=headers
-                )
-
-                if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Email {email} unsubscribed successfully. {response.text}",
-                    }
-                else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to unsubscribe email: {response.text}",
-                    }
-
-            elif name == "delete_unsubscribe":
-                email = arguments.get("email")
-                response = requests.delete(
-                    f"{public_host}/unsubscribes/{email}", headers=headers
-                )
-
-                if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Email {email} deleted from unsubscribed list, {response.text}",
-                    }
-                else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to delete unsubscribe: {response.text}",
-                    }
-
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "mark_lead_as_not_interested_in_campaign":
                 campaignId = arguments.get("campaignId")
                 email = arguments.get("email")
@@ -1197,17 +1401,14 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {
-                        "status": "success",
-                        "message": f"Lead {email} marked as not interested in campaign {campaignId}.",
-                    }
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to mark lead as not interested in campaign: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "get_all_unsubscribes":
-
                 offset = arguments.get("offset", 0)
                 limit = arguments.get("limit", 5)
 
@@ -1217,43 +1418,91 @@ def create_server(user_id, api_key=None):
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "unsubscribes": response.json()}
+                    data = response.json()
+                    if isinstance(data, list):
+                        return [
+                            TextContent(type="text", text=json.dumps(item))
+                            for item in data
+                        ]
+                    return [TextContent(type="text", text=json.dumps(data))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to list unsubscribes: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
             elif name == "export_unsubscribes":
                 response = requests.get(f"{public_host}/unsubs/export", headers=headers)
                 if response.status_code == 200:
-                    result = {"status": "success", "export": response.text}
+                    # For text response, wrap in JSON object
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"export_data": response.text})
+                        )
+                    ]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to export unsubscribes: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
 
             elif name == "get_database_filters":
-
                 response = requests.get(
                     f"{public_host}/database/filters", headers=headers
                 )
 
                 if response.status_code == 200:
-                    result = {"status": "success", "filters": response.json()}
+                    data = response.json()
+                    if isinstance(data, list):
+                        return [
+                            TextContent(type="text", text=json.dumps(item))
+                            for item in data
+                        ]
+                    return [TextContent(type="text", text=json.dumps(data))]
                 else:
-                    result = {
-                        "status": "error",
-                        "message": f"Failed to get filters: {response.text}",
-                    }
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
+
+            elif name == "add_unsubscribe":
+                email = arguments.get("email")
+                response = requests.post(
+                    f"{public_host}/unsubscribes/{email}", headers=headers
+                )
+
+                if response.status_code == 200:
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
+                else:
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
+
+            elif name == "delete_unsubscribe":
+                email = arguments.get("email")
+                response = requests.delete(
+                    f"{public_host}/unsubscribes/{email}", headers=headers
+                )
+
+                if response.status_code == 200:
+                    return [TextContent(type="text", text=json.dumps(response.json()))]
+                else:
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": response.text})
+                        )
+                    ]
 
             else:
                 raise ValueError(f"Unkown tool: {name}")
-            return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
         except Exception as e:
             logger.error(f"Error calling tool {name}: {e}")
-            return [TextContent(type="text", text=f"Error: {str(e)}")]
+            return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
     return server
 
