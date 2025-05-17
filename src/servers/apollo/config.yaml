@@ -2,24 +2,35 @@ name: "Apollo guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Apollo.io for sales prospecting, contact management, and CRM functionality"
 documentation_path: "README.md"
+resources:
+  - name: "user"
+    description: "Apollo user (teammate) records with information about team members in your Apollo account"
 tools:
   # SEARCH TOOLS
   - name: "search_contacts"
     description: "Search for contacts in your Apollo account"
   - name: "search_accounts"
     description: "Search for accounts that have been added to your team's Apollo account"
+  - name: "people_search"
+    description: "Search for people in Apollo's database"
+  - name: "organization_search"
+    description: "Search for organizations in Apollo's database"
 
   # ENRICHMENT TOOLS
   - name: "enrich_person"
     description: "Enrich data for a person using Apollo's People Enrichment API"
   - name: "enrich_organization"
     description: "Enrich data for a company using Apollo's Organization Enrichment API"
+  - name: "get_organization_job_postings"
+    description: "Retrieve current job postings for a specific organization"
 
   # CONTACT MANAGEMENT TOOLS
   - name: "create_contact"
     description: "Create a new contact in Apollo"
   - name: "update_contact"
     description: "Update an existing contact in your Apollo account"
+  - name: "delete_contact"
+    description: "Delete a contact from your Apollo account"
   - name: "list_contact_stages"
     description: "Retrieve the IDs for available contact stages in your Apollo account"
 
@@ -40,6 +51,14 @@ tools:
     description: "List all deals in your Apollo account"
   - name: "list_deal_stages"
     description: "Retrieve information about every deal stage in your Apollo account"
+
+  # SEQUENCE MANAGEMENT TOOLS
+  - name: "search_sequences"
+    description: "Search for sequences in your Apollo account"
+  - name: "add_contacts_to_sequence"
+    description: "Add contacts to an existing sequence in your Apollo account"
+  - name: "update_contact_sequence_status"
+    description: "Mark contacts as finished or remove contacts from sequences"
 
   # TASK AND USER MANAGEMENT TOOLS
   - name: "create_task"

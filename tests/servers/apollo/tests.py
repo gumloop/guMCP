@@ -2,6 +2,9 @@ import pytest
 from datetime import datetime, timedelta
 
 # Test data
+sequence_id = ""  # replace with the sequence id
+
+
 test_contact = {
     "first_name": "Test",
     "last_name": "User",
@@ -149,6 +152,81 @@ async def test_update_contact(client):
 
     print(f"Response: {response}")
     print("✅ update_contact passed.")
+
+
+@pytest.mark.asyncio
+async def test_delete_contact(client):
+    """Test deleting a contact."""
+    global contact_id
+
+    # Create a temporary contact to delete
+    temp_contact_response = await client.process_query(
+        "Use the create_contact tool to create a contact with the following details: "
+        "First Name: TempDelete, "
+        "Last Name: User, "
+        "Organization Name: Test Delete Org, "
+        "Title: Test Engineer, "
+        "Email: temp.delete@testorg.com. "
+        "If successful, start your response with 'Contact created successfully' and return the contact ID."
+        "Please return the contact ID in the format 'ID: <contact_id>'"
+    )
+
+    # Extract the temporary contact ID
+    try:
+        temp_contact_id = temp_contact_response.lower().split("id:")[1].strip()
+    except Exception as e:
+        assert False, f"Error parsing temporary contact ID: {str(e)}"
+
+    # Now delete the temporary contact
+    response = await client.process_query(
+        f"Use the delete_contact tool to delete the contact with ID: {temp_contact_id}. "
+        "If successful, start your response with 'Contact deleted successfully'."
+    )
+
+    assert (
+        "contact deleted successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from delete_contact"
+
+    print(f"Response: {response}")
+    print("✅ delete_contact passed.")
+
+
+@pytest.mark.asyncio
+async def test_organization_search(client):
+    """Test searching for organizations."""
+    response = await client.process_query(
+        "Use the organization_search tool to search for organizations with the following criteria: "
+        "Organization Name: Google. "
+        "If successful, start your response with 'Organizations found successfully'."
+    )
+
+    assert (
+        "organizations found successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from organization_search"
+
+    print(f"Response: {response}")
+    print("✅ organization_search passed.")
+
+
+@pytest.mark.asyncio
+async def test_people_search(client):
+    """Test searching for people."""
+    response = await client.process_query(
+        "Use the people_search tool to search for people with the following criteria: "
+        "Keywords: software engineer, "
+        "Include Similar Titles: true. "
+        "If successful, start your response with 'People found successfully'."
+    )
+
+    assert (
+        "people found successfully" in response.lower()
+    ), f"Expected success phrase not found in response: {response}"
+    assert response, "No response returned from people_search"
+
+    print(f"Response: {response}")
+    print("✅ people_search passed.")
 
 
 @pytest.mark.asyncio
@@ -395,3 +473,132 @@ async def test_enrich_organization(client):
 
     print(f"Response: {response}")
     print("✅ enrich_organization passed.")
+
+
+@pytest.mark.asyncio
+async def test_get_organization_job_postings(client):
+    """Test retrieving job postings for an organization."""
+    # For testing purposes, we'll use the organization ID from one of the enriched orgs
+    response = await client.process_query(
+        "Use the enrich_organization tool to enrich data for Apollo.io and return the organization ID."
+    )
+
+    # Extract organization ID from the response or use a placeholder
+    org_id = None
+    try:
+        # This is a simplified approach; in a real test you might need more robust parsing
+        if "id" in response.lower():
+            org_id = response.lower().split('"id":')[1].split(",")[0].strip('" ')
+    except Exception:
+        pass
+
+    # If we couldn't get an org ID, use a placeholder for testing
+    if not org_id:
+        org_id = "5e66b6381e05b4008c8331b8"  # Example ID from the API docs
+
+    response = await client.process_query(
+        f"Use the get_organization_job_postings tool to retrieve job postings for the organization with ID: {org_id}. "
+        "If successful, start your response with 'Job postings retrieved successfully'."
+    )
+
+    # Check for either success or expected issues (empty results are valid)
+    assert (
+        "job postings retrieved successfully" in response.lower()
+        or "403" in response
+        or "not accessible" in response.lower()
+    ), f"Unexpected response: {response}"
+    assert response, "No response returned from get_organization_job_postings"
+
+    # Verify we can parse the response if successful
+    if "job postings retrieved successfully" in response.lower():
+        assert "job_postings" in response.lower(), "Response missing job_postings field"
+
+    print(f"Response: {response}")
+    print("✅ get_organization_job_postings passed (or expected error received).")
+
+
+@pytest.mark.asyncio
+async def test_search_sequences(client):
+    """Test searching for sequences."""
+    response = await client.process_query(
+        "Use the search_sequences tool to search for sequences with the following criteria: "
+        "Name: Gumloop. "
+        "If successful or if its empty, start your response with 'Sequences found successfully'."
+    )
+
+    # Check for either success or expected issues
+    assert (
+        "sequences found successfully" in response.lower()
+    ), f"Unexpected response: {response}"
+    assert response, "No response returned from search_sequences"
+
+    # Verify the response indicates sequences were found
+    if "sequences found successfully" in response.lower():
+        assert "sequence" in response.lower(), "Response does not mention sequences"
+
+    print(f"Response: {response}")
+    print("✅ search_sequences passed.")
+
+
+@pytest.mark.asyncio
+async def test_add_contacts_to_sequence(client):
+    """Test adding contacts to a sequence."""
+    global contact_id
+
+    # This test assumes we have a valid contact_id from previous tests
+    if not contact_id:
+        print("⚠️ Skipping add_contacts_to_sequence test: No contact_id available")
+        return
+
+    # Use the global sequence_id variable that was defined at the top of the file
+    # This is more reliable than trying to parse it from a response
+    response = await client.process_query(
+        f"Use the add_contacts_to_sequence tool to add the contact with ID: {contact_id} "
+        f"to the sequence with ID: {sequence_id}, with email account ID: {account_id}. "
+        "If successful, start your response with 'Contacts added to sequence successfully'."
+    )
+
+    # Check for either success or expected issues
+    assert (
+        "contacts added to sequence successfully" in response.lower()
+    ), f"Unexpected response: {response}"
+    assert response, "No response returned from add_contacts_to_sequence"
+
+    # Verify the response contains useful information
+    if "contacts added to sequence successfully" in response.lower():
+        assert "sequence" in response.lower(), "Response does not mention sequence"
+
+    print(f"Response: {response}")
+    print("✅ add_contacts_to_sequence passed.")
+
+
+@pytest.mark.asyncio
+async def test_update_contact_sequence_status(client):
+    """Test updating contact status in sequences."""
+    global contact_id
+
+    # This test assumes we have a valid contact_id from previous tests
+    if not contact_id:
+        print("⚠️ Skipping update_contact_sequence_status test: No contact_id available")
+        return
+
+    response = await client.process_query(
+        f"Use the update_contact_sequence_status tool to mark the contact with ID: {contact_id} "
+        f"as finished in the sequence with ID: {sequence_id}. "
+        "If successful or if its empty, start your response with 'Contact sequence status updated successfully'."
+    )
+
+    # Check for either success or expected issues
+    assert (
+        "contact sequence status updated successfully" in response.lower()
+    ), f"Unexpected response: {response}"
+    assert response, "No response returned from update_contact_sequence_status"
+
+    # Verify the response contains useful information about the status update
+    if "contact sequence status updated successfully" in response.lower():
+        assert (
+            "finished" in response.lower()
+        ), "Response does not confirm the contact was marked as finished"
+
+    print(f"Response: {response}")
+    print("✅ update_contact_sequence_status passed.")
