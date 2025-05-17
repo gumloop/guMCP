@@ -1,4 +1,4 @@
-name: "Lemlist MCP Server"
+name: "Lemlist guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Lemlist for campaign management, lead enrichment, scheduling, and outreach automation."
 documentation_path: "README.md"
