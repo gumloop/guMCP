@@ -2,42 +2,84 @@ name: "Klaviyo guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Klaviyo for email marketing, customer engagement, and audience management"
 documentation_path: "README.md"
+resources:
+  - name: "campaign"
+    description: "Klaviyo email or SMS marketing campaign."
+    required_scopes:
+      - "campaigns:read"
 tools:
   # PROFILE MANAGEMENT TOOLS
   - name: "create_profile"
     description: "Creates a new profile with the specified attributes in Klaviyo."
+    required_scopes:
+      - "profiles:write"
   - name: "get_profile"
     description: "Retrieves a specific profile by its ID from the Klaviyo account."
+    required_scopes:
+      - "profiles:read"
   - name: "get_profiles"
     description: "Retrieves all profiles from the Klaviyo account."
+    required_scopes:
+      - "profiles:read"
   - name: "update_profile"
     description: "Updates an existing profile with the given profile ID."
+    required_scopes:
+      - "profiles:write"
   # CAMPAIGN MANAGEMENT TOOLS
   - name: "get_campaign"
     description: "Retrieves a specific campaign by its ID from the Klaviyo account."
+    required_scopes:
+      - "campaigns:read"
   - name: "list_campaigns"
     description: "Returns campaigns based on the selected channel filter."
+    required_scopes:
+      - "campaigns:read"
   - name: "update_campaign"
     description: "Updates an existing campaign with the given campaign ID."
+    required_scopes:
+      - "campaigns:write"
   - name: "send_campaign"
     description: "Triggers a campaign to send asynchronously."
+    required_scopes:
+      - "campaigns:write"
   - name: "delete_campaign"
     description: "Deletes a campaign with the given campaign ID."
+    required_scopes:
+      - "campaigns:write"
   # LIST MANAGEMENT TOOLS
   - name: "create_list"
     description: "Creates a new list in Klaviyo."
+    required_scopes:
+      - "lists:write"
   - name: "get_list"
     description: "Gets a specific list by its ID."
+    required_scopes:
+      - "lists:read"
   - name: "get_lists"
     description: "Retrieves all lists from the Klaviyo account."
+    required_scopes:
+      - "lists:read"
   - name: "get_list_profiles"
     description: "Gets all profiles within a list with the given list ID."
+    required_scopes:
+      - "lists:read"
+      - "profiles:read"
   - name: "add_profiles_to_list"
     description: "Adds profiles to a list with the given list ID."
+    required_scopes:
+      - "lists:write"
+      - "profiles:read"
   - name: "remove_profiles_from_list"
     description: "Removes profiles from a list with the given list ID."
+    required_scopes:
+      - "lists:write"
+      - "profiles:read"
   # ANALYTICS TOOLS
   - name: "list_metrics"
     description: "Gets all metrics in a Klaviyo account with filtering options."
+    required_scopes:
+      - "metrics:read"
   - name: "get_metric"
     description: "Gets a specific metric by its ID."
+    required_scopes:
+      - "metrics:read"

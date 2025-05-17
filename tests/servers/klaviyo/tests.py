@@ -29,21 +29,6 @@ async def test_list_resources(client):
 async def test_read_resource(client):
     """Test reading a resource from Klaviyo"""
     list_response = await client.list_resources()
-
-    # Test reading a list resource
-    list_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("klaviyo://list/")
-    ]
-
-    if len(list_resource_uri) > 0:
-        list_resource_uri = list_resource_uri[0]
-        response = await client.read_resource(list_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for list passed.")
-
     # Test reading a campaign resource
     campaign_resource_uri = [
         resource.uri
@@ -57,20 +42,6 @@ async def test_read_resource(client):
         assert response, "No response returned from read_resource"
         print(f"Response: {response}")
         print("✅ read_resource for campaign passed.")
-
-    # Test reading a profile resource
-    profile_resource_uri = [
-        resource.uri
-        for resource in list_response.resources
-        if str(resource.uri).startswith("klaviyo://profile/")
-    ]
-
-    if len(profile_resource_uri) > 0:
-        profile_resource_uri = profile_resource_uri[0]
-        response = await client.read_resource(profile_resource_uri)
-        assert response, "No response returned from read_resource"
-        print(f"Response: {response}")
-        print("✅ read_resource for profile passed.")
 
 
 # ===== CREATE Operations =====

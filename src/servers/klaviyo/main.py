@@ -98,7 +98,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
     async def handle_list_resources(
         cursor: Optional[str] = None,
     ) -> list[Resource]:
-        """List Klaviyo resources (profiles, campaigns, lists)"""
+        """List Klaviyo resources (campaigns)"""
         logger.info(
             f"Listing resources for user: {server.user_id} with cursor: {cursor}"
         )
@@ -115,27 +115,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
         try:
             resources = []
-
-            # List all profiles
-            profiles_url = klaviyo_client["base_url"] + "profiles"
-            profiles_response = requests.get(profiles_url, headers=headers, timeout=30)
-            if profiles_response.status_code == 200:
-                profiles = profiles_response.json().get("data", [])
-                for profile in profiles:
-                    profile_id = profile.get("id")
-                    email = profile.get("attributes", {}).get("email", "No email")
-                    name = (
-                        f"{profile.get('attributes', {}).get('first_name', '')} {profile.get('attributes', {}).get('last_name', '')}".strip()
-                        or "No name"
-                    )
-                    resources.append(
-                        Resource(
-                            uri=f"klaviyo://profile/{profile_id}",
-                            mimeType="application/json",
-                            name=f"Profile: {name}",
-                            description=f"Klaviyo profile ({email})",
-                        )
-                    )
 
             # List all campaigns with filtering
             campaigns_url = klaviyo_client["base_url"] + "campaigns"
@@ -184,28 +163,6 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     )
                 )
 
-            # List all lists
-            lists_url = klaviyo_client["base_url"] + "lists"
-            lists_response = requests.get(lists_url, headers=headers, timeout=30)
-            if lists_response.status_code == 200:
-                lists = lists_response.json().get("data", [])
-                for list_item in lists:
-                    list_id = list_item.get("id")
-                    list_name = list_item.get("attributes", {}).get(
-                        "name", "Unknown List"
-                    )
-                    created_at = list_item.get("attributes", {}).get(
-                        "created", "Unknown date"
-                    )
-                    resources.append(
-                        Resource(
-                            uri=f"klaviyo://list/{list_id}",
-                            mimeType="application/json",
-                            name=f"List: {list_name}",
-                            description=f"Klaviyo list (Created: {created_at})",
-                        )
-                    )
-
             return resources
 
         except Exception as e:
@@ -232,32 +189,7 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
             raise ValueError(f"Invalid Klaviyo URI: {uri_str}")
 
         try:
-            if uri_str.startswith("klaviyo://profile/"):
-                # Handle profile resource
-                profile_id = uri_str.replace("klaviyo://profile/", "")
-                profile_url = klaviyo_client["base_url"] + f"profiles/{profile_id}"
-                profile_response = requests.get(
-                    profile_url, headers=headers, timeout=30
-                )
-
-                if profile_response.status_code == 200:
-                    profile_data = profile_response.json()
-                    return [
-                        ReadResourceContents(
-                            content=json.dumps(profile_data, indent=2),
-                            mime_type="application/json",
-                        )
-                    ]
-                else:
-                    error_message = f"Error reading profile: {profile_response.text}"
-                    logger.error(error_message)
-                    return [
-                        ReadResourceContents(
-                            content=error_message, mime_type="text/plain"
-                        )
-                    ]
-
-            elif uri_str.startswith("klaviyo://campaign/"):
+            if uri_str.startswith("klaviyo://campaign/"):
                 # Handle campaign resource
                 campaign_id = uri_str.replace("klaviyo://campaign/", "")
                 campaign_url = klaviyo_client["base_url"] + f"campaigns/{campaign_id}"
@@ -281,56 +213,8 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                             content=error_message, mime_type="text/plain"
                         )
                     ]
-
-            elif uri_str.startswith("klaviyo://list/"):
-                # Handle list resource
-                list_id = uri_str.replace("klaviyo://list/", "")
-
-                # Get list details
-                list_url = klaviyo_client["base_url"] + f"lists/{list_id}"
-                list_response = requests.get(list_url, headers=headers, timeout=30)
-
-                if list_response.status_code != 200:
-                    error_message = f"Error reading list: {list_response.text}"
-                    logger.error(error_message)
-                    return [
-                        ReadResourceContents(
-                            content=error_message, mime_type="text/plain"
-                        )
-                    ]
-
-                list_data = list_response.json()
-
-                # Get list profiles
-                profiles_url = klaviyo_client["base_url"] + f"lists/{list_id}/profiles"
-                profiles_response = requests.get(
-                    profiles_url, headers=headers, timeout=30
-                )
-
-                if profiles_response.status_code != 200:
-                    error_message = (
-                        f"Error reading list profiles: {profiles_response.text}"
-                    )
-                    logger.error(error_message)
-                    return [
-                        ReadResourceContents(
-                            content=error_message, mime_type="text/plain"
-                        )
-                    ]
-
-                profiles_data = profiles_response.json()
-
-                # Combine list details with profiles
-                combined_data = {"list": list_data, "profiles": profiles_data}
-
-                return [
-                    ReadResourceContents(
-                        content=json.dumps(combined_data, indent=2),
-                        mime_type="application/json",
-                    )
-                ]
-
-            raise ValueError(f"Unsupported resource URI: {uri_str}")
+            else:
+                raise ValueError(f"Unsupported resource URI: {uri_str}")
 
         except Exception as e:
             logger.error(f"Error reading Klaviyo resource: {e}")
@@ -421,6 +305,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the created profile data with ID and attributes",
+                    "examples": [
+                        '{"data":{"type":"profile","id":"01ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"example@example.com","first_name":"John","last_name":"Doe","phone_number":"+11234567890"},"links":{"self":"https://a.klaviyo.com/api/profiles/01ABCDEF-0123-4567-89AB-CDEF01234567"}}}'
+                    ],
+                },
+                requiredScopes=["profiles:write"],
             ),
             Tool(
                 name="get_profiles",
@@ -439,6 +332,16 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of profile objects with each item representing a single profile",
+                    "examples": [
+                        '{"type":"profile","id":"01ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"customer@example.com","first_name":"Jane","last_name":"Smith","phone_number":"+11234567890","created":"2022-01-01T12:00:00+00:00"}}',
+                        '{"type":"profile","id":"02ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"another@example.com","first_name":"John","last_name":"Doe","created":"2022-02-15T14:30:00+00:00"}}',
+                    ],
+                },
+                requiredScopes=["profiles:read"],
             ),
             Tool(
                 name="get_profile",
@@ -458,6 +361,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["profile_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the requested profile data including ID and attributes",
+                    "examples": [
+                        '{"data":{"type":"profile","id":"01ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"customer@example.com","phone_number":"+11234567890","first_name":"Jane","last_name":"Smith","organization":"Acme Inc","properties":{"loyalty_points":120}},"links":{"self":"https://a.klaviyo.com/api/profiles/01ABCDEF-0123-4567-89AB-CDEF01234567"}}}'
+                    ],
+                },
+                requiredScopes=["profiles:read"],
             ),
             Tool(
                 name="update_profile",
@@ -540,6 +452,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["profile_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the updated profile data with the modified attributes",
+                    "examples": [
+                        '{"data":{"type":"profile","id":"01ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"updated@example.com","first_name":"Jane","last_name":"Smith","phone_number":"+19876543210","organization":"New Company Inc"},"links":{"self":"https://a.klaviyo.com/api/profiles/01ABCDEF-0123-4567-89AB-CDEF01234567"}}}'
+                    ],
+                },
+                requiredScopes=["profiles:write"],
             ),
             Tool(
                 name="list_campaigns",
@@ -564,6 +485,16 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["channel"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of campaign objects with each item representing a single campaign",
+                    "examples": [
+                        '{"type":"campaign","id":"ABC123DEF456","attributes":{"name":"Summer Sale Announcement","status":"draft","created_at":"2023-06-15T10:00:00+00:00","updated_at":"2023-06-16T14:30:00+00:00","messages":{"channel":"email"}}}',
+                        '{"type":"campaign","id":"GHI789JKL012","attributes":{"name":"Product Launch","status":"scheduled","created_at":"2023-07-01T09:15:00+00:00","updated_at":"2023-07-02T11:45:00+00:00","messages":{"channel":"email"}}}',
+                    ],
+                },
+                requiredScopes=["campaigns:read"],
             ),
             Tool(
                 name="update_campaign",
@@ -626,6 +557,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["campaign_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the updated campaign data with modified attributes",
+                    "examples": [
+                        '{"data":{"type":"campaign","id":"ABC123DEF456","attributes":{"name":"Updated Campaign Name","send_strategy":{"method":"immediate"},"send_options":{"use_smart_sending":true},"tracking_options":{"add_tracking_params":true},"status":"draft","created_at":"2023-06-15T10:00:00+00:00","updated_at":"2023-06-17T09:30:00+00:00"}}}'
+                    ],
+                },
+                requiredScopes=["campaigns:write"],
             ),
             Tool(
                 name="get_campaign",
@@ -650,6 +590,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["campaign_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the requested campaign data including ID and attributes",
+                    "examples": [
+                        '{"data":{"type":"campaign","id":"ABC123DEF456","attributes":{"name":"Weekly Newsletter","status":"sent","created_at":"2023-05-10T08:00:00+00:00","updated_at":"2023-05-11T14:20:00+00:00","send_time":"2023-05-12T09:00:00+00:00","audiences":{"included":["LIST123"],"excluded":[]},"send_strategy":{"method":"static"},"messages":{"channel":"email"}},"links":{"self":"https://a.klaviyo.com/api/campaigns/ABC123DEF456"}}}'
+                    ],
+                },
+                requiredScopes=["campaigns:read"],
             ),
             Tool(
                 name="send_campaign",
@@ -664,6 +613,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["campaign_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the campaign send job result with status information",
+                    "examples": [
+                        '{"data":{"type":"campaign-send-job","id":"ABC123DEF456","status":"draft","campaign_id":"CAMPAIGN456"},"links":{"self":"https://a.klaviyo.com/api/campaign-send-jobs/ABC123DEF456"}}'
+                    ],
+                },
+                requiredScopes=["campaigns:write"],
             ),
             Tool(
                 name="delete_campaign",
@@ -678,6 +636,13 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["campaign_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response indicating successful deletion of the campaign",
+                    "examples": ['{"success":true,"campaign_id":"ABC123DEF456"}'],
+                },
+                requiredScopes=["campaigns:write"],
             ),
             Tool(
                 name="list_metrics",
@@ -700,6 +665,16 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of metric objects with each item representing a single metric",
+                    "examples": [
+                        '{"type":"metric","id":"METRIC123","attributes":{"name":"Placed Order","integration":{"name":"Shopify","category":"ecommerce"},"created":"2022-01-15T12:00:00+00:00"}}',
+                        '{"type":"metric","id":"METRIC456","attributes":{"name":"Viewed Product","integration":{"name":"Shopify","category":"ecommerce"},"created":"2022-01-15T12:00:00+00:00"}}',
+                    ],
+                },
+                requiredScopes=["metrics:read"],
             ),
             Tool(
                 name="get_metric",
@@ -719,6 +694,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["metric_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the requested metric data with ID and attributes",
+                    "examples": [
+                        '{"data":{"type":"metric","id":"METRIC123","attributes":{"name":"Placed Order","integration":{"name":"Shopify","category":"ecommerce"},"created":"2022-01-15T12:00:00+00:00","updated":"2022-02-10T09:30:00+00:00","analytics":{"total_occurrences":12543,"unique_occurrences":8976}},"links":{"self":"https://a.klaviyo.com/api/metrics/METRIC123"}}}'
+                    ],
+                },
+                requiredScopes=["metrics:read"],
             ),
             Tool(
                 name="create_list",
@@ -733,6 +717,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["name"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the created list data with ID and name",
+                    "examples": [
+                        '{"data":{"type":"list","id":"LIST123456","attributes":{"name":"Newsletter Subscribers","created":"2023-08-15T10:30:00+00:00"},"links":{"self":"https://a.klaviyo.com/api/lists/LIST123456"}}}'
+                    ],
+                },
+                requiredScopes=["lists:write"],
             ),
             Tool(
                 name="add_profiles_to_list",
@@ -752,6 +745,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["list_id", "profile_ids"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response indicating successful addition of profiles to the list",
+                    "examples": [
+                        '{"success":true,"list_id":"LIST123456","added_profiles":3}'
+                    ],
+                },
+                requiredScopes=["lists:write", "profiles:read"],
             ),
             Tool(
                 name="remove_profiles_from_list",
@@ -771,6 +773,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["list_id", "profile_ids"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response indicating successful removal of profiles from the list",
+                    "examples": [
+                        '{"success":true,"list_id":"LIST123456","removed_profiles":2}'
+                    ],
+                },
+                requiredScopes=["lists:write", "profiles:read"],
             ),
             Tool(
                 name="get_list_profiles",
@@ -794,6 +805,16 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["list_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of profile objects from the specified list with each item representing a single profile",
+                    "examples": [
+                        '{"type":"profile","id":"01ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"subscriber1@example.com","first_name":"Jane","last_name":"Doe","created":"2023-01-15T12:30:00+00:00"}}',
+                        '{"type":"profile","id":"02ABCDEF-0123-4567-89AB-CDEF01234567","attributes":{"email":"subscriber2@example.com","first_name":"John","last_name":"Smith","created":"2023-02-20T09:45:00+00:00"}}',
+                    ],
+                },
+                requiredScopes=["lists:read", "profiles:read"],
             ),
             Tool(
                 name="get_list",
@@ -813,6 +834,15 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                     },
                     "required": ["list_id"],
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "JSON response containing the requested list data with ID and attributes",
+                    "examples": [
+                        '{"data":{"type":"list","id":"LIST123456","attributes":{"name":"Newsletter Subscribers","created":"2023-08-15T10:30:00+00:00","updated":"2023-09-01T14:15:00+00:00","folder_id":null,"profile_count":1240},"links":{"self":"https://a.klaviyo.com/api/lists/LIST123456"}}}'
+                    ],
+                },
+                requiredScopes=["lists:read"],
             ),
             Tool(
                 name="get_lists",
@@ -831,6 +861,16 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                         },
                     },
                 },
+                outputSchema={
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of list objects with each item representing a single list",
+                    "examples": [
+                        '{"type":"list","id":"LIST123456","attributes":{"name":"Newsletter Subscribers","created":"2023-08-15T10:30:00+00:00","updated":"2023-09-01T14:15:00+00:00","profile_count":1240}}',
+                        '{"type":"list","id":"LIST789012","attributes":{"name":"Abandoned Cart","created":"2023-07-10T09:00:00+00:00","updated":"2023-08-20T11:30:00+00:00","profile_count":567}}',
+                    ],
+                },
+                requiredScopes=["lists:read"],
             ),
         ]
 
@@ -914,22 +954,19 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 201, 202]:
                     result = response.json()
-                    profile_id = result.get("data", {}).get("id", "Unknown")
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully created profile with ID: {profile_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 else:
-                    error_message = f"Error creating profile: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error creating profile: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error creating profile: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error creating profile", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "update_profile":
             # Extract parameters
@@ -1013,27 +1050,27 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 202]:
                     result = response.json()
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully updated profile with ID: {profile_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Profile not found",
+                        "profile_id": profile_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text", text=f"Profile with ID {profile_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error updating profile: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error updating profile: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error updating profile: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error updating profile", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_profile":
             # Extract parameters
@@ -1069,27 +1106,30 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved profile with ID: {profile_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Profile not found",
+                        "profile_id": profile_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text", text=f"Profile with ID {profile_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error retrieving profile: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving profile: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving profile: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error retrieving profile",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_profiles":
             # Extract parameters
@@ -1123,23 +1163,30 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    profile_count = len(result.get("data", []))
 
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved {profile_count} profiles.\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    # If we have an array of items, return each as a separate TextContent
+                    if "data" in result and isinstance(result["data"], list):
+                        return [
+                            types.TextContent(type="text", text=json.dumps(item))
+                            for item in result["data"]
+                        ]
+
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 else:
-                    error_message = f"Error retrieving profiles: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving profiles: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving profiles: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error retrieving profiles",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "update_campaign":
             # Extract parameters
@@ -1281,28 +1328,27 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 202]:
                     result = response.json()
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully updated campaign with ID: {campaign_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Campaign not found",
+                        "campaign_id": campaign_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Campaign with ID {campaign_id} not found.",
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error updating campaign: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error updating campaign: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error updating campaign: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error updating campaign", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "list_campaigns":
             # Extract parameters
@@ -1346,23 +1392,30 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    campaign_count = len(result.get("data", []))
 
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved {campaign_count} {channel} campaigns.\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    # If we have an array of items, return each as a separate TextContent
+                    if "data" in result and isinstance(result["data"], list):
+                        return [
+                            types.TextContent(type="text", text=json.dumps(item))
+                            for item in result["data"]
+                        ]
+
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 else:
-                    error_message = f"Error retrieving campaigns: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving campaigns: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving campaigns: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error retrieving campaigns",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_campaign":
             # Extract parameters
@@ -1405,28 +1458,30 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved campaign with ID: {campaign_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Campaign not found",
+                        "campaign_id": campaign_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Campaign with ID {campaign_id} not found.",
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error retrieving campaign: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving campaign: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving campaign: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error retrieving campaign",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "list_metrics":
             # Extract parameters
@@ -1477,31 +1532,30 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    metric_count = len(result.get("data", []))
 
-                    # Create filter description for the response
-                    filter_desc = ""
-                    if integration_name:
-                        filter_desc += f" for integration '{integration_name}'"
-                    if integration_category:
-                        connector = " and" if filter_desc else " for integration"
-                        filter_desc += f"{connector} category '{integration_category}'"
+                    # If we have an array of items, return each as a separate TextContent
+                    if "data" in result and isinstance(result["data"], list):
+                        return [
+                            types.TextContent(type="text", text=json.dumps(item))
+                            for item in result["data"]
+                        ]
 
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved {metric_count} metrics{filter_desc}.\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 else:
-                    error_message = f"Error retrieving metrics: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving metrics: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving metrics: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error retrieving metrics",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "delete_campaign":
             # Extract parameters
@@ -1528,28 +1582,32 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Check if request was successful
                 if response.status_code in [200, 202, 204]:
+                    success_response = {"success": True, "campaign_id": campaign_id}
                     return [
                         types.TextContent(
-                            type="text",
-                            text=f"Successfully deleted campaign with ID: {campaign_id}",
+                            type="text", text=json.dumps(success_response)
                         )
                     ]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Campaign not found",
+                        "campaign_id": campaign_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Campaign with ID {campaign_id} not found.",
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error deleting campaign: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error deleting campaign: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error deleting campaign: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error deleting campaign", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "send_campaign":
             # Extract parameters
@@ -1620,33 +1678,29 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 201, 202]:
                     result = response.json()
-                    status_message = (
-                        "immediately"
-                        if campaign_status.lower() == "draft"
-                        else "asynchronously"
-                    )
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully triggered campaign with ID: {campaign_id} to send {status_message}.\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    result["status"] = campaign_status.lower()
+                    result["campaign_id"] = campaign_id
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Campaign not found",
+                        "campaign_id": campaign_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Campaign with ID {campaign_id} not found.",
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error sending campaign: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error sending campaign: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error sending campaign: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error sending campaign", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_metric":
             # Extract parameters
@@ -1682,32 +1736,27 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    metric_name = (
-                        result.get("data", {})
-                        .get("attributes", {})
-                        .get("name", "Unknown")
-                    )
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved metric '{metric_name}' with ID: {metric_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {
+                        "error": "Metric not found",
+                        "metric_id": metric_id,
+                    }
                     return [
-                        types.TextContent(
-                            type="text", text=f"Metric with ID {metric_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error retrieving metric: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving metric: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving metric: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error retrieving metric", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "add_profiles_to_list":
             # Extract parameters
@@ -1751,30 +1800,36 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Check if request was successful
                 if response.status_code in [200, 201, 202, 204]:
-                    # Return success message with profile count
-                    profile_count = len(profile_ids)
-                    profile_text = "profile" if profile_count == 1 else "profiles"
+                    success_response = {
+                        "success": True,
+                        "list_id": list_id,
+                        "added_profiles": len(profile_ids),
+                    }
                     return [
                         types.TextContent(
-                            type="text",
-                            text=f"Successfully added {profile_count} {profile_text} to list with ID: {list_id}",
+                            type="text", text=json.dumps(success_response)
                         )
                     ]
                 elif response.status_code == 404:
+                    error_response = {"error": "List not found", "list_id": list_id}
                     return [
-                        types.TextContent(
-                            type="text", text=f"List with ID {list_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error adding profiles to list: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error adding profiles to list: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error adding profiles to list: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error adding profiles to list",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "remove_profiles_from_list":
             # Extract parameters
@@ -1818,30 +1873,36 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
 
                 # Check if request was successful
                 if response.status_code in [200, 202, 204]:
-                    # Return success message with profile count
-                    profile_count = len(profile_ids)
-                    profile_text = "profile" if profile_count == 1 else "profiles"
+                    success_response = {
+                        "success": True,
+                        "list_id": list_id,
+                        "removed_profiles": len(profile_ids),
+                    }
                     return [
                         types.TextContent(
-                            type="text",
-                            text=f"Successfully removed {profile_count} {profile_text} from list with ID: {list_id}",
+                            type="text", text=json.dumps(success_response)
                         )
                     ]
                 elif response.status_code == 404:
+                    error_response = {"error": "List not found", "list_id": list_id}
                     return [
-                        types.TextContent(
-                            type="text", text=f"List with ID {list_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error removing profiles from list: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error removing profiles from list: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error removing profiles from list: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {
+                    "error": "Error removing profiles from list",
+                    "details": str(e),
+                }
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "create_list":
             # Extract parameters
@@ -1872,24 +1933,19 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code in [200, 201, 202]:
                     result = response.json()
-                    list_id = result.get("data", {}).get("id", "Unknown")
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully created list '{list_name}' with ID: {list_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 else:
-                    error_message = (
-                        f"Error creating list: {response.status_code} - {response.text}"
-                    )
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error creating list: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error creating list: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error creating list", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_list_profiles":
             # Extract parameters
@@ -1930,29 +1986,31 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    profile_count = len(result.get("data", []))
 
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved {profile_count} profiles from list with ID: {list_id}.\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    # If we have an array of items, return each as a separate TextContent
+                    if "data" in result and isinstance(result["data"], list):
+                        return [
+                            types.TextContent(type="text", text=json.dumps(item))
+                            for item in result["data"]
+                        ]
+
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {"error": "List not found", "list_id": list_id}
                     return [
-                        types.TextContent(
-                            type="text", text=f"List with ID {list_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error retrieving profiles from list: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving profiles from list: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving profiles from list: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_list":
             # Extract parameters
@@ -1988,32 +2046,23 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    list_name = (
-                        result.get("data", {})
-                        .get("attributes", {})
-                        .get("name", "Unknown")
-                    )
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved list '{list_name}' with ID: {list_id}\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 elif response.status_code == 404:
+                    error_response = {"error": "List not found", "list_id": list_id}
                     return [
-                        types.TextContent(
-                            type="text", text=f"List with ID {list_id} not found."
-                        )
+                        types.TextContent(type="text", text=json.dumps(error_response))
                     ]
                 else:
-                    error_message = f"Error retrieving list: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving list: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving list: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         elif name == "get_lists":
             # Extract parameters
@@ -2047,28 +2096,31 @@ def create_server(user_id: str, api_key: Optional[str] = None) -> Server:
                 # Check if request was successful
                 if response.status_code == 200:
                     result = response.json()
-                    list_count = len(result.get("data", []))
 
-                    return [
-                        types.TextContent(
-                            type="text",
-                            text=f"Successfully retrieved {list_count} lists.\n\n{json.dumps(result, indent=2)}",
-                        )
-                    ]
+                    # If we have an array of items, return each as a separate TextContent
+                    if "data" in result and isinstance(result["data"], list):
+                        return [
+                            types.TextContent(type="text", text=json.dumps(item))
+                            for item in result["data"]
+                        ]
+
+                    return [types.TextContent(type="text", text=json.dumps(result))]
                 else:
-                    error_message = f"Error retrieving lists: {response.status_code} - {response.text}"
-                    logger.error(error_message)
-                    return [types.TextContent(type="text", text=error_message)]
+                    error_response = {
+                        "error": f"Error retrieving lists: {response.status_code}",
+                        "details": response.text,
+                    }
+                    return [
+                        types.TextContent(type="text", text=json.dumps(error_response))
+                    ]
 
             except Exception as e:
-                error_message = f"Error retrieving lists: {str(e)}"
-                logger.error(error_message)
-                return [types.TextContent(type="text", text=error_message)]
+                error_response = {"error": "Error retrieving lists", "details": str(e)}
+                return [types.TextContent(type="text", text=json.dumps(error_response))]
 
         else:
-            return [
-                types.TextContent(type="text", text=f"Tool {name} not implemented yet")
-            ]
+            error_response = {"error": "Tool not implemented", "tool": name}
+            return [types.TextContent(type="text", text=json.dumps(error_response))]
 
     return server
 
