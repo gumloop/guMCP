@@ -2,10 +2,25 @@ name: "Linear guMCP Server"
 icon: "assets/icon.png"
 description: "Interact with Linear issue tracking and project management"
 documentation_path: "README.md"
+resources:
+  - name: "team"
+    description: "Linear teams with their issues, states, and labels."
+    required_scopes:
+      - "read"
+  - name: "issue"
+    description: "Linear issues with their details, state, assignee, and comments."
+    required_scopes:
+      - "read"
 tools:
   - name: "search_issues"
     description: "Search for issues in Linear"
+    required_scopes:
+      - "read"
   - name: "create_issue"
     description: "Create a new issue in Linear"
+    required_scopes:
+      - "write"
   - name: "update_issue"
     description: "Update an existing issue in Linear"
+    required_scopes:
+      - "write"
